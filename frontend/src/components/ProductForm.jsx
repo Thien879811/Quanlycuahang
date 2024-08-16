@@ -1,0 +1,106 @@
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const ProductForm = () => {
+  const [productName, setProductName] = useState('');
+  const [ngaysx, setNgaySx] = useState('');
+  const [hsd, setHsd] = useState('');
+  const [image, setImage] = useState(null);
+  const [soluong, setSoLuong] = useState('');
+  const [gianhap, setGiaNhap] = useState('');
+  const [giaban, setGiaBan] = useState('');
+  const [catalogID, setCatalogID] = useState('');
+
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    // Basic validation
+    if (!productName || !ngaysx || !hsd || !soluong || !gianhap || !giaban || !image || !catalogID) {
+      setError('Please fill in all fields.');
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append("productName", productName);
+    formData.append('ngaysx', ngaysx);
+    formData.append('hsd', hsd);
+    formData.append('soluong', soluong);
+    formData.append('gianhap', gianhap);
+    formData.append('giaban', giaban);
+    formData.append('image', image);
+    formData.append('catalogID', catalogID);
+    console.log(formData)
+    try {
+      const response = await axios.post('/api/product', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Accept: 'application/json',
+        },
+      });
+      setSuccess('Product added successfully!');
+      setError(null);
+      // Optionally reset form fields here
+    } catch (error) {
+      setError(error.response?.data?.message || error.message || 'An error occurred');
+      setSuccess(null);
+    }
+  };
+
+  const handleImageChange = (event) => {
+    setImage(event.target.files[0]);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <label>
+        Tên sản phẩm:
+        <input type="text" value={productName} onChange={(event) => setProductName(event.target.value)} />
+      </label>
+
+      <label>
+        Danh Mục:
+        <input type="text" value={catalogID} onChange={(event) => setCatalogID(event.target.value)} />
+      </label>
+
+      <label>
+        Ngày sản xuất:
+        <input type="date" value={ngaysx} onChange={(event) => setNgaySx(event.target.value)} />
+      </label>
+
+      <label>
+        Hạn sử dụng:
+        <input type="date" value={hsd} onChange={(event) => setHsd(event.target.value)} />
+      </label>
+
+      <label>
+        Số lượng:
+        <input type="number" value={soluong} onChange={(event) => setSoLuong(event.target.value)} />
+      </label>
+
+      <label>
+        Giá mua vào:
+        <input type="number" value={gianhap} onChange={(event) => setGiaNhap(event.target.value)} />
+      </label>
+
+      <label>
+        Giá bán ra:
+        <input type="number" value={giaban} onChange={(event) => setGiaBan(event.target.value)} />
+      </label>
+
+      <label>
+        Hình ảnh sản phẩm:
+        <input type="file" onChange={handleImageChange} />
+      </label>
+
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {success && <p style={{ color: 'green' }}>{success}</p>}
+
+      <button type="submit">Thêm sản phẩm</button>
+    </form>
+  );
+};
+
+export default ProductForm;
