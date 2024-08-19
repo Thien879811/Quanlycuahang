@@ -1,4 +1,4 @@
-import { useContext } from "react";
+
 import { Navigate, Outlet } from "react-router-dom";
 import { useStateContext } from "../context/contextprovider";
 
@@ -7,19 +7,22 @@ export default function DefaultLayout(){
     if(!token){
         return <Navigate to='/login'/>
     }
-
+   
     return (
-        <div id='defaultLayout'>
+        <div id="defaultLayout">
         <div className="content">
-            <header>
-                <div>
-                    header
-                </div>
-            </header>
-            <main>
-                <Outlet/>
-            </main>
-        </div>
-    </div>
+           <header>
+               <div>
+                   Header
+               </div>
+               <div>
+                   <a href="#" className="btn-logout"> Logout</a>
+               </div>
+           </header>
+           <main>
+                <Outlet />
+           </main>
+           </div>
+       </div>
     );
 }

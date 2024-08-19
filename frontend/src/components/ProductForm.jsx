@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import contactService from '../services/contact.service';
 import axios from 'axios';
 
 const ProductForm = () => {
@@ -23,27 +24,21 @@ const ProductForm = () => {
       return;
     }
     
-    const formData = new FormData();
-    formData.append("productName", productName);
-    formData.append('ngaysx', ngaysx);
-    formData.append('hsd', hsd);
-    formData.append('soluong', soluong);
-    formData.append('gianhap', gianhap);
-    formData.append('giaban', giaban);
-    formData.append('image', image);
-    formData.append('catalogID', catalogID);
+    const formData = {
+    'productName': productName,
+    'ngaysx': ngaysx,
+    'hsd': hsd,
+    'soluong': soluong,
+    'gianhap': gianhap,
+    'giaban' : giaban,
+    'image': image,
+    'catalogID': catalogID,
+    }
     console.log(formData)
     try {
-      const response = await axios.post('/api/product', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Accept: 'application/json',
-        },
-      });
-      setSuccess('Product added successfully!');
-      setError(null);
+      const response = await contactService.create(formData);
       // Optionally reset form fields here
-    } catch (error) {
+    }catch (error) {
       setError(error.response?.data?.message || error.message || 'An error occurred');
       setSuccess(null);
     }
