@@ -14,7 +14,7 @@ export default function login(){
         ev.preventDefault();
         const user = {
             email: emailRef.current.value,
-            password: passwordRef.current.value,
+            password: passwordRef.current.value, 
         }
 
         

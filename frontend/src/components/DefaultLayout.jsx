@@ -1,5 +1,5 @@
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Link, Navigate, Outlet } from "react-router-dom";
 import { useStateContext } from "../context/contextprovider";
 
 export default function DefaultLayout(){
@@ -14,6 +14,9 @@ export default function DefaultLayout(){
            <header>
                <div>
                    Header
+               </div>
+               <div>
+                <Link to='/home'>Thêm sản phẩm</Link>
                </div>
                <div>
                    <a href="#" className="btn-logout"> Logout</a>
