@@ -1,6 +1,7 @@
 <?php
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CataloryController;
+use App\Http\Controllers\FactoryController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -24,12 +25,19 @@ Route::middleware('auth:sanctum')->group(function() {
         return $request->user();
     });
 
-    Route::get('/product',[ProductController::class,'getAll']);
-    Route::post('/product',[ProductController::class,'create']);
+    // Route::get('/product',[ProductController::class,'getAll']);
+    // Route::post('/product',[ProductController::class,'create']);
 
     Route::get('/catalory',[CataloryController::class,'getCatalory']);
    // Route::apiResource('/users',UserController::class);
 });
 
+Route::get('/catalory',[CataloryController::class,'getCatalory']);
+
+Route::get('/factory',[FactoryController::class,'getAll']);
+
 Route::post('login',[AuthController::class,'login']);
 Route::post('register',[AuthController::class,'register']);
+
+Route::get('/product',[ProductController::class,'getAll']);
+Route::post('/product',[ProductController::class,'create']);

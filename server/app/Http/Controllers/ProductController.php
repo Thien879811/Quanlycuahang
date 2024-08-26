@@ -5,14 +5,38 @@ namespace App\Http\Controllers;
 use App\Models\Catalory;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
+    public function getAll()
+    {
+        $products = Product::all();
+
+        return response()->json($products);
+    }
+
     public function create(Request $request)
     {
-        // Validate the request
+        //Validate the request
         $request->validate([
             'image' => 'required|image|mimes:jpeg,png,gif|max:2048', // Adjust validation rules as needed
+            'barcode' => 'required|string|unique:products,barcode', // Added barcode validation
+            'catalogy_id' => 'required|integer', // Adjust according to your requirements
+            // Add other validation rules as needed
+        ]);
+
+        $productData = $request->only([
+            'product_name',
+            'barcode',
+            'production_date',
+            'expiration_date',
+            'quantity',
+            'selling_price',
+            'catalogy_id',
+            'image',
+            'factory_id',
+            'purchase_price',
         ]);
 
         // Check if the request has a file
@@ -27,71 +51,31 @@ class ProductController extends Controller
             $file->move(public_path('images'), $imageName);
             $imageUrl = asset('images/' . $imageName);
 
-            // Optionally, you can use Laravel's Storage facade to store the file
-            // $path = $file->storeAs('images', $imageName, 'public');
-
-            // Return a success response with the image name
+            // Add image URL to product data
+            $productData['image'] = $imageUrl;
+        } else {
             return response()->json([
-                'success' => true,
-                'image' => $imageUrl,
-                'message' => 'Image uploaded successfully.'
-            ]);
+                'success' => false,
+                'message' => 'No image file provided.'
+            ], 400); // 400 Bad Request
         }
 
-        // Return an error response if no file was uploaded
+        // Check if the product with the given barcode already exists
+        $existingProduct = Product::where('barcode', $productData['barcode'])->first();
+        if ($existingProduct) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product already exists.'
+            ], 400); // 400 Bad Request
+        }
+
+        // Create the new product
+        $product = Product::create($productData);
+
         return response()->json([
-            'success' => false,
-            'message' => 'No image file provided.'
-        ], 400); // 400 Bad Request
-    }
-
-//     public function create(Request $request)
-// {
-//     $request->validate([
-//         'image' => 'required|image|mimes:jpeg,png,gif|max:2048',
-//     ]);
-
-//     if ($request->hasFile('image')) {
-//         $file = $request->file('image');
-//         $imageName = time() . '.' . $file->getClientOriginalExtension();
-
-//         // Store the file in the public disk
-//         $filePath = $file->storeAs('images', $imageName, 'public');
-
-//         // Return the URL to access the image
-//         $imageUrl = asset('/' . $filePath);
-
-//         return response()->json([
-//             'image' => $imageUrl
-//         ]);
-//     }
-
-//     return response()->json([
-//         'error' => 'No image file provided.'
-//     ], 400);
-// }
-
-
-      // $product = $request ->all();
-
-        // $catalory = $product['catalogy_id'];
-
-        // if(!is_int($catalory)){
-        //     $Catalory = new Catalory;
-        //     $find = $Catalory->findCatalory($catalory);
-        //     if(!$find){
-        //         $catalory= Catalory::create([
-        //             'catalogy_name' => $catalory               
-        //         ]);
-        //         $product['catalogy_id'] = $catalory->id;
-        //     }else{
-        //         $product['catalogy_id'] =  $find->id;
-        //     } 
-        // }
-
-        // $image=time().'.'.$product->image->extension();
-        // $product->image->move(public_path('images'),$image);
-    public function getAll(Request $request){
-        $products = Product::all();
+            'success' => true,
+            'product' => $product,
+            'message' => 'Product created successfully.'
+        ]);
     }
 }

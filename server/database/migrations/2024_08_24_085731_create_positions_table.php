@@ -13,9 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('catalogy', function (Blueprint $table) {
+        Schema::create('positions', function (Blueprint $table) {
             $table->id();
-            $table->string('catalogy_name');
+            // Giả sử ov_id là khóa chính và tự tăng
+            $table->string('position'); // Giả sử ov_tenov là một chuỗi
+            $table->integer('wage');
             $table->timestamps();
         });
     }
@@ -27,7 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('catalogy');
+        Schema::dropIfExists('positions');
     }
 };
-///php artisan make:model DetailOrder  --migration --controller --resource

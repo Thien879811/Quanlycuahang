@@ -1,6 +1,6 @@
 import createApiClient from "./api.service";
-class MuonSachService {
-    constructor(baseUrl = "/api/theodoimuonsach") {
+class FactoryService {
+    constructor(baseUrl = "/api/factory") {
         this.api = createApiClient(baseUrl);
     }
     async getAll() {
@@ -22,7 +22,7 @@ class MuonSachService {
         return (await this.api.delete(`/${id}`)).data;
     }
 }
-export default new MuonSachService();
+export default new FactoryService();
 
 
-//http://localhost:3000/api/theodoimuonsach
+

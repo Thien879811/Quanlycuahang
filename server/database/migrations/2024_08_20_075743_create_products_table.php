@@ -17,8 +17,9 @@ return new class extends Migration
             $table->id();
             $table->string('product_name');
             $table->foreignId('catalogy_id')->constrained('catalogy');
+            $table->foreignId('factory_id')->constrained('factory');
      // Sử dụng foreignId và constrained
-            $table->date('production_date'); // Sử dụng tiếng Anh cho tên cột
+            $table->date('production_date');  
             $table->date('expiration_date')->nullable();
             $table->string('image');
             $table->integer('quantity');

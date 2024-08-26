@@ -13,10 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('catalogy', function (Blueprint $table) {
+        Schema::create('satffs', function (Blueprint $table) {
             $table->id();
-            $table->string('catalogy_name');
-            $table->timestamps();
+            $table->string('names');
+            $table->integer('age');
+            $table->string('address');
+            $table->string('phone');
+            $table->string('gioitinh');
+            $table->foreignId('position_id')->constrained('positions');
+
         });
     }
 
@@ -27,7 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('catalogy');
+        Schema::dropIfExists('satffs');
     }
 };
-///php artisan make:model DetailOrder  --migration --controller --resource

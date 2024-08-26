@@ -13,9 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('catalogy', function (Blueprint $table) {
+        Schema::create('customers', function (Blueprint $table) {
             $table->id();
-            $table->string('catalogy_name');
+            $table->string('name');
+            $table->string('phone');
+            $table->bigInteger('diem')->default(0); // Giả sử điểm khởi tạo là 0
+            $table->string('password')->nullable(true);
             $table->timestamps();
         });
     }
@@ -27,7 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('catalogy');
+        Schema::dropIfExists('customers');
     }
 };
-///php artisan make:model DetailOrder  --migration --controller --resource
