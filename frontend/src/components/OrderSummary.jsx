@@ -28,11 +28,6 @@ const OrderSummary = ({ order }) => {
           ))}
         </tbody>
       </table>
-      <div className="totals">
-        <p>Subtotal: ${subtotal.toFixed(2)}</p>
-        <p>Tax: ${tax.toFixed(2)}</p>
-        <p>Total: ${total.toFixed(2)}</p>
-      </div>
     </div>
   );
 };

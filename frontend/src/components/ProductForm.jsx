@@ -51,11 +51,12 @@ const ProductForm =  () => {
     formData.append('catalogy_id', catalogID);
     formData.append('image', image);
     formData.append('factory_id', factoryID);
+    
     console.log(formData)
     try {
       const response = await productService.create(formData);
-      console.log(response)
-      // Optionally reset form fields here
+      
+      window.location      
     }catch (error) {
       setError(error.response?.data?.message || error.message || 'An error occurred');
       setSuccess(null);
@@ -142,15 +143,10 @@ const ProductForm =  () => {
 
       <button type="submit">Thêm sản phẩm</button>
 
-      {previewImage && (
-          <img
-            src={previewImage}
-            alt="Preview"
-            style={{ maxWidth: '500px', maxHeight: '500px' }}
-          />
-        )}
+      
 
     </form>   
+
 
   );
 };

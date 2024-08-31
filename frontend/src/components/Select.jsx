@@ -6,7 +6,6 @@ import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 
 export default function BasicSelect({ value, onValue, options }) {
-
   const handleChange = (event) => {
     const newValue = event.target.value;
     onValue(newValue); // Call the function passed via props to update the parent state

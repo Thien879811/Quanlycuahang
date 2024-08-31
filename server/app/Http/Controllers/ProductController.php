@@ -76,6 +76,6 @@ class ProductController extends Controller
             'success' => true,
             'product' => $product,
             'message' => 'Product created successfully.'
-        ]);
+        ],200);
     }
 }

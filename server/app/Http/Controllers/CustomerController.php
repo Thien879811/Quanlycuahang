@@ -14,7 +14,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        //
+        
     }
 
     /**
@@ -81,5 +81,20 @@ class CustomerController extends Controller
     public function destroy(customer $customer)
     {
         //
+    }
+
+    public function getOne(Request $request){
+        $phone = $request->phone;
+        $customer = Customer::where("phone",$phone)->first();
+
+        if($customer){
+            return response()->json([
+                $customer,
+            ],200);
+        }
+
+        return response()->json([
+            "message" => "Vui số điện thoại chưa được tích điểm"
+        ]);
     }
 }
