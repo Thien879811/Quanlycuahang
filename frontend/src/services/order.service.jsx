@@ -1,14 +1,13 @@
 import createApiClient from "./api.service";
-class ProductService {
-    constructor(baseUrl = "/api/product") {
+class FactoryService {
+    constructor(baseUrl = "/api/orders") {
         this.api = createApiClient(baseUrl);
     }
     async getAll() {
         return (await this.api.get("/")).data;
     }
     async create(data) {
-        const headers = { 'Content-Type': 'multipart/form-data' };
-        return (await this.api.post("/", data, { headers })).data;
+        return (await this.api.post("/", data)).data;
     }
     async deleteAll() {
         return (await this.api.delete("/")).data;
@@ -23,4 +22,6 @@ class ProductService {
         return (await this.api.delete(`/${id}`)).data;
     }
 }
-export default new ProductService();
+export default new FactoryService();
+
+

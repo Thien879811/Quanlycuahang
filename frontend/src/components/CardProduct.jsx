@@ -7,33 +7,34 @@ import IconButton from '@mui/joy/IconButton';
 import Typography from '@mui/joy/Typography';
 import BookmarkAdd from '@mui/icons-material/BookmarkAddOutlined';
 
-export default function BasicCard({ product,onClick }) {
+export default function BasicCard({product,onClick}) {
   const handleOnClick = () => {
-    // Retrieve existing products from localStorage
-    const existingProducts = JSON.parse(localStorage.getItem('order_product')) || [];
+    // // Retrieve existing products from localStorage
+    // const existingProducts = JSON.parse(localStorage.getItem('order_product')) || [];
 
-    // Check if the product already exists
-    const productIndex = existingProducts.findIndex(p => p.product_id === product.id);
+    // // Check if the product already exists
+    // const productIndex = existingProducts.findIndex(p => p.product_id === product.id);
 
-    if (productIndex > -1) {
-      // If product exists, update the quantity
-      existingProducts[productIndex].soluong += 1;
-    } else {
-      // If product does not exist, create a new entry
-      const product_order = {
-        product_id: product.id,
-        product_name: product.product_name,
-        soluong: 1,
-      };
-      existingProducts.push(product_order);
-    }
+    // if (productIndex > -1) {
+    //   // If product exists, update the quantity
+    //   existingProducts[productIndex].quantity += 1;
+    // } else {
+    //   // If product does not exist, create a new entry
+    //   const product_order = {
+    //     product_id: product.id,
+    //     productName: product.product_name,
+    //     quantity: 1,
+    //     price: product.purchase_price,
+    //   };
+    //   existingProducts.push(product_order);
+    // }
 
-    // Save the updated list back to localStorage
-    localStorage.setItem('order_product', JSON.stringify(existingProducts));
+    // // Save the updated list back to localStorage
+    // localStorage.setItem('order_product', JSON.stringify(existingProducts));
 
-    // Optionally, provide feedback to the user
-    console.log('Product added or updated in localStorage!');
-    onClick();
+    // // Optionally, provide feedback to the user
+    // console.log('Product added or updated in localStorage!');
+    onClick(product);
   };
 
   return (
@@ -72,7 +73,7 @@ export default function BasicCard({ product,onClick }) {
           color="primary"
           aria-label="Add product"
           sx={{ ml: 'auto', alignSelf: 'center', fontWeight: 600 }}
-          onClick={handleOnClick} // Pass function reference without parentheses
+          onClick={()=>handleOnClick(product)} // Pass function reference without parentheses
         >
           Add
         </Button>

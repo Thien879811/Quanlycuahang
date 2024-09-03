@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CardProduct from '../components/CardProduct';
 import useProducts from '../utils/productUtils';
-import { Box, Grid, Table } from '@mui/material';
+import { Box, Grid, Table, Button } from '@mui/material';
 import { styled } from '@mui/joy/styles';
 import Sheet from '@mui/joy/Sheet';
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import CloseIcon from '@mui/icons-material/Close';
 
 const Product = () => {
-
+    const navigate = useNavigate();
     const {products} = useProducts();
     const [orderProducts, setOrderProducts] = useState([]);
 
-   
     const fetchOrderData = () => {
         const storedOrderProduct = JSON.parse(localStorage.getItem('order_product')) || [];
         setOrderProducts(storedOrderProduct);
@@ -24,7 +24,6 @@ const Product = () => {
 
     const deleteOrder = (id) => {
         const updatedOrders = orderProducts.filter(product => product.product_id !== id);
-        console.log(updatedOrders)
         localStorage.setItem('order_product', JSON.stringify(updatedOrders));
         setOrderProducts(updatedOrders);
     };
@@ -32,43 +31,73 @@ const Product = () => {
     useEffect(() => {
         fetchOrderData();
     }, []);
+
+    const handleProductClick = (product) => {
+        const updatedOrderProducts = [...orderProducts];
+        const existingProductIndex = updatedOrderProducts.findIndex(p => p.product_id === product.id);
+        
+        if (existingProductIndex !== -1) {
+            updatedOrderProducts[existingProductIndex].quantity += 1;
+        } else {
+            updatedOrderProducts.push({
+                product_id: product.id,
+                productName: product.product_name,
+                quantity: 1,
+                price: product.purchase_price,
+            });
+        }
+        
+        localStorage.setItem('order_product', JSON.stringify(updatedOrderProducts));
+        setOrderProducts(updatedOrderProducts);
+    };
+
     return(
         <Box sx={{ flexGrow: 1 }}>
-            <Grid container spacing={2} direction="row">
-
-                <Grid item xs={9} container spacing={2} direction="row">
-
-                    {products.map((product)=>(  
-                        <Style>
-                            <CardProduct xs={3} product ={product} onClick={() => fetchOrderData()}/>
-                        </Style>
+            <Button 
+                variant="contained" 
+                color="secondary" 
+                startIcon={<CloseIcon />} 
+                onClick={() => navigate('/')}
+                sx={{ mb: 2, float: 'right' }}
+            >
+                Đóng
+            </Button>
+            <Grid container spacing={3}>
+                <Grid item xs={8} container spacing={3}>
+                    {products.map((product) => (  
+                        <Grid item xs={4} key={product.id}>
+                            <Style>
+                                <CardProduct product={product} onClick={() => handleProductClick(product)} />
+                            </Style>
+                        </Grid>
                     ))}
-
-
                 </Grid>
-                <Grid item xs={3}>
-                    <Table aria-label="basic table" stripe="even"  variant="soft">
+                <Grid item xs={4}>
+                    <Table aria-label="order table" stripe="even" variant="outlined" sx={{ borderRadius: 2, boxShadow: 3 }}>
                         <thead>
                           <tr>
-                            <th style={{ width: '40%' }}>Tên sản phẩm</th>
-                            <th>Số lượng</th>
-                            <th></th>
+                            <th style={{ width: '50%', padding: '10px', backgroundColor: '#f5f5f5' }}>Tên sản phẩm</th>
+                            <th style={{ padding: '10px', backgroundColor: '#f5f5f5' }}>Số lượng</th>
+                            <th style={{ padding: '10px', backgroundColor: '#f5f5f5' }}></th>
                           </tr>
                         </thead>
-                        {orderProducts.map((product)=>(  
                         <tbody>
-                          <tr>
-                            <td>{product.product_name}</td>
-                            <td>{product.soluong}</td>
-                            <td><button onClick ={()=>deleteOrder(product.product_id)} ><DeleteIcon/></button></td>
-                          </tr>
+                          {orderProducts.map((product) => (  
+                            <tr key={product.product_id}>
+                              <td style={{ padding: '10px' }}>{product.productName}</td>
+                              <td style={{ padding: '10px' }}>{product.quantity}</td>
+                              <td style={{ padding: '10px' }}>
+                                <Button onClick={() => deleteOrder(product.product_id)} variant="contained" color="secondary" size="small">
+                                  <DeleteIcon />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
-                         ))}
                     </Table>
                 </Grid>
             </Grid>
-        </Box>
-        
+        </Box>  
     )
 };
 

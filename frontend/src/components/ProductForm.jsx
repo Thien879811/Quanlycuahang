@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import contactService from '../services/contact.service';
 import productService from '../services/product.service';
 import BasicSelect from './Select';
@@ -7,10 +7,10 @@ import useFactory from '../utils/factoryUtils';
 import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 import Box from '@mui/material/Box';
+import { Button } from '@mui/material';
+import Scanner from './BarcodeScanner';
 
-
-const ProductForm =  () => {
-
+const ProductForm = () => {
   const [productName, setProductName] = useState('');
   const [ngaysx, setNgaySx] = useState('');
   const [hsd, setHsd] = useState('');
@@ -20,13 +20,11 @@ const ProductForm =  () => {
   const [giaban, setGiaBan] = useState('');
   const [barcode, setBarCode] = useState('');
   const [factoryID, setFactoryID] = useState('');
-
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-
-
   const [catalogID, setCatalogID] = useState('');
   const [previewImage, setPreviewImage] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   const { options, loading, error: catalogError } = useCatalogs();
   const { f_options, f_loading, error: f_Error } = useFactory();
@@ -57,7 +55,7 @@ const ProductForm =  () => {
       const response = await productService.create(formData);
       
       window.location      
-    }catch (error) {
+    } catch (error) {
       setError(error.response?.data?.message || error.message || 'An error occurred');
       setSuccess(null);
 
@@ -75,7 +73,6 @@ const ProductForm =  () => {
 
   return (
     <form onSubmit={handleSubmit}>
-
       <label>
         Danh Mục:
         <BasicSelect 
@@ -125,13 +122,23 @@ const ProductForm =  () => {
         Giá bán ra:
         <input type="number" value={giaban} onChange={(event) => setGiaBan(event.target.value)} />
       </label>
-
       <label>
         Mã Vạch Sản Phẩm:
-        <input type="number" value={barcode} onChange={(event) => setBarCode(event.target.value)} />
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <input type="number" value={barcode} onChange={(event) => setBarCode(event.target.value)} />
+          <Button variant="contained" onClick={() => setShowScanner(true)} style={{ marginLeft: '10px' }}>
+            Quét mã
+          </Button>
+        </div>
       </label>
-
-
+      {showScanner && (
+        <Scanner
+          onDetected={(result) => {
+            setBarCode(result);
+            setShowScanner(false);
+          }}
+        />
+      )}
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {success && <p style={{ color: 'green' }}>{success}</p>}
@@ -142,12 +149,7 @@ const ProductForm =  () => {
       </label>
 
       <button type="submit">Thêm sản phẩm</button>
-
-      
-
     </form>   
-
-
   );
 };
 

@@ -15,7 +15,7 @@ class OrdersController extends Controller
      */
     public function index()
     {
-        //
+        
     }
 
     /**
@@ -36,39 +36,49 @@ class OrdersController extends Controller
         // Create a new order if none exist
         $order = Orders::create(
            [
-            "customer_id" => $validated['customer_id'],
-            "satff_id" => $validated['satff_id'],
+            "customer_id" => $validated['khachhang'] !== '0' ? $validated['khachhang'] : 0,
+            "satff_id" => $validated['nhanvien'],
             "status" => "0",
-            "tongcong"=>"100",
+            "tongcong"=>$validated['tonghoadon'],
+            "pays_id" =>$validated['pays_id']
            ]
         );
     }
 
+    $order->tongcong = $validated['tonghoadon'];
+    $order->customer_id = $validated['khachhang'] !== '0' ? $validated['khachhang'] : 0;
+    $order->save();
+
+    if($validated['products']){
+
     // Handle product details
-    foreach ($validated['products'] as $product) {
-        $product_id = $product['product_id']; // Hoặc $product->product_id nếu là đối tượng
+        foreach ($validated['products'] as $product) {
+            $product_id = $product['product_id']; // Hoặc $product->product_id nếu là đối tượng
+            
+            // Check if the detail exists
+            $detail = DetailOrder::where('order_id', $order->id)
+                                ->where('product_id', $product_id)
+                                ->first();
         
-        // Check if the detail exists
-        $detail = DetailOrder::where('order_id', $order->id)
-                             ->where('product_id', $product_id)
-                             ->first();
-    
-        if ($detail) {
-            // Update the quantity if the detail already exists
-            $detail->soluong = $detail->soluong +  $product['soluong']; // Adjust as needed for your logic
-            $detail->save();
-        } else {
-            // Create new detail if it does not exist
-            DetailOrder::create([
-                'order_id' => $order->id,
-                'product_id' => $product_id,
-                'soluong' => 1, // Default quantity or adjust as needed
-                // Add other fields if needed
-                'dongia' => $product['dongia']
-            ]);
+            if ($detail) {
+                // Update the quantity if the detail already exists
+                $detail->soluong = $product['quantity']; // Adjust as needed for your logic
+                $detail->save();
+            } else {
+                // Create new detail if it does not exist
+                DetailOrder::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product_id,
+                    'soluong' => $product['quantity'], // Default quantity or adjust as needed
+                    // Add other fields if needed
+                    'dongia' => $product['price'],
+                ]);
+            }
         }
     }
-    
+    else{
+        $detail = DetailOrder::where('order_id', $order->id)->delete();
+    }
 
     return response()->json($order, 201);
 }
@@ -122,7 +132,7 @@ class OrdersController extends Controller
      */
     public function update(Request $request, Orders $orders)
     {
-        //
+        
     }
 
     /**
@@ -140,5 +150,19 @@ class OrdersController extends Controller
         return response()->json([
             'message'=>'thanhcong'
         ]);
+    }
+
+    public function updateOrder(Request $request, $order_id){
+        $validated = $request->validate([
+            'status' => 'required',
+            'pays_id' => 'required'
+        ]);
+        
+        $order = Orders::find($order_id);
+        $order->status = $validated['status'];
+        $order->pays_id = $validated['pays_id'];
+        $order->save();
+
+        return response()->json($order);
     }
 }

@@ -35,12 +35,26 @@ Route::middleware('auth:sanctum')->group(function() {
    // Route::apiResource('/users',UserController::class);
 });
 
-Route::get('/catalory',[CataloryController::class,'getCatalory']);
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function() {
+    Route::post('/product', [ProductController::class, 'create']);
+    // Các route khác chỉ dành cho admin
+});
+
+Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function() {
+    Route::get('/product', [ProductController::class, 'getAll']);
+    // Các route dành cho cả admin và manager
+});
+
+Route::middleware(['auth:sanctum', 'role:admin,manager,employee'])->group(function() {
+    Route::get('/catalory', [CataloryController::class, 'getCatalory']);
+    // Các route dành cho tất cả nhân viên đã đăng nhập
+});
 
 Route::get('/factory',[FactoryController::class,'getAll']);
 
 Route::post('login',[AuthController::class,'login']);
 Route::post('register',[AuthController::class,'register']);
+Route::post('logout',[AuthController::class,'logout']);
 
 Route::get('/product',[ProductController::class,'getAll']);
 Route::post('/product',[ProductController::class,'create']);
@@ -48,7 +62,9 @@ Route::post('/product',[ProductController::class,'create']);
 
 Route::controller(CustomerController::class)->group(function () {
     Route::get('/customer/{phone}', 'getOne');
-    Route::post('/customer', 'store');
+    Route::post('/customer', 'create');
+    Route::put('/customer/{id}', 'update');
+
 });
 
 Route::controller(OrdersController::class)->group(function () {
@@ -56,7 +72,9 @@ Route::controller(OrdersController::class)->group(function () {
     // Route::post('/order', 'create');
 });
 
-Route::post('/order', [OrdersController::class, 'create']);
+Route::post('/orders', [OrdersController::class, 'create']);
+Route::put('/orders/{order_id}', [OrdersController::class, 'updateOrder']);
+
 
 
 Route::post('/vnpay/pay', [PaymentController::class, 'pay']);

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('satff_id')->constrained('satffs');
             $table->integer('tongcong');
             $table->integer('status');
+            $table->foreignId('pays_id')->constrained('pays');
             $table->timestamps();
         });
     }

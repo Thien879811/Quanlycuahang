@@ -10,4 +10,12 @@ class Factory extends Model
     use HasFactory;
 
     protected $table = 'factory';
+
+    protected $fillable = [
+        'factory_name',
+        'address',
+        'phone',
+        'catalogy_id',
+    ];
+
 }

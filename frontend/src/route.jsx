@@ -8,6 +8,7 @@ import UserForm from './views/UserForm.jsx';
 import Home from './pages/Home.jsx';//
 import ProductForm from './components/ProductForm.jsx';
 import PayReturn from "./components/PayReturn.jsx";
+import Pay from "./pages/Pay.jsx";
 import Product from "./pages/Product.jsx"
 
 const router = createBrowserRouter ([
@@ -20,7 +21,7 @@ const router = createBrowserRouter ([
                 element: <Users />,
             },
             {
-                path: '/home',
+                path: '/',
                 element: <Home />,
             },
             {
@@ -39,6 +40,14 @@ const router = createBrowserRouter ([
                 path: '/product',
                 element: <Product />
             },
+            {
+                path: '/create_product',
+                element: <ProductForm />
+            },
+            {
+                path: '/pay',
+                element: <Pay />
+            }
         ]
     },
 

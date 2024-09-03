@@ -1,106 +1,100 @@
-// import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import useOrderProduct from './orderproduct';
+import orderService from '../services/order.service';
+import { debounce } from 'lodash';
 
-// const useOrder = () => {
-//   const [products, setProducts] = useState([]);
-//   const [ngaytao, setNgaytao] = useState(true);
-//   const [nhanvien, setNhanvien] = useState(null);
-//   const [khachhang, setKhachhang] = useState(null);
-//   const [tonghoadon, setTonghoadon] = useState(null);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-
-//   // Example effect to fetch data, adjust as needed
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         // Simulate fetching data
-//         setLoading(true);
-//         // Fetch data logic here
-//         // setProducts(fetchedProducts);
-//         // setNgaytao(fetchedNgaytao);
-//         // setNhanvien(fetchedNhanvien);
-//         // setKhachhang(fetchedKhachhang);
-//         // setTonghoadon(fetchedTonghoadon);
-//       } catch (err) {
-//         setError(err);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchData();
-//   }, []);
-
-//   return { products, ngaytao, nhanvien, khachhang, tonghoadon, loading, error };
-// };
-
-// export default useOrder;
-
-
-import { useState } from 'react';
-
-// Hàm tạo đơn hàng mẫu (có thể được thay đổi tùy vào yêu cầu thực tế)
-const createOrder = (products, ngaytao, nhanvien, khachhang, tonghoadon) => {
-  return {
-    products,
-    ngaytao,
-    nhanvien,
-    khachhang,
-    tonghoadon,
-    createdAt: new Date().toISOString(),
-  };
+// import useCustomer from './customerUtils';
+// Hàm tạo đơn hàng
+const createOrder = (products, nhanvien, khachhang, tonghoadon, pays_id) => {
+    return {
+        products,
+        pays_id,
+        nhanvien,
+        khachhang,
+        tonghoadon,
+    };
 };
 
 const useOrder = () => {
-  const [products, setProducts] = useState([]);
-  const [ngaytao, setNgaytao] = useState(true);
-  const [nhanvien, setNhanvien] = useState(null);
-  const [khachhang, setKhachhang] = useState(null);
-  const [tonghoadon, setTonghoadon] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+    const { orderProducts,
+      getTotalAmount,
+      getTotalQuantity,
+      clearOrderProduct,
+     } = useOrderProduct();
+    const [pays_id, setPays_id] = useState('1');
+    const [nhanvien, setNhanvien] = useState('3');
+    const customer = JSON.parse(localStorage.getItem('customer'));
+    const [khachhang, setKhachhang] = useState('0');
+    const [tonghoadon, setTonghoadon] = useState(getTotalAmount());
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-  // Tạo đơn hàng và lưu vào localStorage
-  const saveOrderToLocalStorage = (orderDetails) => {
-    localStorage.setItem('order', JSON.stringify(orderDetails));
-  };
+    useEffect(() => {
+        if (customer && customer.id) {
+            setKhachhang(customer.id);
+        }
+    }, [customer]);
 
-  // Xử lý thanh toán và gửi đơn hàng đến server
-  const submitOrder = async () => {
-    setLoading(true);
-    try {
-      // Tạo đơn hàng
-      const orderDetails = createOrder(products, ngaytao, nhanvien, khachhang, tonghoadon);
-      
-      // Lưu đơn hàng vào localStorage
-      saveOrderToLocalStorage(orderDetails);
+    const createAndSendOrder = async () => {
+        if (orderProducts.length === 0) {
+            setError('Không có sản phẩm trong đơn hàng');
+            return;
+        }
+        setLoading(true);
+        setError(null);
 
-      // Gửi đơn hàng đến server
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderDetails),
-      });
+        try {
+            const orderDetails = createOrder(orderProducts, nhanvien, khachhang, tonghoadon, pays_id);
+            console.log(orderDetails);
 
-      if (!response.ok) {
-        throw new Error('Failed to submit order');
-      }
+            const response = await orderService.create(orderDetails);
+          
+            const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
+            const data = JSON.parse(cleanJsonString);
 
-      const result = await response.json();
-      // Xử lý thành công (có thể xóa đơn hàng từ localStorage nếu cần)
-      localStorage.removeItem('order');
-      console.log('Order submitted successfully:', result);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+            localStorage.setItem('order_id', data.id);
 
-  return { products, ngaytao, nhanvien, khachhang, tonghoadon, loading, error, submitOrder };
+        } catch (err) {
+            setError(err.message);
+            console.error('Lỗi khi tạo đơn hàng:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const updateOrder = async (order_id, status, pays_id) => {
+        const response = await orderService.update(order_id, { status, pays_id });
+    };
+    
+    const clearOrder = () => {
+        localStorage.removeItem('order_id');
+        setKhachhang('0');
+        clearOrderProduct();
+    };
+
+    useEffect(() => {
+        setTonghoadon(getTotalAmount());
+    }, [orderProducts]);
+
+    const handleCreateOrder = () => {
+        if (orderProducts.length > 0) {
+            createAndSendOrder();
+        }
+    };
+
+    return {
+        orderProducts,
+        nhanvien,
+        setNhanvien,
+        khachhang,
+        setKhachhang,
+        tonghoadon,
+        loading,
+        error,
+        handleCreateOrder,  // New function to trigger order creation
+        updateOrder,
+        clearOrder
+    };
 };
 
 export default useOrder;
-

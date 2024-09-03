@@ -14,7 +14,8 @@ class Orders extends Model
         'customer_id',
         'satff_id',
         'tongcong',
-        'status'
+        'status',
+        'pays_id'
     ];
 
 }
