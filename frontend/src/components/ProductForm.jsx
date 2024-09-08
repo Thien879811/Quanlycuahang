@@ -1,155 +1,287 @@
 import React, { useState, useEffect } from 'react';
-import contactService from '../services/contact.service';
+import { TextField, Button, Grid, Paper, Typography, Box, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import productService from '../services/product.service';
-import BasicSelect from './Select';
 import useCatalogs from '../utils/catalogUtils';
 import useFactory from '../utils/factoryUtils';
-import Fab from '@mui/material/Fab';
-import AddIcon from '@mui/icons-material/Add';
-import Box from '@mui/material/Box';
-import { Button } from '@mui/material';
 import Scanner from './BarcodeScanner';
 
-const ProductForm = () => {
-  const [productName, setProductName] = useState('');
-  const [ngaysx, setNgaySx] = useState('');
-  const [hsd, setHsd] = useState('');
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  margin: theme.spacing(3),
+}));
+
+const StyledForm = styled('form')(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(2),
+}));
+
+const ScannerContainer = styled(Box)(({ theme }) => ({
+  position: 'fixed',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '300px',
+  height: '300px',
+  zIndex: 1000,
+  backgroundColor: 'white',
+  padding: theme.spacing(2),
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: theme.shadows[5],
+}));
+
+const ProductForm = ({ product, onSuccess, onCancel }) => {
+  const [productData, setProductData] = useState({
+    product_name: '',
+    production_date: '',
+    expiration_date: '',
+    quantity: '',
+    purchase_price: '',
+    selling_price: '',
+    barcode: '',
+    factory_id: '',
+    catalogy_id: '',
+  });
   const [image, setImage] = useState(null);
-  const [soluong, setSoLuong] = useState('');
-  const [gianhap, setGiaNhap] = useState('');
-  const [giaban, setGiaBan] = useState('');
-  const [barcode, setBarCode] = useState('');
-  const [factoryID, setFactoryID] = useState('');
+  const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [catalogID, setCatalogID] = useState('');
-  const [previewImage, setPreviewImage] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const { options } = useCatalogs();
+  const { f_options } = useFactory();
 
-  const { options, loading, error: catalogError } = useCatalogs();
-  const { f_options, f_loading, error: f_Error } = useFactory();
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    // Basic validation
-    if (!productName || !ngaysx || !hsd || !soluong || !gianhap || !giaban || !image || !catalogID) {
-      setError('Please fill in all fields.');
-      return;
+  useEffect(() => {
+    if (product) {
+      setProductData(product);
+      if (product.image) {
+        setImagePreview(product.image);
+      }
     }
-    
-    const formData = new FormData();
-    formData.append('product_name', productName);
-    formData.append('barcode', barcode);
-    formData.append('production_date', ngaysx);
-    formData.append('expiration_date', hsd);
-    formData.append('quantity', soluong);
-    formData.append('selling_price', gianhap);
-    formData.append('purchase_price', giaban);
-    formData.append('catalogy_id', catalogID);
-    formData.append('image', image);
-    formData.append('factory_id', factoryID);
-    
-    console.log(formData)
-    try {
-      const response = await productService.create(formData);
-      
-      window.location      
-    } catch (error) {
-      setError(error.response?.data?.message || error.message || 'An error occurred');
-      setSuccess(null);
+  }, [product]);
 
-      console.log(error)
-    }
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setProductData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
   };
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     setImage(file);
     if (file) {
-      setPreviewImage(URL.createObjectURL(file)); // Set image preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
     }
   };
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    
+    if (Object.values(productData).some(field => field === '') || (!image && !product)) {
+      setError('Vui lòng điền đầy đủ thông tin.');
+      return;
+    }
+    
+    const formData = new FormData();
+    Object.entries(productData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        formData.append(key, value);
+      }
+    });
+    if (image) {
+      formData.append('image', image);
+    }
+    
+    try {
+      let response;
+      if (product) {
+        response = await productService.update(product.id, formData);
+        console.log(response);
+      } else {
+        response = await productService.create(formData);
+      }
+      setSuccess(product ? 'Sản phẩm đã được cập nhật thành công.' : 'Sản phẩm đã được thêm thành công.');
+      if (onSuccess) onSuccess(response.data);
+    } catch (error) {
+      console.error(error);
+      setError(error.response?.data?.message || 'Đã xảy ra lỗi.');
+    }
+  };
+
+  const handleScanComplete = (result) => {
+    setProductData(prevData => ({ ...prevData, barcode: result }));
+    setShowScanner(false);
+  };
+
+  const handleCloseScanner = () => {
+    setShowScanner(false);
+  };
+
   return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        Danh Mục:
-        <BasicSelect 
-          value={catalogID} 
-          onValue={(value) => setCatalogID(value)}   
-          options={options}/>
-      </label> 
-      <label>
-      <Box>
-        Nhà cung cấp:
-        <BasicSelect 
-          value={factoryID} 
-          onValue={(value) => setFactoryID(value)}   
-          options={f_options}/>
-          
-            <Fab color="primary" aria-label="add">
-              <AddIcon />
-            </Fab>
-      </Box>
-      </label>
-
-     <label>
-        Tên sản phẩm:
-        <input type="text" value={productName} onChange={(event) => setProductName(event.target.value)} />
-      </label>
-      <label>
-        Ngày sản xuất:
-        <input type="date" value={ngaysx} onChange={(event) => setNgaySx(event.target.value)} />
-      </label>
-
-      <label>
-        Hạn sử dụng:
-        <input type="date" value={hsd} onChange={(event) => setHsd(event.target.value)} />
-      </label>
-
-      <label>
-        Số lượng:
-        <input type="number" value={soluong} onChange={(event) => setSoLuong(event.target.value)} />
-      </label>
-
-      <label>
-        Giá mua vào:
-        <input type="number" value={gianhap} onChange={(event) => setGiaNhap(event.target.value)} />
-      </label>
-
-      <label>
-        Giá bán ra:
-        <input type="number" value={giaban} onChange={(event) => setGiaBan(event.target.value)} />
-      </label>
-      <label>
-        Mã Vạch Sản Phẩm:
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <input type="number" value={barcode} onChange={(event) => setBarCode(event.target.value)} />
-          <Button variant="contained" onClick={() => setShowScanner(true)} style={{ marginLeft: '10px' }}>
-            Quét mã
+    <StyledPaper elevation={3}>
+      <Typography variant="h5" gutterBottom>{product ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'}</Typography>
+      <StyledForm onSubmit={handleSubmit}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel>Danh Mục</InputLabel>
+              <Select
+                name="catalogy_id"
+                value={productData.catalogy_id}
+                onChange={handleChange}
+              >
+                {options.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel>Nhà cung cấp</InputLabel>
+              <Select
+                name="factory_id"
+                value={productData.factory_id}
+                onChange={handleChange}
+              >
+                {f_options.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Tên sản phẩm"
+              name="product_name"
+              value={productData.product_name}
+              onChange={handleChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Ngày sản xuất"
+              type="date"
+              name="production_date"
+              value={productData.production_date}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Hạn sử dụng"
+              type="date"
+              name="expiration_date"
+              value={productData.expiration_date}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              label="Số lượng"
+              type="number"
+              name="quantity"
+              value={productData.quantity}
+              onChange={handleChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              label="Giá mua vào"
+              type="number"
+              name="purchase_price"
+              value={productData.purchase_price}
+              onChange={handleChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              label="Giá bán ra"
+              type="number"
+              name="selling_price"
+              value={productData.selling_price}
+              onChange={handleChange}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Box display="flex" alignItems="center">
+              <TextField
+                fullWidth
+                label="Mã Vạch Sản Phẩm"
+                name="barcode"
+                value={productData.barcode}
+                onChange={handleChange}
+              />
+              <Button
+                variant="contained"
+                onClick={() => setShowScanner(true)}
+                style={{ marginLeft: '10px' }}
+              >
+                Quét mã
+              </Button>
+            </Box>
+          </Grid>
+          <Grid item xs={12}>
+            <input
+              accept="image/*"
+              style={{ display: 'none' }}
+              id="raised-button-file"
+              type="file"
+              onChange={handleImageChange}
+            />
+            <label htmlFor="raised-button-file">
+              <Button variant="contained" component="span">
+                {product ? 'Thay đổi hình ảnh' : 'Tải lên hình ảnh'}
+              </Button>
+            </label>
+            {imagePreview && (
+              <Box mt={2}>
+                <img src={imagePreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: '200px' }} />
+              </Box>
+            )}
+          </Grid>
+        </Grid>
+        
+        {error && <Typography color="error">{error}</Typography>}
+        {success && <Typography color="success">{success}</Typography>}
+        
+        <Box mt={2} display="flex" justifyContent="space-between">
+          <Button onClick={onCancel} variant="outlined">
+            Hủy
           </Button>
-        </div>
-      </label>
+          <Button type="submit" variant="contained" color="primary">
+            {product ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'}
+          </Button>
+        </Box>
+      </StyledForm>
+      
       {showScanner && (
-        <Scanner
-          onDetected={(result) => {
-            setBarCode(result);
-            setShowScanner(false);
-          }}
-        />
+        <ScannerContainer>
+          <Scanner
+            onDetected={handleScanComplete}
+          />
+          <Button onClick={handleCloseScanner} style={{ marginTop: '10px' }}>
+            Đóng
+          </Button>
+        </ScannerContainer>
       )}
-
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
-
-      <label>
-        Hình ảnh sản phẩm:
-        <input type="file" onChange={handleImageChange} />
-      </label>
-
-      <button type="submit">Thêm sản phẩm</button>
-    </form>   
+    </StyledPaper>
   );
 };
 

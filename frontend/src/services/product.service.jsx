@@ -17,7 +17,8 @@ class ProductService {
         return (await this.api.get(`/${id}`)).data;
     }
     async update(id, data) {
-        return (await this.api.put(`/${id}`, data)).data;
+        const headers = { 'Content-Type': 'multipart/form-data' };
+        return (await this.api.put(`/${id}`, data, { headers })).data;
     }
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;

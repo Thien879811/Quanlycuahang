@@ -38,7 +38,7 @@ export default function BasicCard({product,onClick}) {
   };
 
   return (
-    <Card sx={{ width: 200 }}>
+    <Card sx={{ }}>
       <div>
         <Typography level="title-lg">{product.product_name}</Typography>
         <Typography level="body-sm">{product.barcode}</Typography>

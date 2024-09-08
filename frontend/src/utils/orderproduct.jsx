@@ -23,18 +23,22 @@ const useOrderProduct = () => {
 
     const removeProduct = useCallback((productCode) => {
         setOrderProducts(prevProducts => 
-            prevProducts.filter(product => product.productCode !== productCode)
+            prevProducts.filter(product => product.product_id !== productCode)
         );
     }, []);
 
-    const updateProductQuantity = useCallback((productCode, newQuantity) => {
-        setOrderProducts(prevProducts =>
-            prevProducts.map(product =>
-                product.productCode === productCode
-                    ? { ...product, quantity: parseInt(newQuantity, 10) }
-                    : product
-            )
-        );
+    const updateProductQuantity = useCallback((productCode, quantityChange) => {
+        setOrderProducts(prevProducts => {
+            const updatedProducts = prevProducts.map(product => {
+                if (product.product_id === productCode) {
+                    const newQuantity = Math.max(0, product.quantity + quantityChange);
+                    return { ...product, quantity: newQuantity };
+                }
+                return product;
+            });
+            localStorage.setItem('order_product', JSON.stringify(updatedProducts));
+            return updatedProducts;
+        });
     }, []);
 
     const getTotalAmount = useCallback(() => {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CardProduct from '../components/CardProduct';
 import useProducts from '../utils/productUtils';
-import { Box, Grid, Table, Button } from '@mui/material';
+import { Box, Grid, Table, Button, Typography, List, ListItem, ListItemText, Paper } from '@mui/material';
 import { styled } from '@mui/joy/styles';
 import Sheet from '@mui/joy/Sheet';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -12,6 +12,7 @@ const Product = () => {
     const navigate = useNavigate();
     const {products} = useProducts();
     const [orderProducts, setOrderProducts] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
     const fetchOrderData = () => {
         const storedOrderProduct = JSON.parse(localStorage.getItem('order_product')) || [];
@@ -51,6 +52,12 @@ const Product = () => {
         setOrderProducts(updatedOrderProducts);
     };
 
+    const categories = [...new Set(products.map(product => product.catalogy_id))];
+
+    const filteredProducts = selectedCategory
+        ? products.filter(product => product.catalogy_id === selectedCategory)
+        : products;
+
     return(
         <Box sx={{ flexGrow: 1 }}>
             <Button 
@@ -63,8 +70,28 @@ const Product = () => {
                 Đóng
             </Button>
             <Grid container spacing={3}>
+                <Grid item xs={2}>
+                    <Paper elevation={3} sx={{ p: 2, backgroundColor: '#f0f4f8' }}>
+                        <Typography variant="h6" gutterBottom>Danh mục sản phẩm</Typography>
+                        <List component="nav">
+                            <ListItem button onClick={() => setSelectedCategory(null)} sx={{ backgroundColor: selectedCategory === null ? '#e3f2fd' : 'transparent' }}>
+                                <ListItemText primary="Tất cả" />
+                            </ListItem>
+                            {categories.map((category) => (
+                                <ListItem 
+                                    button 
+                                    key={category} 
+                                    onClick={() => setSelectedCategory(category)}
+                                    sx={{ backgroundColor: selectedCategory === category ? '#e3f2fd' : 'transparent' }}
+                                >
+                                    <ListItemText primary={`Danh mục ${category}`} />
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Paper>
+                </Grid>
                 <Grid item xs={8} container spacing={3}>
-                    {products.map((product) => (  
+                    {filteredProducts.map((product) => (  
                         <Grid item xs={4} key={product.id}>
                             <Style>
                                 <CardProduct product={product} onClick={() => handleProductClick(product)} />
@@ -72,7 +99,7 @@ const Product = () => {
                         </Grid>
                     ))}
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={2}>
                     <Table aria-label="order table" stripe="even" variant="outlined" sx={{ borderRadius: 2, boxShadow: 3 }}>
                         <thead>
                           <tr>

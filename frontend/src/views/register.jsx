@@ -24,7 +24,7 @@ export default function register(){
             const data = JSON.parse(cleanJsonString);
             setUser(data.user);
             setToken(data.token);
-
+            localStorage.setItem('user', JSON.stringify(data.user));
         }catch(err){
             console.log(err)
         }

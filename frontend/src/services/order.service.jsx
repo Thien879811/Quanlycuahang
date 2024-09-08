@@ -1,5 +1,5 @@
 import createApiClient from "./api.service";
-class FactoryService {
+class OrderService {
     constructor(baseUrl = "/api/orders") {
         this.api = createApiClient(baseUrl);
     }
@@ -21,7 +21,10 @@ class FactoryService {
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
     }
+    async getDetail(id) {
+        return (await this.api.get(`/detail/${id}`)).data;
+    }
 }
-export default new FactoryService();
+export default new OrderService();
 
 

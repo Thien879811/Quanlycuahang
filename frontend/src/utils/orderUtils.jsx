@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import useOrderProduct from './orderproduct';
 import orderService from '../services/order.service';
-import { debounce } from 'lodash';
+import useEmployee from './userUtils';
 
 // import useCustomer from './customerUtils';
 // Hàm tạo đơn hàng
@@ -22,12 +22,25 @@ const useOrder = () => {
       clearOrderProduct,
      } = useOrderProduct();
     const [pays_id, setPays_id] = useState('1');
-    const [nhanvien, setNhanvien] = useState('3');
+    const [employee, setEmployee] = useState();
+    const [nhanvien, setNhanvien] = useState(() => {
+        if (employee) {
+            return employee.id;
+        } else {
+            return '1';
+        }
+    });
     const customer = JSON.parse(localStorage.getItem('customer'));
     const [khachhang, setKhachhang] = useState('0');
     const [tonghoadon, setTonghoadon] = useState(getTotalAmount());
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (localStorage.getItem('employee')) {
+            setEmployee(JSON.parse(localStorage.getItem('employee')));
+        }
+    }, []);
 
     useEffect(() => {
         if (customer && customer.id) {
@@ -37,6 +50,7 @@ const useOrder = () => {
 
     const createAndSendOrder = async () => {
         if (orderProducts.length === 0) {
+
             setError('Không có sản phẩm trong đơn hàng');
             return;
         }
@@ -82,6 +96,8 @@ const useOrder = () => {
         }
     };
 
+
+
     return {
         orderProducts,
         nhanvien,
@@ -93,7 +109,8 @@ const useOrder = () => {
         error,
         handleCreateOrder,  // New function to trigger order creation
         updateOrder,
-        clearOrder
+        clearOrder,
+        createAndSendOrder
     };
 };
 

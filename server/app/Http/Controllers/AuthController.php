@@ -17,7 +17,7 @@ class AuthController extends Controller
         
         if(!Auth::attempt($data)){
             return response([
-                'message' => 'email or password are wrong'
+                'message' => 'Email or password are wrong'
             ]);
         }
 

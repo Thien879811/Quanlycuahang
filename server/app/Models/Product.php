@@ -22,7 +22,6 @@ class Product extends Model
         'image',
         'factory_id',
         'purchase_price',
-
     ];
 
     // Optionally, specify any attributes that should be cast to a specific type
@@ -30,7 +29,11 @@ class Product extends Model
         'production_date' => 'date',
         'expiration_date' => 'date',
         'quantity' => 'integer',
-        'selling_price' => 'decimal:2',
     ];
+
+    public function hangSuDung()
+    {
+        return $this->hasMany(HangSuDung::class)->select();
+    }
 }
 

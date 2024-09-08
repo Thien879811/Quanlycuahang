@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\customer;
 use App\Models\Orders;
 use Illuminate\Http\Request;
 use App\Models\DetailOrder;
-
+use App\Models\Product;
 class OrdersController extends Controller
 {
     /**
@@ -13,11 +14,44 @@ class OrdersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        
+    public function getAll(){
+        $orders = Orders::all();
+        return response()->json($orders);
     }
 
+    public function getDetail($order_id){
+        $order = Orders::findOrFail($order_id);
+        $details = DetailOrder::where('order_id', $order_id)->get();
+        
+        $products = Product::whereIn('id', $details->pluck('product_id'))->get();
+        
+        $result = $details->map(function ($detail) use ($products) {
+            $product = $products->firstWhere('id', $detail->product_id);
+            return [
+                'product_id' => $detail->product_id,
+                'name' => $product ? $product->product_name : 'Unknown',
+                'quantity' => $detail->soluong,
+                'price' => $product ? $product->selling_price : 0,
+            ];
+        });
+        
+        // Fetch customer name
+        $customer= customer::find($order->customer_id);
+        $customerName = $customer ? $customer->name : 'Unknown';
+        // Fetch staff name
+        $staffName = $order->staff ? $order->staff->name : 'Unknown';
+        
+        return response()->json([
+            'products' => $result,
+            'customer_name' => $customerName,
+            'staff_name' => $staffName,
+            'created_at' => $order->created_at,
+            'tongcong' => $order->tongcong,
+            'status' => $order->status,
+            'id' => $order->id
+        ]);
+    }   
+// $products = Product::whereIn('id', $detail->pluck('product_id'))->get();
     /**
      * Show the form for creating a new resource.
      *
@@ -36,17 +70,17 @@ class OrdersController extends Controller
         // Create a new order if none exist
         $order = Orders::create(
            [
-            "customer_id" => $validated['khachhang'] !== '0' ? $validated['khachhang'] : 0,
+            "customer_id" => $validated['khachhang'] !== '0' ? $validated['khachhang'] : null,
             "satff_id" => $validated['nhanvien'],
             "status" => "0",
             "tongcong"=>$validated['tonghoadon'],
-            "pays_id" =>$validated['pays_id']
+             "pays_id" =>$validated['pays_id']
            ]
         );
     }
 
     $order->tongcong = $validated['tonghoadon'];
-    $order->customer_id = $validated['khachhang'] !== '0' ? $validated['khachhang'] : 0;
+    $order->customer_id = $validated['khachhang'] !== '0' ? $validated['khachhang'] : null;
     $order->save();
 
     if($validated['products']){

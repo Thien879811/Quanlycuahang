@@ -16,15 +16,12 @@ export default function login(){
             email: emailRef.current.value,
             password: passwordRef.current.value, 
         }
-
-        
             try{
                 const response = await  authService.login(user);
                 const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
                 const data = JSON.parse(cleanJsonString);
                 setUser(data.user);
                 setToken(data.token);
-
             }catch(err){
                 console.log(err)
             }

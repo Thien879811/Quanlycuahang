@@ -25,7 +25,7 @@ class CustomerController extends Controller
             return response()->json($customer,200);
         }
 
-        return response()->json(null,404);
+        return response()->json(400);
     }
 
     public function create(Request $request){

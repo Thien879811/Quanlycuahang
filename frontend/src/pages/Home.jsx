@@ -1,21 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid, Paper, TextField, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Typography, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Grid, Paper, TextField, Typography, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import useOrderProduct from '../utils/orderproduct';
 import useOrder from '../utils/orderUtils';
 import useCustomer from '../utils/customerUtils';
+import OrderDisplay from '../components/OrderDisplay';
 
 const Home = () => {
 	const navigate = useNavigate();
-	const { orderProducts, getTotalAmount, getTotalQuantity } = useOrderProduct();
-	const { createAndSendOrder, loading, error } = useOrder();
+	const {orderProducts,
+		getTotalAmount,
+		getTotalQuantity,
+		updateProductQuantity,
+		removeProduct 
+		} = useOrderProduct();
+	const {createAndSendOrder, loading, error } = useOrder();
 	const [containerHeight, setContainerHeight] = useState('100vh');
 	const [openCustomerDialog, setOpenCustomerDialog] = useState(false);
 	const [openCustomerInfoDialog, setOpenCustomerInfoDialog] = useState(false);
 	const [openNewCustomerDialog, setOpenNewCustomerDialog] = useState(false);
 	const [customerPhone, setCustomerPhone] = useState('');
 	const [newCustomerName, setNewCustomerName] = useState('');
-	const {customer, searchCustomerByPhone, createCustomer, setCustomer } = useCustomer();
+	const {customer,
+		searchCustomerByPhone, 
+		createCustomer, 
+		openNewCustomer, 
+		openCustomerInfo,
+		setOpenNewCustomer,
+		setOpenCustomerInfo
+	} = useCustomer();
+ 
+	useEffect(() => {
+		if(openNewCustomer){
+			setOpenNewCustomerDialog(true);
+		}
+	}, [openNewCustomer]);
+
+	useEffect(() => {
+		if(openCustomerInfo){
+			setOpenCustomerInfoDialog(true);
+		}
+	}, [openCustomerInfo]);
 
 
 	useEffect(() => {
@@ -32,7 +57,7 @@ const Home = () => {
 
 	const handlePayment = async () => {
 		createAndSendOrder();
-		navigate('/pay');
+		return navigate('/pay');
 	};
 
 	const handleOpenCustomerDialog = () => {
@@ -44,28 +69,35 @@ const Home = () => {
 	};
 
 	const handleCloseCustomerInfoDialog = () => {
+		setOpenCustomerInfo(false);
 		setOpenCustomerInfoDialog(false);
 	};
 
 	const handleCloseNewCustomerDialog = () => {
+		setOpenNewCustomer(false);
 		setOpenNewCustomerDialog(false);
 	};
 
 	const handleSearchCustomer = () => {
 		searchCustomerByPhone(customerPhone);
-		
-			if (customer) {
-				setOpenCustomerInfoDialog(true);
-			} else{
-				setOpenNewCustomerDialog(true);
-			}
-		
 		handleCloseCustomerDialog();
 	};
 
 	const handleCreateNewCustomer = () => {
 		createCustomer({ name: newCustomerName, phone: customerPhone, diem: 0 });
 		handleCloseNewCustomerDialog();
+	};
+
+	const handleIncreaseQuantity = (productId) => {
+		updateProductQuantity(productId, 1);
+	};
+
+	const handleDecreaseQuantity = (productId) => {
+		updateProductQuantity(productId, -1);
+	};
+
+	const handleRemoveProduct = (productCode) => {
+		removeProduct(productCode);
 	};
 
 	return (
@@ -78,40 +110,12 @@ const Home = () => {
 						variant="outlined"
 						sx={{ mb: 2 }}
 					/>
-					<TableContainer sx={{ flexGrow: 1, overflow: 'auto' }}>
-						<Table stickyHeader>
-							<TableHead>
-								<TableRow>
-									<TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Tên sản phẩm</TableCell>
-									<TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Đơn giá</TableCell>
-									<TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>SL</TableCell>
-									<TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>CK</TableCell>
-									<TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Thành tiền</TableCell>
-									<TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Ghi chú</TableCell>
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{orderProducts.length > 0 ? (
-									orderProducts.map((item, index) => (
-										<TableRow key={index}>
-											<TableCell>{item.productName}</TableCell>
-											<TableCell>{item.price ? item.price.toFixed(2) : '0.00'}₫</TableCell>
-											<TableCell>{item.quantity}</TableCell>
-											<TableCell>0₫</TableCell>
-											<TableCell>{item.price ? (item.price * item.quantity).toFixed(2) : '0.00'}₫</TableCell>
-											<TableCell></TableCell>
-										</TableRow>
-									))
-								) : (
-									<TableRow>
-										<TableCell colSpan={6} align="center">
-											<Typography variant="h6">Không có sản phẩm</Typography>
-										</TableCell>
-									</TableRow>
-								)}
-							</TableBody>
-						</Table>
-					</TableContainer>
+					<OrderDisplay
+						orderProducts={orderProducts}
+						handleIncreaseQuantity={handleIncreaseQuantity}
+						handleDecreaseQuantity={handleDecreaseQuantity}
+						handleRemoveProduct={handleRemoveProduct}
+					/>
 					<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 2 }}>
 						<Typography variant="h6">KHÔNG CÓ KHUYẾN MÃI</Typography>
 					</Box>
@@ -151,6 +155,8 @@ const Home = () => {
 											navigate('/product');
 										} else if (item === 'Khách Hàng') {
 											handleOpenCustomerDialog();
+										} else if (item === 'Tìm Hóa Đơn') {
+											navigate('/orders');
 										}
 									}}
 								>
@@ -163,7 +169,12 @@ const Home = () => {
 						<Typography variant="h6">SỐ LƯỢNG: {getTotalQuantity()}</Typography>
 						<Typography variant="h6" color="primary">THÀNH TIỀN: {getTotalAmount()}</Typography>
 						<Typography variant="h6" color="secondary">CHIẾT KHẤU: 0₫</Typography>
-						<Typography variant="h6" color="error">TỔNG CỘNG: {getTotalAmount()}</Typography>
+						{customer && (
+							<Typography variant="h6" color="info">ĐIỂM TÍCH LŨY: {customer.diem} + {getTotalAmount()}</Typography>
+						)}
+						<Box sx={{ borderTop: '1px solid #ccc', mt: 2, pt: 2 }}>
+							<Typography variant="h6" color="error">TỔNG CỘNG: {getTotalAmount()}</Typography>
+						</Box>
 					</Box>
 				</Paper>
 			</Grid>

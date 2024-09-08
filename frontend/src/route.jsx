@@ -5,11 +5,14 @@ import DefaultLayout from './components/DefaultLayout.jsx';
 import GuestLayout from './components/GuestLayout.jsx';
 import Users from './views/users.jsx';
 import UserForm from './views/UserForm.jsx';
-import Home from './pages/Home.jsx';//
+import Home from './pages/Home.jsx';
 import ProductForm from './components/ProductForm.jsx';
 import PayReturn from "./components/PayReturn.jsx";
 import Pay from "./pages/Pay.jsx";
 import Product from "./pages/Product.jsx"
+import Order from './pages/Order.jsx';
+import PrivateRoute from './components/PrivateRoute.jsx';
+import WareHome from './pages/WareHome.jsx';
 
 const router = createBrowserRouter ([
     {
@@ -17,20 +20,20 @@ const router = createBrowserRouter ([
         element: <DefaultLayout />,
         children: [
             {
-                path: '/users',
-                element: <Users />,
-            },
-            {
                 path: '/',
                 element: <Home />,
             },
             {
+                path: '/users',
+                element: <PrivateRoute roles={['manager']}><Users /></PrivateRoute>,
+            },
+            {
                 path: '/users/new',
-                element: <UserForm key="userCreate"/>
+                element: <PrivateRoute roles={['manager']}><UserForm key="userCreate"/></PrivateRoute>
             },
             {
                 path: '/users/:id',
-                element: <UserForm key="userUpdate" />
+                element: <PrivateRoute roles={['manager']}><UserForm key="userUpdate" /></PrivateRoute>
             },
             {
                 path: '/vnpay/return',
@@ -38,15 +41,23 @@ const router = createBrowserRouter ([
             },
             {
                 path: '/product',
-                element: <Product />
+                element: <PrivateRoute roles={['sales', 'warehouse', 'manager']}><Product /></PrivateRoute>
             },
             {
                 path: '/create_product',
-                element: <ProductForm />
+                element: <PrivateRoute roles={['warehouse', 'manager']}><ProductForm /></PrivateRoute>
             },
             {
                 path: '/pay',
-                element: <Pay />
+                element:<Pay />
+            },
+            {
+                path: '/orders',
+                element: <PrivateRoute roles={['sales', 'manager']}><Order /></PrivateRoute>
+            },
+            {
+                path: '/warehouse',
+                element:<WareHome />
             }
         ]
     },

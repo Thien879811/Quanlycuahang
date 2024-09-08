@@ -28,7 +28,7 @@ class ProductSeeder extends Seeder
             'purchase_price' => 10000,
         ]);
         Product::create([
-            'product_name' => 'Cà phê',
+            'product_name' => 'Bánh mì',
             'barcode' => '1234567890',
             'production_date' => '2024-01-01',
             'expiration_date' => '2024-01-01',

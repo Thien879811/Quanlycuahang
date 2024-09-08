@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import config from "./config.json";
 import Quagga from "quagga";
+import { Box } from "@mui/material";
 
 const Scanner = props => {
   const { onDetected } = props;
@@ -8,7 +9,19 @@ const Scanner = props => {
 
   useEffect(() => {
     if (scanning) {
-      Quagga.init(config, err => {
+      const updatedConfig = {
+        ...config,
+        inputStream: {
+          ...config.inputStream,
+          constraints: {
+            ...config.inputStream.constraints,
+            width: 270,
+            height: 200,
+          },
+        },
+      };
+
+      Quagga.init(updatedConfig, err => {
         if (err) {
           console.log(err, "error msg");
         }
@@ -73,11 +86,13 @@ const Scanner = props => {
   };
 
   return (
-    <div id="interactive" className="viewport">
-      {!scanning && (
-        <button onClick={() => setScanning(true)}>Scan Again</button>
-      )}
-    </div>
+    <Box sx={{ width: 300, height: 200, overflow: 'hidden' }}>
+      <div id="interactive" className="viewport" style={{ width: '100%', height: '100%' }}>
+        {!scanning && (
+          <button onClick={() => setScanning(true)}>Scan Again</button>
+        )}
+      </div>
+    </Box>
   );
 };
 

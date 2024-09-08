@@ -6,7 +6,8 @@ use App\Models\Catalory;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\HangSuDung;
+use App\Http\Requests\ProductRequest;
 class ProductController extends Controller
 {
     public function getAll()
@@ -16,66 +17,145 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
-    public function create(Request $request)
+    public function create(ProductRequest $request)
     {
         //Validate the request
-        $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,gif|max:2048', // Adjust validation rules as needed
-            'barcode' => 'required|string|unique:products,barcode', // Added barcode validation
-            'catalogy_id' => 'required|integer', // Adjust according to your requirements
-            // Add other validation rules as needed
-        ]);
-
-        $productData = $request->only([
-            'product_name',
-            'barcode',
-            'production_date',
-            'expiration_date',
-            'quantity',
-            'selling_price',
-            'catalogy_id',
-            'image',
-            'factory_id',
-            'purchase_price',
-        ]);
-
-        // Check if the request has a file
-        if ($request->hasFile('image')) {
-            // Retrieve the uploaded file
-            $file = $request->file('image');
-
-            // Generate a unique file name
-            $imageName = time() . '.' . $file->getClientOriginalExtension();
-
-            // Move the file to the public/images directory
-            $file->move(public_path('images'), $imageName);
-            $imageUrl = asset('images/' . $imageName);
-
-            // Add image URL to product data
-            $productData['image'] = $imageUrl;
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'No image file provided.'
-            ], 400); // 400 Bad Request
-        }
-
+        $productData = $request->validated();
+        
         // Check if the product with the given barcode already exists
-        $existingProduct = Product::where('barcode', $productData['barcode'])->first();
+        $existingProduct = $this->checkExistingProduct($productData);
+
         if ($existingProduct) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product already exists.'
-            ], 400); // 400 Bad Request
+            return response()->json($existingProduct, 400);
         }
+
+        //Handle image upload
+        $imageResult = $this->handleImageUpload($request);
+        if (!$imageResult['success']) {
+            return response()->json($imageResult, 400);
+        }
+
+        $productData['image'] = $imageResult['imageUrl'];
 
         // Create the new product
+
         $product = Product::create($productData);
+
+        HangSuDung::create([
+            'product_id' => $product->id,
+            'hang_su_dung' => $productData['expiration_date'],
+            'quantity' => $productData['quantity'],
+            'status' => 'active'
+        ]);
 
         return response()->json([
             'success' => true,
             'product' => $product,
             'message' => 'Product created successfully.'
-        ],200);
+        ], 200);
+    }
+
+
+    private function checkExistingProduct($productData)
+    {
+        $existingProduct = Product::where('barcode', $productData['barcode'])->first();
+        if ($existingProduct) {
+            $existingProduct->quantity += $productData['quantity'];
+            $existingProduct->save();
+            $hsd = HangSuDung::where('product_id', $existingProduct->id)->first();
+            if ($hsd && $hsd['hang_su_dung'] == $productData['expiration_date']) {
+                $hsd['quantity'] += $productData['quantity'];
+                $hsd->save();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product created successfully.'
+                ], 200);
+            }
+
+            HangSuDung::create([
+                'product_id' => $existingProduct->id,
+                'hang_su_dung' => $productData['expiration_date'],
+                'quantity' => $productData['quantity'],
+                'status' => 'active'
+            ]);
+
+            return response()->json([
+                'message' => 'Product already exists.'
+            ], 200);
+        }
+
+        return false;
+    }
+
+    private function handleImageUpload(Request $request)
+    {
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $imageName = time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('images'), $imageName);
+            $imageUrl = asset('images/' . $imageName);
+
+            return [
+                'success' => true,
+                'imageUrl' => $imageUrl
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'No image file provided.'
+        ];
+    }
+    public function update(Request $request, $id)
+    {
+        $product = Product::find($id);
+        
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        $data = $request->all ();
+
+        if ($request->hasFile('image')) {
+            $imageResult = $this->handleImageUpload($request);
+            if ($imageResult['success']) {
+                // Delete old image if exists
+                if ($product->image) {
+                    $oldImagePath = public_path(str_replace(url('/'), '', $product->image));
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
+                }
+                $data['image'] = $imageResult['imageUrl'];
+            } else {
+                return response()->json(['message' => $imageResult['message']], 400);
+            }
+        }
+
+        $product->update($data);
+
+        // Update HangSuDung if expiration_date is provided
+        if (isset($data['expiration_date'])) {
+            $hangSuDung = HangSuDung::where('product_id', $product->id)
+                                    ->where('hang_su_dung', $data['expiration_date'])
+                                    ->first();
+
+            if ($hangSuDung) {
+                $hangSuDung->quantity = $data['quantity'] ?? $hangSuDung->quantity;
+                $hangSuDung->save();
+            } else {
+                HangSuDung::create([
+                    'product_id' => $product->id,
+                    'hang_su_dung' => $data['expiration_date'],
+                    'quantity' => $data['quantity'] ?? 0,
+                    'status' => 'active'
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Product updated successfully',
+            'data' => $product
+        ], 200);
     }
 }
