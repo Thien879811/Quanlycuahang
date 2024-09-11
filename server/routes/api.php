@@ -37,7 +37,8 @@ Route::middleware('auth:sanctum')->group(function() {
    // Route::apiResource('/users',UserController::class);
 });
 
-Route::middleware(['auth:sanctum', 'role:admin'])->group(function() {
+Route::middleware(['auth:sanctum', 'role'])->group(function() {
+    Route::get('/product',[ProductController::class,'getAll']);
     //Route::post('/product', [ProductController::class, 'create']);
     // Các route khác chỉ dành cho admin
 });

@@ -13,6 +13,12 @@ import Product from "./pages/Product.jsx"
 import Order from './pages/Order.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
 import WareHome from './pages/WareHome.jsx';
+import AdminLayout from './components/AdminLayout.jsx';
+import Dashboard from './pages/admin/Dashboard/index.jsx';
+import ProductAdmin  from './pages/admin/ProductAdmin.jsx';
+
+
+
 
 const router = createBrowserRouter ([
     {
@@ -62,6 +68,28 @@ const router = createBrowserRouter ([
         ]
     },
 
+    {
+        path: '/admin',
+        element: <AdminLayout />,
+        children: [
+            {
+                path: '/admin/users',
+                element: <Users />
+            },
+            {
+                path: '/admin',
+                element: <Dashboard />
+            },
+            {
+                path: '/admin/products',
+                element: <ProductAdmin />
+            },
+            {
+                path: '/admin/orders',
+                element: <Order />
+            },
+        ]
+    },
     {
         path: '/',
         element: <GuestLayout />,
