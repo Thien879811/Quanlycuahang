@@ -11,4 +11,8 @@ class SatffController extends Controller
         $employee = Satff::where('user_id', $user_id)->first();
         return response()->json($employee);
     }
+
+    public function getAll(){
+       
+    }
 }

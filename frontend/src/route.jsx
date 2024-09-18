@@ -16,7 +16,10 @@ import WareHome from './pages/WareHome.jsx';
 import AdminLayout from './components/AdminLayout.jsx';
 import Dashboard from './pages/admin/Dashboard/index.jsx';
 import ProductAdmin  from './pages/admin/ProductAdmin.jsx';
-
+import OrderAdmin from './pages/admin/OrderAdmin.jsx';
+import StaffAdmin from './pages/admin/StaffAdmin.jsx';
+import SupplierAdmin from './pages/admin/SupplierAdmin.jsx';
+import SalesAdmin from './pages/admin/SalesAdmin.jsx';
 
 
 
@@ -59,12 +62,13 @@ const router = createBrowserRouter ([
             },
             {
                 path: '/orders',
-                element: <PrivateRoute roles={['sales', 'manager']}><Order /></PrivateRoute>
+                element:<Order />
             },
             {
                 path: '/warehouse',
                 element:<WareHome />
             }
+        
         ]
     },
 
@@ -86,8 +90,20 @@ const router = createBrowserRouter ([
             },
             {
                 path: '/admin/orders',
-                element: <Order />
+                element: <OrderAdmin />
             },
+            {
+                path: '/admin/suppliers',
+                element: <SupplierAdmin />
+            },
+            {
+                path: '/admin/staff',
+                element: <StaffAdmin />
+            },
+            {
+                path: '/admin/sales',
+                element: <SalesAdmin />
+            }
         ]
     },
     {

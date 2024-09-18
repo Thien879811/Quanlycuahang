@@ -20,9 +20,15 @@ class PositionSeeder extends Seeder
             'position' => 'Quản lý',
             'wage' => 1000000,
         ]);
+        
         Position::create([
             'position' => 'Nhân viên',
             'wage' => 1000000,
+        ]);
+
+        Position::create([
+            'position' => 'Nhân viên Part-time',
+            'wage' => 20000,
         ]);
  
     }

@@ -1,4 +1,4 @@
-<?php
+ <?php
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CataloryController;
 use App\Http\Controllers\CustomerController;
@@ -88,7 +88,13 @@ Route::post('/vnpay/notify', [PaymentController::class, 'notify']);
 
 
 Route::get('/employee/{user_id}',[SatffController::class,'getInfoEmployee']);
+Route::get('/employee',[SatffController::class,'getInfoEmployee']);
 
 Route::get('/hang-su-dung',[HangSuDungController::class,'getAll']);
 Route::get('/hang-su-dung-product',[HangSuDungController::class,'get']);
+
+Route::get('hello',[HangSuDungController::class,'hello']);
+
+
+
 

@@ -16,6 +16,8 @@ import CategoryIcon from '@mui/icons-material/Category';
 import BusinessIcon from '@mui/icons-material/Business';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/ExitToApp';
+import GroupIcon from '@mui/icons-material/Group';
+import DiscountIcon from '@mui/icons-material/Discount';
 
 const drawerWidth = 240;
 
@@ -87,9 +89,10 @@ export default function AdminLayout() {
         { text: 'Trang chủ', icon: <DashboardIcon />, path: '/admin' },
         { text: 'Người dùng', icon: <PeopleIcon />, path: '/admin/users' },
         { text: 'Sản phẩm', icon: <InventoryIcon />, path: '/admin/products' },
-        { text: 'Danh mục', icon: <CategoryIcon />, path: '/admin/categories' },
         { text: 'Nhà cung cấp', icon: <BusinessIcon />, path: '/admin/suppliers' },
         { text: 'Đơn hàng', icon: <AssignmentIcon />, path: '/admin/orders' },
+        { text: 'Nhân sự', icon: <GroupIcon />, path: '/admin/staff' },
+        { text: 'Khuyến mãi', icon: <DiscountIcon />, path: '/admin/sales' },
     ];
 
     return (

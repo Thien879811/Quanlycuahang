@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 
 class HangSuDungController extends Controller
 {
+    public function hello(Request $request){
+        return response()->json([
+            "hello"=>"hello"
+    ]);
+    }
     public function getAll()
     {
         $hang_su_dung = HangSuDung::all();

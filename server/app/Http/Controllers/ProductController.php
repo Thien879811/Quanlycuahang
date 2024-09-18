@@ -10,10 +10,9 @@ use App\Models\HangSuDung;
 use App\Http\Requests\ProductRequest;
 class ProductController extends Controller
 {
-    public function getAll()
+    public function getAll()   
     {
         $products = Product::all();
-
         return response()->json($products);
     }
 
