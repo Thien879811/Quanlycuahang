@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Typography, Image } from 'antd';
 import ExpiryDateService from '../services/expirydate.service';
 import moment from 'moment';
+import { handleResponse } from '../functions';
 
 const { Title } = Typography;
 
@@ -12,9 +13,8 @@ const HangSuDung = () => {
     const fetchData = async () => {
         try {
             const response = await ExpiryDateService.getAll();
-            const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
-            const parsedData = JSON.parse(cleanJsonString);
-            const formattedData = parsedData.map(item => ({
+            const data = handleResponse(response);
+            const formattedData = data.map(item => ({
                 ...item,
                 hang_su_dung: item.hang_su_dung.split('T')[0] // Only keep the date part
             }));

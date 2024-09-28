@@ -15,11 +15,11 @@ return new class extends Migration
     {
         Schema::create('lich_lam_viecs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('staff_id')->constrained('staffs');
-            $table->date('date');
-            $table->time('time_start');
-            $table->time('time_end');
-            $table->string('reason');
+            $table->foreignId('staff_id')->constrained('staffs')->nullable();
+            $table->date('date')->nullable();
+            $table->time('time_start')->nullable();
+            $table->time('time_end')->nullable();
+            $table->string('reason')->nullable();
             $table->timestamps();
         });
     }

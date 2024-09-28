@@ -113,7 +113,7 @@ class ProductController extends Controller
             return response()->json(['message' => 'Product not found'], 404);
         }
 
-        $data = $request->all ();
+        $data = $request->all();
 
         if ($request->hasFile('image')) {
             $imageResult = $this->handleImageUpload($request);

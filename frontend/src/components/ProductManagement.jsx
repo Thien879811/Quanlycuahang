@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Image } from 'antd';
 import ProductForm from './ProductForm';
 import productService from '../services/product.service';
+import { handleResponse } from '../functions';
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
@@ -16,8 +17,7 @@ const ProductManagement = () => {
   const fetchProducts = async () => {
     try {
       const fetchedProducts = await productService.getAll();
-      const cleanJsonString = fetchedProducts.replace(/^<!--\s*|\s*-->$/g, '');
-      const data = JSON.parse(cleanJsonString);
+      const data = handleResponse(fetchedProducts);
       setProducts(data);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -109,17 +109,16 @@ const ProductManagement = () => {
 
   return (
     <div>
-      <h2>Product Management</h2>
       <Input.Search
         placeholder="Tìm kiếm sản phẩm theo tên hoặc mã vạch"
         onSearch={handleSearch}
         onChange={(e) => handleSearch(e.target.value)}
         style={{ width: 300, marginBottom: 16 }}
       />
-      <Button onClick={handleAddProduct} style={{ marginLeft: 16 }}>Add Product</Button>
+      <Button onClick={handleAddProduct} style={{ marginLeft: 16 }}>Thêm sản phẩm</Button>
       <Table columns={columns} dataSource={filteredProducts} rowKey="id" />
       <Modal
-        title={editingProduct ? "Edit Product" : "Add Product"}
+        title={editingProduct ? "Sửa sản phẩm" : "Thêm sản phẩm"}
         visible={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}

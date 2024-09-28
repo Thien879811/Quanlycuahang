@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import orderService from '../services/order.service';
+import { handleResponse } from "../functions/index";
 
 const Order = () => {
     const [orders, setOrders] = useState([]);
@@ -13,9 +14,8 @@ const Order = () => {
         const fetchOrders = async () => {
             try {
                 const response = await orderService.getAll();
-                console.log(response);
-                const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
-                const data = JSON.parse(cleanJsonString);
+                
+                const data = handleResponse(response);
                 setOrders(data);
                 console.log(data);
             } catch (error) {
@@ -33,8 +33,7 @@ const Order = () => {
     const handleOpenDialog = async (order) => {
 
         const response = await orderService.getDetail(order.id);
-        const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
-        const data = JSON.parse(cleanJsonString);
+        const data = handleResponse(response);
         
         console.log(data);
         setSelectedOrder(data);
@@ -49,33 +48,31 @@ const Order = () => {
         <div>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h4">
-                    All Orders
+                    Tất cả đơn hàng
                 </Typography>
                 <Button variant="contained" color="primary" onClick={handleClose}>
-                    Close
+                    Đóng
                 </Button>
             </Box>
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>Order ID</TableCell>
-                            <TableCell>Total Amount</TableCell>
-                            <TableCell>Date</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Actions</TableCell>
+                            <TableCell>Tổng tiền</TableCell>
+                            <TableCell>Ngày</TableCell>
+                            <TableCell>Trạng thái</TableCell>
+                            <TableCell>Hành động</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {orders.map((order) => (
                             <TableRow key={order.id}>
-                                <TableCell>{order.id}</TableCell>
                                 <TableCell>{order.tongcong} VND</TableCell>
                                 <TableCell>{new Date(order.created_at).toLocaleString()}</TableCell>
                                 <TableCell>{order.status === '0' ? 'Chưa thanh toán' : 'Đã thanh toán'}</TableCell>
                                 <TableCell>
                                     <Button variant="outlined" onClick={() => handleOpenDialog(order)}>
-                                        View Details
+                                        Xem chi tiết
                                     </Button>
                                 </TableCell>
                             </TableRow>
@@ -85,24 +82,24 @@ const Order = () => {
             </TableContainer>
 
             <Dialog open={openDialog} onClose={handleCloseDialog}>
-                <DialogTitle>Order Details</DialogTitle>
+                <DialogTitle>Chi tiết đơn hàng</DialogTitle>
                 <DialogContent>
                     {selectedOrder && (
                         <div>
-                            <Typography><strong>Order ID:</strong> {selectedOrder.id}</Typography>
-                            <Typography><strong>Customer Name:</strong> {selectedOrder.customer_name}</Typography>
-                            <Typography><strong>Total Amount:</strong> {selectedOrder.tongcong}</Typography>
-                            <Typography><strong>Date:</strong> {new Date(selectedOrder.created_at).toLocaleString()}</Typography>
-                            <Typography><strong>Status:</strong> {selectedOrder.status === '0' ? 'Chưa thanh toán' : 'Đã thanh toán'}</Typography>
-                            <Typography><strong>Products:</strong></Typography>
+                            <Typography><strong>Mã đơn hàng:</strong> {selectedOrder.id}</Typography>
+                            <Typography><strong>Tên khách hàng:</strong> {selectedOrder.customer_name}</Typography>
+                            <Typography><strong>Tổng tiền:</strong> {selectedOrder.tongcong}</Typography>
+                            <Typography><strong>Ngày:</strong> {new Date(selectedOrder.created_at).toLocaleString()}</Typography>
+                            <Typography><strong>Trạng thái:</strong> {selectedOrder.status === '0' ? 'Chưa thanh toán' : 'Đã thanh toán'}</Typography>
+                            <Typography><strong>Sản phẩm:</strong></Typography>
                             <TableContainer component={Paper}>
                                 <Table>
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell>Product Name</TableCell>
-                                            <TableCell>Quantity</TableCell>
-                                            <TableCell>Price</TableCell>
-                                            <TableCell>Subtotal</TableCell>
+                                            <TableCell>Tên sản phẩm</TableCell>
+                                            <TableCell>Số lượng</TableCell>
+                                            <TableCell>Giá</TableCell>
+                                            <TableCell>Thành tiền</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -122,7 +119,7 @@ const Order = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseDialog} color="primary">
-                        Close
+                        Đóng
                     </Button>
                 </DialogActions>
             </Dialog>

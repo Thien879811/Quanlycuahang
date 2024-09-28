@@ -21,6 +21,7 @@ const Home = () => {
 	const [openNewCustomerDialog, setOpenNewCustomerDialog] = useState(false);
 	const [customerPhone, setCustomerPhone] = useState('');
 	const [newCustomerName, setNewCustomerName] = useState('');
+	
 	const {customer,
 		searchCustomerByPhone, 
 		createCustomer, 

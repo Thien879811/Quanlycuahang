@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import employeeService from '../services/employee.service.jsx';
+import { handleResponse } from '../functions/index';
 
 const useEmployee = () => {
     const [employee, setEmployee] = useState(null);
@@ -12,8 +13,7 @@ const useEmployee = () => {
         try {
         const response = await employeeService.get(userId);
 
-        const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
-        const data = JSON.parse(cleanJsonString);
+        const data = handleResponse(response);
         console.log(data);
         localStorage.setItem('employee', JSON.stringify(data));
         setEmployee(response.data);

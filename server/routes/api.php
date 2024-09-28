@@ -8,6 +8,8 @@ use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SatffController;
+use App\Http\Controllers\LichLamViecController;
+use App\Http\Controllers\ChamCongController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
@@ -23,22 +25,50 @@ use Illuminate\Support\Facades\Route;
 |
 */ 
 
+Route::post('login',[AuthController::class,'login']);
+Route::post('register',[AuthController::class,'register']);
+Route::post('/logout',[AuthController::class,'logout']);
+Route::get('/product',[ProductController::class,'getAll']);
+
 Route::middleware('auth:sanctum')->group(function() {
-    Route::get('logout',[AuthController::class,'logout']);
+    
+    Route::get('/logout',[AuthController::class,'logout']);
 
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
-    // Route::get('/product',[ProductController::class,'getAll']);
-    // Route::post('/product',[ProductController::class,'create']);
-
     Route::get('/catalory',[CataloryController::class,'getCatalory']);
-   // Route::apiResource('/users',UserController::class);
+
+  
+    //employee
+    Route::prefix('employee')->group(function () {  
+        Route::get('/{user_id}',[SatffController::class,'getInfoEmployee']);
+        Route::get('/',[SatffController::class,'getAll']);
+
+        //get work schedule
+        Route::controller(LichLamViecController::class)->group(function () {
+            Route::get('/lich-lam-viec/{staff_id}', 'getByStaffId');
+        });
+
+        //attendance
+        Route::controller(ChamCongController::class)->group(function () {
+            Route::post('/check-in', 'create');
+            Route::put('/check-out/{id}', 'update');
+            Route::get('/cham-cong/{staff_id}/{day}', 'getByStaffIdAndDay');
+            Route::get('/', 'index');
+            Route::put('/{id}', 'update');
+        });
+
+    });
+
+    Route::post('/check-login-status',[AuthController::class,'checkLoginStatus']);
+    Route::get('/current-user',[AuthController::class,'getCurrentUser']);
+    Route::post('/verify-token',[AuthController::class,'verifyToken']);
 });
 
 Route::middleware(['auth:sanctum', 'role'])->group(function() {
-    Route::get('/product',[ProductController::class,'getAll']);
+    
     //Route::post('/product', [ProductController::class, 'create']);
     // Các route khác chỉ dành cho admin
 });
@@ -55,11 +85,9 @@ Route::middleware(['auth:sanctum', 'role:admin,manager,employee'])->group(functi
 
 Route::get('/factory',[FactoryController::class,'getAll']);
 
-Route::post('login',[AuthController::class,'login']);
-Route::post('register',[AuthController::class,'register']);
-Route::post('logout',[AuthController::class,'logout']);
 
-Route::get('/product',[ProductController::class,'getAll']);
+
+
 Route::post('/product',[ProductController::class,'create']);
 Route::put('/product/{id}',[ProductController::class,'update']);
 
@@ -87,14 +115,14 @@ Route::get('/vnpay/return', [PaymentController::class, 'return']);
 Route::post('/vnpay/notify', [PaymentController::class, 'notify']);
 
 
-Route::get('/employee/{user_id}',[SatffController::class,'getInfoEmployee']);
-Route::get('/employee',[SatffController::class,'getInfoEmployee']);
+
 
 Route::get('/hang-su-dung',[HangSuDungController::class,'getAll']);
 Route::get('/hang-su-dung-product',[HangSuDungController::class,'get']);
 
-Route::get('hello',[HangSuDungController::class,'hello']);
 
 
+
+///php artisan serve --host=10.0.2.16 
 
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import useOrderProduct from './orderproduct';
 import orderService from '../services/order.service';
 import useEmployee from './userUtils';
+import { handleResponse } from '../functions/index';
 
 // import useCustomer from './customerUtils';
 // Hàm tạo đơn hàng
@@ -63,8 +64,7 @@ const useOrder = () => {
 
             const response = await orderService.create(orderDetails);
           
-            const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
-            const data = JSON.parse(cleanJsonString);
+            const data = handleResponse(response);
 
             localStorage.setItem('order_id', data.id);
 

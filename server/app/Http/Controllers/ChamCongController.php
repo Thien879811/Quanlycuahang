@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\Staff;
 use App\Models\ChamCong;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,8 @@ class ChamCongController extends Controller
      */
     public function index()
     {
-        //
+        $chamCong = ChamCong::all();
+        return response()->json($chamCong);
     }
 
     /**
@@ -22,9 +23,22 @@ class ChamCongController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        
+        $chamCong = $request->all();
+
+        $checkIn = ChamCong::where('staff_id', $chamCong['staff_id'])->where('date', $chamCong['date'])->first();
+        if($checkIn){
+            return response()->json(
+                ['message' => 'Check in already exists'],
+                400
+            );
+        }
+        else{
+            $chamCong = ChamCong::create($chamCong);
+            return response()->json($chamCong);
+        }
     }
 
     /**
@@ -33,53 +47,23 @@ class ChamCongController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    
+    public function update(Request $request, $id)
     {
-        //
+        $chamCong = ChamCong::find($id);
+        $chamCong->update($request->all());
+        $chamCong->save();
+
+        return response()->json(
+           $chamCong,
+           200
+        );
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\ChamCong  $chamCong
-     * @return \Illuminate\Http\Response
-     */
-    public function show(ChamCong $chamCong)
+    public function getByStaffIdAndDay($staff_id, $day)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\ChamCong  $chamCong
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(ChamCong $chamCong)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\ChamCong  $chamCong
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, ChamCong $chamCong)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\ChamCong  $chamCong
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(ChamCong $chamCong)
-    {
-        //
+        $chamCong = ChamCong::where('staff_id', $staff_id)->where('date', $day)->first();
+        return response()->json($chamCong);
     }
 }
+

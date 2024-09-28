@@ -50,7 +50,8 @@ const router = createBrowserRouter ([
             },
             {
                 path: '/product',
-                element: <PrivateRoute roles={['sales', 'warehouse', 'manager']}><Product /></PrivateRoute>
+                element: <Product />
+                
             },
             {
                 path: '/create_product',

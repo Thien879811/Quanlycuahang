@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Typography, Image } from 'antd';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import productService from '../services/product.service';
+import { handleResponse } from '../functions';
 
 const { Title } = Typography;
 
@@ -15,8 +16,7 @@ const ShelfManagement = () => {
   const fetchProducts = async () => {
     try {
       const fetchedProducts = await productService.getAll();
-      const cleanJsonString = fetchedProducts.replace(/^<!--\s*|\s*-->$/g, '');
-      const data = JSON.parse(cleanJsonString);
+      const data = handleResponse(fetchedProducts);
       
       // Create 6 shelves with 10 unique products each
       const newShelves = Array(6).fill().map((_, index) => ({

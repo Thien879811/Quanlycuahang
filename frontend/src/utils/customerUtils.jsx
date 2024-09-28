@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import CustomerService from '../services/customer.service';
 import useOrder from './orderUtils';
+import { handleResponse } from '../functions/index';
 
 const useCustomer = () => {
     const [customer, setCustomer] = useState(JSON.parse(localStorage.getItem('customer')) || null);
@@ -15,18 +16,19 @@ const useCustomer = () => {
         try {
             const response = await CustomerService.get(phone);
 
-            const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
-            const data = JSON.parse(cleanJsonString);
+            const data = handleResponse(response);
 
-            if (data && Object.keys(data).length > 0) {
+            console.log(data);
+
+            if (response.status === 200) {
                 console.log('Customer data:', data);
                 setCustomer(data);
                 setOpenCustomerInfo(true);
                 localStorage.setItem('customer', JSON.stringify(data));
             } else {
+                setOpenNewCustomer(true);
                 console.log('No customer data found');
                 localStorage.removeItem('customer');
-                setOpenNewCustomer(true);
                 setCustomer(null);
             }
 
@@ -56,8 +58,7 @@ const useCustomer = () => {
         try {
             const response = await CustomerService.create(customer);
 
-            const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
-            const data = JSON.parse(cleanJsonString);
+            const data = handleResponse(response);
             
             if(data !== null){
                 localStorage.setItem('customer', JSON.stringify(data));

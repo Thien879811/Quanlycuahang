@@ -71,7 +71,7 @@ class OrdersController extends Controller
         $order = Orders::create(
            [
             "customer_id" => $validated['khachhang'] !== '0' ? $validated['khachhang'] : null,
-            "satff_id" => $validated['nhanvien'],
+            "staff_id" => $validated['nhanvien'],
             "status" => "0",
             "tongcong"=>$validated['tonghoadon'],
              "pays_id" =>$validated['pays_id']

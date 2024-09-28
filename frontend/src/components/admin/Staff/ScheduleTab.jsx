@@ -8,7 +8,6 @@ import AddTaskModal from './Modal/AddTaskModal';
 const { Option } = Select;
 
 const ScheduleTab = ({ employees, schedules, setSchedules }) => {
-    console.log(employees, schedules, setSchedules);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [viewMode, setViewMode] = useState('table');
   const [isAddEmployeeModalVisible, setIsAddEmployeeModalVisible] = useState(false);

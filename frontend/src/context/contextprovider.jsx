@@ -1,6 +1,6 @@
-import { useContext } from "react";
-import { useState } from "react";
-import { createContext } from "react";
+import { useContext, useState, createContext, useEffect } from "react";
+import axios from "axios";
+import AuthService from "../services/auth.service";
 
 const StateContext = createContext({
     user: null,
@@ -10,8 +10,8 @@ const StateContext = createContext({
 });
 
 export const ContextProvider = ({children}) => {
-    const [user, setUser] = useState();
-    const [token, _setToken] = useState(localStorage.getItem('ACCESS_TOKEN'));
+    const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')));
+    const [token, _setToken] = useState(localStorage.getItem("ACCESS_TOKEN"));
 
     const setToken = (token) => {
         _setToken(token)
@@ -25,6 +25,7 @@ export const ContextProvider = ({children}) => {
             localStorage.removeItem('user');
         }
     }
+
     return (
         <StateContext.Provider value={{
             user,

@@ -13,15 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('satffs', function (Blueprint $table) {
+        Schema::create('dang_ki_lịches', function (Blueprint $table) {
             $table->id();
-            $table->string('names');
-            $table->integer('age');
-            $table->string('address');
-            $table->string('phone');
-            $table->string('gioitinh');
-            $table->foreignId('position_id')->constrained('positions');
-            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('staff_id')->constrained('staffs')->nullable();
+            $table->date('date')->nullable();
+            $table->time('time_start')->nullable();
+            $table->time('time_end')->nullable();
+            $table->string('reason')->nullable();
             $table->timestamps();
         });
     }
@@ -33,6 +31,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('satffs');
+        Schema::dropIfExists('dang_ki_lịches');
     }
 };

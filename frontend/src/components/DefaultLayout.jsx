@@ -47,7 +47,7 @@ export default function DefaultLayout() {
                     <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Typography variant="subtitle1">
-                                {/* {employee.names} */}
+                                 {employee.names}
                             </Typography>
                             <Typography variant="subtitle2">
                                 HD : 0001

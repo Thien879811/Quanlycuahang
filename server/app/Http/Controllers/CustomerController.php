@@ -19,13 +19,14 @@ class CustomerController extends Controller
     }
 
     public function getOne($phone){
+
         $customer = Customer::where("phone",$phone)->first();
 
         if($customer){
             return response()->json($customer,200);
         }
 
-        return response()->json(400);
+        return response()->json(null);
     }
 
     public function create(Request $request){

@@ -38,20 +38,20 @@ const WareHome = () => {
         mode="inline"
       >
         <Menu.Item key="products" icon={<AppstoreOutlined />}>
-          Products
+          Sản phẩm
         </Menu.Item>
         <Menu.Item key="import" icon={<ImportOutlined />}>
-          Import Products
+          Nhập hàng
         </Menu.Item>
         <Menu.Item key="shelves" icon={<AppstoreOutlined />}>
-          Manage Shelves
+          Quản lý kệ hàng
         </Menu.Item>
         <Menu.Item key="hang-su-dung" icon={<AppstoreOutlined />}>
-          Product Expiry Date
+          Hạn sử dụng sản phẩm
         </Menu.Item>
       </Menu>
       <div style={{ flex: 1, padding: '0 24px' }}>
-        <h1>Warehouse Management</h1>
+        <h1>Quản lý kho hàng</h1>
         {renderContent()}
       </div>
     </div>

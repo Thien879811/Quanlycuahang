@@ -29,5 +29,12 @@ class UserTableSeeder extends Seeder
             'password' => bcrypt('thien879811'),
             'role' => 'employee',
         ]);
+
+        DB::table('users')->insert([
+            'name' => 'Nguyễn Văn C',
+            'email' => 'employee2@gmail.com',
+            'password' => bcrypt('thien879811'),
+            'role' => 'employee',
+        ]);
     }
 }

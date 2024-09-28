@@ -2,6 +2,7 @@ import { useRef , useEffect} from "react";
 import { Link } from "react-router-dom"
 import {useStateContext} from '../context/contextprovider'
 import authService from "../services/auth.service";
+import { handleToken } from "../functions";
 
 export default function login(){
     const nameRef = useRef();
@@ -18,10 +19,13 @@ export default function login(){
         }
             try{
                 const response = await  authService.login(user);
-                const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
+                const cleanJsonString = response.replace(/^[^[{]*([\[{])/,'$1').replace(/([\]}])[^}\]]*$/,'$1');
                 const data = JSON.parse(cleanJsonString);
+                const token = handleToken(data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('ACCESS_TOKEN', token);
                 setUser(data.user);
-                setToken(data.token);
+                setToken(token);
             }catch(err){
                 console.log(err)
             }

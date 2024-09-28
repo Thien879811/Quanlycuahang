@@ -7,79 +7,33 @@ use Illuminate\Http\Request;
 
 class LichLamViecController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function create(Request $request)
     {
-        //
+        $staff = Staff::find($request->staff_id);
+        $lichLamViec = LichLamViec::create([
+            'staff_id' => $staff->id,
+            'date' => $request->date,
+            'time_start' => $request->time_start,
+            'time_end' => $request->time_end,
+            'reason' => $request->reason,
+        ]);
+        return response()->json($lichLamViec);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function update(Request $request, $id)
     {
-        //
+        $lichLamViec = LichLamViec::find($id);
+        $lichLamViec->update([
+            'date' => $request->date,
+            'time_start' => $request->time_start,
+            'time_end' => $request->time_end,
+            'reason' => $request->reason,
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function getByStaffId($staffId)
     {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\LichLamViec  $lichLamViec
-     * @return \Illuminate\Http\Response
-     */
-    public function show(LichLamViec $lichLamViec)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\LichLamViec  $lichLamViec
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(LichLamViec $lichLamViec)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\LichLamViec  $lichLamViec
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, LichLamViec $lichLamViec)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\LichLamViec  $lichLamViec
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(LichLamViec $lichLamViec)
-    {
-        //
+        $lichLamViec = LichLamViec::where('staff_id', $staffId)->get();
+        return response()->json($lichLamViec);
     }
 }

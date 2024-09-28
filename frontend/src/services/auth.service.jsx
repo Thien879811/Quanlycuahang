@@ -13,5 +13,12 @@ class AuthService {
     async logout() {
         return (await this.api.get("/logout")).data;
     }
+    async getCurrentUser(token   ) {
+        return (await this.api.get("/current-user",{
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })).data;
+    }
 }
 export default new AuthService();
