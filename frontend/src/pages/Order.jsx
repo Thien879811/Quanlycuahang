@@ -16,8 +16,10 @@ const Order = () => {
                 const response = await orderService.getAll();
                 
                 const data = handleResponse(response);
-                setOrders(data);
-                console.log(data);
+                // Sort orders by created_at in descending order (newest first)
+                const sortedOrders = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                setOrders(sortedOrders);
+                console.log(sortedOrders);
             } catch (error) {
                 console.error('Error fetching orders:', error);
             }

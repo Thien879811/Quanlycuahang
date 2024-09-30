@@ -30,7 +30,7 @@ class PaymentController extends Controller
         $vnp_OrderType = 'billpayment';
         $vnp_Amount = $request->input('amount', 100000) * 100; // Convert to VND cents
         $vnp_Locale = 'vn';
-        $vnp_BankCode = 'VnPayQR';
+        $vnp_BankCode = 'QR';
         $vnp_IpAddr = $request->ip();
 
         $inputData = [

@@ -60,11 +60,12 @@ const useOrder = () => {
 
         try {
             const orderDetails = createOrder(orderProducts, nhanvien, khachhang, tonghoadon, pays_id);
-            console.log(orderDetails);
+            
 
             const response = await orderService.create(orderDetails);
           
             const data = handleResponse(response);
+            console.log(data);
 
             localStorage.setItem('order_id', data.id);
 

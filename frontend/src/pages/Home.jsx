@@ -5,14 +5,18 @@ import useOrderProduct from '../utils/orderproduct';
 import useOrder from '../utils/orderUtils';
 import useCustomer from '../utils/customerUtils';
 import OrderDisplay from '../components/OrderDisplay';
+import useProduct from '../utils/productUtils';
+import Scanner from '../components/BarcodeScanner';
 
 const Home = () => {
 	const navigate = useNavigate();
-	const {orderProducts,
+	const {
+		orderProducts,
 		getTotalAmount,
 		getTotalQuantity,
 		updateProductQuantity,
-		removeProduct 
+		removeProduct,
+		addProduct
 		} = useOrderProduct();
 	const {createAndSendOrder, loading, error } = useOrder();
 	const [containerHeight, setContainerHeight] = useState('100vh');
@@ -21,7 +25,11 @@ const Home = () => {
 	const [openNewCustomerDialog, setOpenNewCustomerDialog] = useState(false);
 	const [customerPhone, setCustomerPhone] = useState('');
 	const [newCustomerName, setNewCustomerName] = useState('');
-	
+	const [barcode, setBarcode] = useState('');
+	const {products} = useProduct();
+	const [isScannerOpen, setIsScannerOpen] = useState(false);
+	const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+
 	const {customer,
 		searchCustomerByPhone, 
 		createCustomer, 
@@ -43,7 +51,6 @@ const Home = () => {
 		}
 	}, [openCustomerInfo]);
 
-
 	useEffect(() => {
 		const updateHeight = () => {
 			const headerHeight = document.querySelector('header')?.offsetHeight || 0;
@@ -56,9 +63,19 @@ const Home = () => {
 		return () => window.removeEventListener('resize', updateHeight);
 	}, []);
 
-	const handlePayment = async () => {
-		createAndSendOrder();
-		return navigate('/pay');
+	const handlePayment = async (type) => {
+		if(orderProducts.length === 0){
+			alert('Vui lòng thêm sản phẩm vào hóa đơn');
+			return;
+		}
+		if(type === 1){
+			createAndSendOrder();
+			return navigate('/pay');
+		}
+		if(type === 2){
+			createAndSendOrder();
+			return navigate('/vnpay');
+		}
 	};
 
 	const handleOpenCustomerDialog = () => {
@@ -101,16 +118,54 @@ const Home = () => {
 		removeProduct(productCode);
 	};
 
+	const handleBarcodeChange = (event) => {
+		setBarcode(event.target.value);
+	};
+	
+	const handleBarcodeKeyPress = (event) => {
+		if (event.key === 'Enter') {
+			handleBarcodeScanned(barcode);
+		}
+	};
+
+	const handleBarcodeScanned = (scannedBarcode) => {
+		const barcodeNumber = parseInt(scannedBarcode, 10);
+		const foundProduct = products.find(product => product.barcode === barcodeNumber);
+		if (foundProduct) {
+			addProduct(foundProduct.id, foundProduct.product_name, foundProduct.selling_price || 0, 1);
+			console.log(`Added product: ${foundProduct.product_name}`);
+			setBarcode('');
+			setIsScannerModalOpen(false); // Close the scanner modal
+		} else {
+			console.log('Product not found');
+		}
+	};
+
+	const handleError = (error) => {
+		console.error(error);
+	};
+
+	const toggleScanner = () => {
+		setIsScannerModalOpen(!isScannerModalOpen);
+	};
+
 	return (
 		<Grid container spacing={2} sx={{ height: containerHeight, overflow: 'hidden' }}>
 			<Grid item xs={8} sx={{ height: '100%', overflow: 'auto' }}>
 				<Paper elevation={3} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-					<TextField
-						fullWidth
-						label="Scan barcode"
-						variant="outlined"
-						sx={{ mb: 2 }}
-					/>
+					<Box sx={{ display: 'flex', mb: 2 }}>
+						<TextField
+							fullWidth
+							label="Scan barcode"
+							variant="outlined"
+							value={barcode}
+							onChange={handleBarcodeChange}
+							onKeyPress={handleBarcodeKeyPress}
+						/>
+						<Button onClick={toggleScanner}>
+							{isScannerModalOpen ? 'Close Scanner' : 'Open Scanner'}
+						</Button>
+					</Box>
 					<OrderDisplay
 						orderProducts={orderProducts}
 						handleIncreaseQuantity={handleIncreaseQuantity}
@@ -133,6 +188,15 @@ const Home = () => {
 									sx={{ height: '100%' }}
 									onClick={() => {
 										if (item === 'Tiền Mặt') {
+											handlePayment(1);
+										}
+										if (item === 'Ví Điện Tử') {
+											handlePayment(2);
+										}
+										if (item === 'E-Voucher') {
+											handlePayment();
+										}
+										if (item === 'Membership') {
 											handlePayment();
 										}
 									}}
@@ -243,6 +307,11 @@ const Home = () => {
 					<Button onClick={handleCloseNewCustomerDialog}>Hủy</Button>
 					<Button onClick={handleCreateNewCustomer}>Tạo mới</Button>
 				</DialogActions>
+			</Dialog>
+			<Dialog open={isScannerModalOpen} onClose={toggleScanner} maxWidth="sm" fullWidth>
+				<DialogContent>
+					<Scanner onDetected={handleBarcodeScanned} />
+				</DialogContent>
 			</Dialog>
 		</Grid>
 	);

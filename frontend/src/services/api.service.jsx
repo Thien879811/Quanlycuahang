@@ -1,5 +1,6 @@
 import axios from "axios";
 const token = localStorage.getItem('ACCESS_TOKEN');
+
 const commonConfig = {
     headers: {
     "Content-Type": "application/json",

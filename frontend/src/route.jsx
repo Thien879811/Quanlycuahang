@@ -20,6 +20,7 @@ import OrderAdmin from './pages/admin/OrderAdmin.jsx';
 import StaffAdmin from './pages/admin/StaffAdmin.jsx';
 import SupplierAdmin from './pages/admin/SupplierAdmin.jsx';
 import SalesAdmin from './pages/admin/SalesAdmin.jsx';
+import Vnpay from './pages/vnpay.jsx';
 
 
 
@@ -68,6 +69,10 @@ const router = createBrowserRouter ([
             {
                 path: '/warehouse',
                 element:<WareHome />
+            },
+            {
+                path: '/vnpay',
+                element: <Vnpay />
             }
         
         ]
