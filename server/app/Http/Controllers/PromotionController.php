@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class PromotionController extends Controller
 {
-    public function index()
+    public function getPromotion()
     {
         $promotions = Promotion::all();
         return response()->json($promotions);

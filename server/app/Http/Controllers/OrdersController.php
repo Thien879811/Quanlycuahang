@@ -103,7 +103,8 @@ class OrdersController extends Controller
                 DetailOrder::create([
                     'order_id' => $order->id,
                     'product_id' => $product_id,
-                    'soluong' => $product['quantity'], // Default quantity or adjust as needed
+                    'soluong' => $product['quantity'],
+                    'discount' => $product['discount'],
                     // Add other fields if needed
                     'dongia' => $product['price'],
                 ]);

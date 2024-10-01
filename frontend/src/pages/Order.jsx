@@ -101,6 +101,7 @@ const Order = () => {
                                             <TableCell>Tên sản phẩm</TableCell>
                                             <TableCell>Số lượng</TableCell>
                                             <TableCell>Giá</TableCell>
+                                            <TableCell>Giảm giá</TableCell>
                                             <TableCell>Thành tiền</TableCell>
                                         </TableRow>
                                     </TableHead>
@@ -110,7 +111,8 @@ const Order = () => {
                                                 <TableCell>{product.name}</TableCell>
                                                 <TableCell>{product.quantity}</TableCell>
                                                 <TableCell>{product.price}</TableCell>
-                                                <TableCell>{product.quantity * product.price}</TableCell>
+                                                <TableCell>{product.discount}</TableCell>
+                                                <TableCell>{product.quantity * product.price - product.discount}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>

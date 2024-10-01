@@ -9,6 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 
 const Product = () => {
+
     const navigate = useNavigate();
     const {products} = useProducts();
     const [orderProducts, setOrderProducts] = useState([]);
@@ -42,9 +43,11 @@ const Product = () => {
         } else {
             updatedOrderProducts.push({
                 product_id: product.id,
-                productName: product.product_name,
+                product_name: product.product_name,
+                image: product.image,
                 quantity: 1,
                 price: product.purchase_price,
+                discount: 0
             });
         }
         
@@ -111,7 +114,7 @@ const Product = () => {
                         <tbody>
                           {orderProducts.map((product) => (  
                             <tr key={product.product_id}>
-                              <td style={{ padding: '10px' }}>{product.productName}</td>
+                              <td style={{ padding: '10px' }}>{product.product_name}</td>
                               <td style={{ padding: '10px' }}>{product.quantity}</td>
                               <td style={{ padding: '10px' }}>
                                 <Button onClick={() => deleteOrder(product.product_id)} variant="contained" color="secondary" size="small">

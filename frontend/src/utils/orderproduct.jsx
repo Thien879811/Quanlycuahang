@@ -10,12 +10,14 @@ const useOrderProduct = () => {
         localStorage.setItem('order_product', JSON.stringify(orderProducts));
     }, [orderProducts]);
 
-    const addProduct = useCallback((productCode, productName, price, quantity) => {
+    const addProduct = useCallback((productCode, productName, image, price, quantity) => {
         const newProduct = {
-            productCode,
-            productName,
+            product_id: productCode,
+            product_name: productName,
+            image: image,
             price: parseFloat(price),
-            quantity: parseInt(quantity, 10)
+            quantity: parseInt(quantity, 10),
+            discount: 0
         };
 
         setOrderProducts(prevProducts => [...prevProducts, newProduct]);
@@ -41,8 +43,55 @@ const useOrderProduct = () => {
         });
     }, []);
 
+    const updateProductDiscount = useCallback((productCode, discount, quantity, present) => {
+        setOrderProducts(prevProducts => {
+            const updatedProducts = prevProducts.map(product => {
+                if (product.product_id === productCode) {
+                    if (quantity) {
+                        const discountMultiplier = Math.floor(product.quantity / quantity);
+                        if (discountMultiplier > 0) {
+                            return {
+                                ...product,
+                                discount: (product.price * discount / 100) * discountMultiplier,
+                                present: present ? present * discountMultiplier : null
+                            };
+                        }
+                    } else {    // If quantity is not provided, apply discount to all products
+                        return {
+                            ...product,
+                            discount: (product.price * discount / 100) * product.quantity,
+                            present: present || null
+                        };
+                    }
+                    return { ...product, discount: 0, present: null };
+                }
+                return product;
+            });
+
+            // Apply discount to present product if it exists
+            if (present) {
+                const presentProduct = updatedProducts.find(p => p.product_id === present);
+                if (presentProduct) {
+                    presentProduct.discount = presentProduct.price; // 100% discount for the present product
+                }
+            }
+
+            localStorage.setItem('order_product', JSON.stringify(updatedProducts)); 
+            return updatedProducts;
+        });
+    }, []);
+
     const getTotalAmount = useCallback(() => {
-        return orderProducts.reduce((total, product) => total + (product.price * product.quantity), 0);
+        return orderProducts.reduce((total, product) => { 
+            return total + (product.price * product.quantity - product.discount);
+        }, 0);
+    }, [orderProducts]);
+
+    const getTotalDiscount = useCallback(() => {
+        return orderProducts.reduce((total, product) => {
+            const discountAmount = product.discount || 0;
+            return total + discountAmount;
+        }, 0);
     }, [orderProducts]);
 
     const getTotalQuantity = useCallback(() => {
@@ -59,8 +108,10 @@ const useOrderProduct = () => {
         addProduct,
         removeProduct,
         updateProductQuantity,
+        updateProductDiscount,
         getTotalAmount,
         getTotalQuantity,
+        getTotalDiscount,
         clearOrderProduct
     }; 
 };

@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SatffController;
 use App\Http\Controllers\LichLamViecController;
 use App\Http\Controllers\ChamCongController;
+use App\Http\Controllers\PromotionController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,8 @@ Route::post('login',[AuthController::class,'login']);
 Route::post('register',[AuthController::class,'register']);
 Route::post('/logout',[AuthController::class,'logout']);
 Route::get('/product',[ProductController::class,'getAll']);
+
+Route::get('/promotion',[PromotionController::class,'getPromotion']);
 
 Route::middleware('auth:sanctum')->group(function() {
     

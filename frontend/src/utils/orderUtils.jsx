@@ -17,10 +17,11 @@ const createOrder = (products, nhanvien, khachhang, tonghoadon, pays_id) => {
 };
 
 const useOrder = () => {
-    const { orderProducts,
-      getTotalAmount,
-      getTotalQuantity,
-      clearOrderProduct,
+    const { 
+        orderProducts,
+        getTotalAmount,
+        getTotalQuantity,
+        clearOrderProduct,
      } = useOrderProduct();
     const [pays_id, setPays_id] = useState('1');
     const [employee, setEmployee] = useState();
@@ -60,8 +61,8 @@ const useOrder = () => {
 
         try {
             const orderDetails = createOrder(orderProducts, nhanvien, khachhang, tonghoadon, pays_id);
+            console.log(orderDetails);
             
-
             const response = await orderService.create(orderDetails);
           
             const data = handleResponse(response);

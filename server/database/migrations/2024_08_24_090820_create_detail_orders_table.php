@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products');
             $table->integer('dongia');
             $table->integer('soluong');
+            $table->integer('discount')->nullable();
             $table->timestamps();
         });
     }

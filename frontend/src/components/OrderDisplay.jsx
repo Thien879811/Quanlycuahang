@@ -4,7 +4,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-const OrderDisplay = ({ orderProducts, handleIncreaseQuantity, handleDecreaseQuantity, handleRemoveProduct }) => {
+const OrderDisplay = ({ orderProducts, handleIncreaseQuantity, handleDecreaseQuantity, handleRemoveProduct, getTotalDiscount }) => {
   return (
     <TableContainer sx={{ flexGrow: 1, overflow: 'auto' }}>
       <Table stickyHeader>
@@ -12,8 +12,8 @@ const OrderDisplay = ({ orderProducts, handleIncreaseQuantity, handleDecreaseQua
           <TableRow>
             <TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Tên sản phẩm</TableCell>
             <TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Đơn giá</TableCell>
-            <TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>SL</TableCell>
-            <TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>CK</TableCell>
+            <TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Số lượng</TableCell>
+            <TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Khuyến mãi</TableCell>
             <TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Thành tiền</TableCell>
             <TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Ghi chú</TableCell>
             <TableCell sx={{ backgroundColor: '#0000FF', color: 'white' }}>Xóa</TableCell>
@@ -23,8 +23,8 @@ const OrderDisplay = ({ orderProducts, handleIncreaseQuantity, handleDecreaseQua
           {orderProducts.length > 0 ? (
             orderProducts.map((item, index) => (
               <TableRow key={index}>
-                <TableCell>{item.productName}</TableCell>
-                <TableCell>{item.price ? item.price.toFixed(2) : '0.00'}₫</TableCell>
+                <TableCell>{item.product_name}</TableCell>
+                <TableCell>{item.price ? item.price.toFixed() : '0'}₫</TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <IconButton onClick={() => handleDecreaseQuantity(item.product_id)} size="small">
@@ -36,8 +36,8 @@ const OrderDisplay = ({ orderProducts, handleIncreaseQuantity, handleDecreaseQua
                     </IconButton>
                   </Box>
                 </TableCell>
-                <TableCell>0₫</TableCell>
-                <TableCell>{item.price ? (item.price * item.quantity).toFixed(2) : '0.00'}₫</TableCell>
+                <TableCell>{item.discount ? item.discount: 0}</TableCell>
+                <TableCell>{item.price ? (item.price * item.quantity).toFixed(2) - item.discount : '0'}₫</TableCell>
                 <TableCell></TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleRemoveProduct(item.product_id)} size="small">

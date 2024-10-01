@@ -14,6 +14,7 @@ class DetailOrder extends Model
         'order_id',
         'product_id',
         'dongia',
-        'soluong'
+        'soluong',
+        'discount',
     ];
 }
