@@ -4,7 +4,7 @@ import { handleResponse } from "../functions";
 
 const usePromotion = () => {
     const [promotions, setPromotions] = useState([]);
-
+    
     useEffect(()  => {
         const fetchPromotion = async () => {
            try {
@@ -18,9 +18,22 @@ const usePromotion = () => {
         fetchPromotion();
     }, []);
 
+    const createPromotion = async (promotion) => {
+        try {
+            const res = await PromotionService.create(promotion);
+            const data = handleResponse(res);
+            return data;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     return {
-        promotions
+        promotions,
+        createPromotion
     };
+
+
 }
 
 export default usePromotion;

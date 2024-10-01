@@ -31,7 +31,10 @@ Route::post('register',[AuthController::class,'register']);
 Route::post('/logout',[AuthController::class,'logout']);
 Route::get('/product',[ProductController::class,'getAll']);
 
-Route::get('/promotion',[PromotionController::class,'getPromotion']);
+Route::controller(PromotionController::class)->group(function () {
+    Route::get('/promotion', 'getPromotion');
+    Route::post('/promotion', 'create');
+});
 
 Route::middleware('auth:sanctum')->group(function() {
     

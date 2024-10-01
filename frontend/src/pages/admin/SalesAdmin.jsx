@@ -38,7 +38,7 @@ function SalesAdmin() {
           <TabPane tab="Giảm giá sản phẩm" key="1">
             <CreatePromotion />
           </TabPane>
-          <TabPane tab="Giảm giá" key="2">
+          <TabPane tab="Tạo Voucher" key="2">
             <CreateDiscountPromotion />
           </TabPane>
           <TabPane tab="Mua sản phẩm này giảm giá sản phẩm khác" key="3">
