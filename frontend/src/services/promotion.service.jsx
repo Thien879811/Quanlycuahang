@@ -9,5 +9,11 @@ class PromotionService {
     async getPromotion() {
         return (await this.api.get("/")).data;
     }
+    async delete(id) {
+        return (await this.api.delete(`/${id}`)).data;
+    }
+    async update(id, data) {
+        return (await this.api.put(`/${id}`, data)).data;
+    }
 }
 export default new PromotionService();  

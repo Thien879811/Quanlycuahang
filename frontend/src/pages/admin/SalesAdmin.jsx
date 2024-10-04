@@ -5,7 +5,7 @@ import CreatePromotion from '../../components/admin/Discount/CreatePromotion.jsx
 import PromotionList from '../../components/admin/Discount/PromotionList.jsx';
 import CreateDiscountPromotion from '../../components/admin/Discount/CreateDiscountPromotion.jsx';
 import CreateCrossProductPromotion from '../../components/admin/Discount/CreateCrossProductPromotion.jsx';
-
+import CreateBulkPurchasePromotion from '../../components/admin/Discount/CreateBulkPurchasePromotion.jsx';
 
 const { TabPane } = Tabs;
 
@@ -41,8 +41,11 @@ function SalesAdmin() {
           <TabPane tab="Tạo Voucher" key="2">
             <CreateDiscountPromotion />
           </TabPane>
-          <TabPane tab="Mua sản phẩm này giảm giá sản phẩm khác" key="3">
+          <TabPane tab="Giảm giá sản phẩm mua kèm" key="3">
             <CreateCrossProductPromotion />
+          </TabPane>
+          <TabPane tab="Khuyến mãi mua nhiều" key="4">
+            <CreateBulkPurchasePromotion />
           </TabPane>
         </Tabs>
       </Modal>

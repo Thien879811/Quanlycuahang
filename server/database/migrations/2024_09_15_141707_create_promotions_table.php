@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('quantity')->nullable(); // Số lượng khuyến mãi, có thể để trống
             $table->date('start_date')->nullable(); // Ngày bắt đầu khuyến mãi, có thể để trống
             $table->date('end_date')->nullable(); // Ngày kết thúc khuyến mãi, có thể để trống
+            $table->string('catalory')->nullable(); // Loại khuyến mãi, có thể để trống
             $table->timestamps(); // Tự động tạo cột 'created_at' và 'updated_at'
         });
     }

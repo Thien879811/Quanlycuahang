@@ -34,6 +34,8 @@ Route::get('/product',[ProductController::class,'getAll']);
 Route::controller(PromotionController::class)->group(function () {
     Route::get('/promotion', 'getPromotion');
     Route::post('/promotion', 'create');
+    Route::delete('/promotion/{id}', 'delete');
+    Route::put('/promotion/{id}', 'update');
 });
 
 Route::middleware('auth:sanctum')->group(function() {
