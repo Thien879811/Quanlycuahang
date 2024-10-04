@@ -17,10 +17,8 @@ const useCustomer = () => {
             const response = await CustomerService.get(phone);
 
             const data = handleResponse(response);
-
-            console.log(data);
-
-            if (response.status === 200) {
+   
+            if (!data.error) {
                 console.log('Customer data:', data);
                 setCustomer(data);
                 setOpenCustomerInfo(true);

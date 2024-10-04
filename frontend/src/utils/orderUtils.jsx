@@ -23,6 +23,7 @@ const useOrder = () => {
         getTotalQuantity,
         clearOrderProduct,
      } = useOrderProduct();
+     
     const [pays_id, setPays_id] = useState('1');
     const [employee, setEmployee] = useState();
     const [nhanvien, setNhanvien] = useState(() => {
@@ -61,12 +62,12 @@ const useOrder = () => {
 
         try {
             const orderDetails = createOrder(orderProducts, nhanvien, khachhang, tonghoadon, pays_id);
-            console.log(orderDetails);
+            
             
             const response = await orderService.create(orderDetails);
           
             const data = handleResponse(response);
-            console.log(data);
+            console.log(response);
 
             localStorage.setItem('order_id', data.id);
 
@@ -90,6 +91,7 @@ const useOrder = () => {
 
     useEffect(() => {
         setTonghoadon(getTotalAmount());
+        createAndSendOrder();
     }, [orderProducts]);
 
     const handleCreateOrder = () => {

@@ -32,6 +32,7 @@ class OrdersController extends Controller
                 'name' => $product ? $product->product_name : 'Unknown',
                 'quantity' => $detail->soluong,
                 'price' => $product ? $product->selling_price : 0,
+                'discount' => $detail->discount,
             ];
         });
         
@@ -44,6 +45,7 @@ class OrdersController extends Controller
         return response()->json([
             'products' => $result,
             'customer_name' => $customerName,
+            'pays_id' => $order->pays_id,
             'staff_name' => $staffName,
             'created_at' => $order->created_at,
             'tongcong' => $order->tongcong,
@@ -74,7 +76,7 @@ class OrdersController extends Controller
             "staff_id" => $validated['nhanvien'],
             "status" => "0",
             "tongcong"=>$validated['tonghoadon'],
-             "pays_id" =>$validated['pays_id']
+            "pays_id" =>$validated['pays_id'],
            ]
         );
     }
@@ -96,7 +98,9 @@ class OrdersController extends Controller
         
             if ($detail) {
                 // Update the quantity if the detail already exists
-                $detail->soluong = $product['quantity']; // Adjust as needed for your logic
+                $detail->soluong = $product['quantity'];
+                $detail->discount = $product['discount'];
+             // Adjust as needed for your logic
                 $detail->save();
             } else {
                 // Create new detail if it does not exist
@@ -105,7 +109,6 @@ class OrdersController extends Controller
                     'product_id' => $product_id,
                     'soluong' => $product['quantity'],
                     'discount' => $product['discount'],
-                    // Add other fields if needed
                     'dongia' => $product['price'],
                 ]);
             }

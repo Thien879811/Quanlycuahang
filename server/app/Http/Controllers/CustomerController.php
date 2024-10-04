@@ -23,10 +23,10 @@ class CustomerController extends Controller
         $customer = Customer::where("phone",$phone)->first();
 
         if($customer){
-            return response()->json($customer,200);
+            return response()->json($customer);
         }
 
-        return response()->json(null);
+        return response()->json(['error' => 'Không tìm thấy khách hàng']);
     }
 
     public function create(Request $request){

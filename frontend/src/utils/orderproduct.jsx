@@ -77,6 +77,7 @@ const useOrderProduct = () => {
             }
 
             localStorage.setItem('order_product', JSON.stringify(updatedProducts)); 
+           
             return updatedProducts;
         });
     }, []);

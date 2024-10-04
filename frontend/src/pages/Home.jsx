@@ -61,8 +61,13 @@ const Home = () => {
 		const searchPromotion = () => {
 			if(orderProducts.length > 0){
 				const foundPromotions = [];
+				const currentDate = new Date();
 				for(const product of orderProducts){
-					const matchingPromotions = promotions.filter(promo => promo.product_id === product.product_id);
+					const matchingPromotions = promotions.filter(promo => 
+						promo.product_id === product.product_id &&
+						new Date(promo.start_date) <= currentDate &&
+						new Date(promo.end_date) >= currentDate
+					);
 					const promotionsWithProductInfo = matchingPromotions.map(promo => ({
 						...promo,
 						productName: product.product_name,
@@ -193,7 +198,12 @@ const Home = () => {
 			setIsScannerModalOpen(false); // Close the scanner modal
 
 			// Check for promotions
-			const foundPromotion = promotions.find(promo => promo.product_id === foundProduct.id);
+			const currentDate = new Date();
+			const foundPromotion = promotions.find(promo => 
+				promo.product_id === foundProduct.id &&
+				new Date(promo.start_date) <= currentDate &&
+				new Date(promo.end_date) >= currentDate
+			);
 			if (foundPromotion) {
 				setActivePromotion([...activePromotion, foundPromotion]);
 				updateProductDiscount(foundProduct.id, foundPromotion.discount_percentage);

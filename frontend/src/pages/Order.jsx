@@ -112,7 +112,7 @@ const Order = () => {
                                                 <TableCell>{product.quantity}</TableCell>
                                                 <TableCell>{product.price}</TableCell>
                                                 <TableCell>{product.discount}</TableCell>
-                                                <TableCell>{product.quantity * product.price - product.discount}</TableCell>
+                                                <TableCell>{product.discount ? product.quantity * product.price - product.discount : product.quantity * product.price }</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
