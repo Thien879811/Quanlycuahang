@@ -15,9 +15,15 @@ class Staff extends Model
         'address',
         'phone',
         'gioitinh',
-        'position_id',
+        'position',
         'user_id',
     ];
 
-    
+    public function user(){
+        return $this->belongsTo(User::class);
+    }
+
+    public function position(){
+        return $this->belongsTo(Position::class);
+    }
 }

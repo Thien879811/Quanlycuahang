@@ -20,5 +20,17 @@ class AuthService {
             }
         })).data;
     }
+    async getAllUser() {
+        return (await this.api.get("/users")).data;
+    }
+    async deleteUser(id) {
+        return (await this.api.delete(`/users/${id}`)).data;
+    }
+    async createUser(data) {
+        return (await this.api.post("/users", data)).data;
+    }
+    async updateUser(id, data) {
+        return (await this.api.put(`/users/${id}`, data)).data;
+    }
 }
 export default new AuthService();

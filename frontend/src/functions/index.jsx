@@ -2,6 +2,10 @@ import useOrderProduct from "../utils/orderproduct";
 
 
 export const handleResponse = (response) => {
+    if (typeof response !== 'string') {
+        console.error('Invalid response type:', typeof response);
+        return null;
+    }
     const cleanJsonString = response.replace(/^[^[{]*([\[{])/,'$1').replace(/([\]}])[^}\]]*$/,'$1');
     const data = JSON.parse(cleanJsonString);
     return data;

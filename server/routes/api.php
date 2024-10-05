@@ -11,6 +11,7 @@ use App\Http\Controllers\SatffController;
 use App\Http\Controllers\LichLamViecController;
 use App\Http\Controllers\ChamCongController;
 use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,16 @@ Route::post('register',[AuthController::class,'register']);
 Route::post('/logout',[AuthController::class,'logout']);
 Route::get('/product',[ProductController::class,'getAll']);
 
+// user manager api
+Route::controller(UserController::class)->group(function () {
+    Route::get('/users/{id}', 'getUserById');
+    Route::post('/users', 'createUser');
+    Route::put('/users/{id}', 'updateUser');
+    Route::get('/users/{id}/staff', 'getStaffByUserId');
+    Route::get('/users', 'getAll');
+    Route::delete('/users/{id}', 'deleteUser');
+});
+//manager discount api
 Route::controller(PromotionController::class)->group(function () {
     Route::get('/promotion', 'getPromotion');
     Route::post('/promotion', 'create');
@@ -38,18 +49,7 @@ Route::controller(PromotionController::class)->group(function () {
     Route::put('/promotion/{id}', 'update');
 });
 
-Route::middleware('auth:sanctum')->group(function() {
-    
-    Route::get('/logout',[AuthController::class,'logout']);
-
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
-
-    Route::get('/catalory',[CataloryController::class,'getCatalory']);
-
-  
-    //employee
+    //employee api
     Route::prefix('employee')->group(function () {  
         Route::get('/{user_id}',[SatffController::class,'getInfoEmployee']);
         Route::get('/',[SatffController::class,'getAll']);
@@ -70,26 +70,24 @@ Route::middleware('auth:sanctum')->group(function() {
 
     });
 
+
+Route::middleware('auth:sanctum')->group(function() {
+    
+    Route::get('/logout',[AuthController::class,'logout']);
+
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
+    Route::get('/catalory',[CataloryController::class,'getCatalory']);
+
+
     Route::post('/check-login-status',[AuthController::class,'checkLoginStatus']);
     Route::get('/current-user',[AuthController::class,'getCurrentUser']);
     Route::post('/verify-token',[AuthController::class,'verifyToken']);
 });
 
-Route::middleware(['auth:sanctum', 'role'])->group(function() {
-    
-    //Route::post('/product', [ProductController::class, 'create']);
-    // Các route khác chỉ dành cho admin
-});
 
-Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function() {
-//    Route::get('/product', [ProductController::class, 'getAll']);
-    // Các route dành cho cả admin và manager
-});
-
-Route::middleware(['auth:sanctum', 'role:admin,manager,employee'])->group(function() {
- //   Route::get('/catalory', [CataloryController::class, 'getCatalory']);
-    // Các route dành cho tất cả nhân viên đã đăng nhập
-});
 
 Route::get('/factory',[FactoryController::class,'getAll']);
 

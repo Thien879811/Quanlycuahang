@@ -40,7 +40,6 @@ const useCustomer = () => {
     const updatePointCustomer = async (point) => {
         if (customer) {
             customer.diem = customer.diem + point;
-            console.log(customer);
             try {
                 const response = await CustomerService.update(customer.id, customer);
                 setCustomer(null);
