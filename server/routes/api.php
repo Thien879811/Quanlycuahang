@@ -27,6 +27,11 @@ use Illuminate\Support\Facades\Route;
 |
 */ 
 
+Route::post('/employee/create-working-schedule',[LichLamViecController::class,'create']);
+Route::get('/employee/lich-lam-viec',[LichLamViecController::class,'getAll']);
+Route::put('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'update']);
+Route::delete('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'delete']);
+
 Route::post('login',[AuthController::class,'login']);
 Route::post('register',[AuthController::class,'register']);
 Route::post('/logout',[AuthController::class,'logout']);
@@ -49,26 +54,31 @@ Route::controller(PromotionController::class)->group(function () {
     Route::put('/promotion/{id}', 'update');
 });
 
-    //employee api
-    Route::prefix('employee')->group(function () {  
-        Route::get('/{user_id}',[SatffController::class,'getInfoEmployee']);
-        Route::get('/',[SatffController::class,'getAll']);
+Route::prefix('/employee')->group(function () {
 
-        //get work schedule
-        Route::controller(LichLamViecController::class)->group(function () {
-            Route::get('/lich-lam-viec/{staff_id}', 'getByStaffId');
-        });
+    Route::get('/',[SatffController::class,'getAll']);
+    Route::get('/{user_id}',[SatffController::class,'getInfoEmployee']);
 
-        //attendance
-        Route::controller(ChamCongController::class)->group(function () {
-            Route::post('/check-in', 'create');
-            Route::put('/check-out/{id}', 'update');
-            Route::get('/cham-cong/{staff_id}/{day}', 'getByStaffIdAndDay');
-            Route::get('/', 'index');
-            Route::put('/{id}', 'update');
-        });
+    //Route::get('/lich-lam-viec',[LichLamViecController::class,'getAll']);
+    Route::get('/lich-lam-viec/{staff_id}',[LichLamViecController::class,'getByStaffId']);
+   
+    Route::post('/check-in',[ChamCongController::class,'create']);
+    Route::put('/check-out/{id}',[ChamCongController::class,'update']);
+    Route::get('/cham-cong/{staff_id}/{day}',[ChamCongController::class,'getByStaffIdAndDay']);
+    Route::get('/cham-cong',[ChamCongController::class,'index']);
+    Route::put('/{id}',[ChamCongController::class,'update']);
 
-    });
+});
+
+Route::controller(HangSuDungController::class)->group(function () {
+    Route::get('/hang-su-dung', 'getAll');
+    Route::get('/hang-su-dung/{id}', 'getById');
+    Route::post('/hang-su-dung', 'create');
+    Route::put('/hang-su-dung/{id}', 'update');
+    Route::delete('/hang-su-dung/{id}', 'delete');
+});
+
+
 
 
 Route::middleware('auth:sanctum')->group(function() {
@@ -90,8 +100,6 @@ Route::middleware('auth:sanctum')->group(function() {
 
 
 Route::get('/factory',[FactoryController::class,'getAll']);
-
-
 
 
 Route::post('/product',[ProductController::class,'create']);

@@ -15,6 +15,6 @@ class SatffController extends Controller
 
     public function getAll(){
         $employee = Staff::all();
-        return response()->json( $employee);
+        return response()->json($employee);
     }
 }

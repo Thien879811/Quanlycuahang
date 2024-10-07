@@ -21,13 +21,7 @@ class LichLamViecSeeder extends Seeder
             'time_end' => '15:00',
             'reason' => '',
         ]);
-        LichLamViec::create([
-            'staff_id' => 3,
-            'date' => '2024-09-23',
-            'time_start' => '15:00',
-            'time_end' => '23:00',
-            'reason' => '',
-        ]);
+  
         LichLamViec::create([
             'staff_id' => 2,
             'date' => '2024-09-24',
@@ -35,13 +29,7 @@ class LichLamViecSeeder extends Seeder
             'time_end' => '15:00',
             'reason' => '',
         ]); 
-        LichLamViec::create([
-            'staff_id' => 3,
-            'date' => '2024-09-24',
-            'time_start' => '15:00',
-            'time_end' => '23:00',
-            'reason' => '',
-        ]);      
+      
         LichLamViec::create([
             'staff_id' => 2,
             'date' => '2024-09-25',
@@ -49,13 +37,7 @@ class LichLamViecSeeder extends Seeder
             'time_end' => '15:00',
             'reason' => '',
         ]); 
-        LichLamViec::create([
-            'staff_id' => 3,        
-            'date' => '2024-09-25',
-            'time_start' => '15:00',
-            'time_end' => '23:00',
-            'reason' => '',
-        ]);      
+         
         LichLamViec::create([
             'staff_id' => 2,
             'date' => '2024-09-26',
@@ -63,13 +45,7 @@ class LichLamViecSeeder extends Seeder
             'time_end' => '15:00',
             'reason' => '',
         ]); 
-        LichLamViec::create([
-            'staff_id' => 3,        
-            'date' => '2024-09-26',
-            'time_start' => '15:00',
-            'time_end' => '23:00',
-            'reason' => '',
-        ]);      
+        
         LichLamViec::create([
             'staff_id' => 2,
             'date' => '2024-09-27',
@@ -77,13 +53,7 @@ class LichLamViecSeeder extends Seeder
             'time_end' => '15:00',
             'reason' => '',
         ]); 
-        LichLamViec::create([
-            'staff_id' => 3,        
-            'date' => '2024-09-27',
-            'time_start' => '15:00',
-            'time_end' => '23:00',
-            'reason' => '',
-        ]);      
+         
         LichLamViec::create([
             'staff_id' => 2,
             'date' => '2024-09-28',
@@ -91,13 +61,8 @@ class LichLamViecSeeder extends Seeder
             'time_end' => '15:00',
             'reason' => '',
         ]); 
-        LichLamViec::create([
-            'staff_id' => 3,        
-            'date' => '2024-09-28',
-            'time_start' => '15:00',
-            'time_end' => '23:00',
-            'reason' => '',
-        ]);      
+     
+      
         LichLamViec::create([
             'staff_id' => 2,
             'date' => '2024-09-29',
@@ -105,13 +70,7 @@ class LichLamViecSeeder extends Seeder
             'time_end' => '15:00',
             'reason' => '',
         ]); 
-        LichLamViec::create([
-            'staff_id' => 3,        
-            'date' => '2024-09-29',
-            'time_start' => '15:00',
-            'time_end' => '23:00',
-            'reason' => '',
-        ]);      
+       
       
     }
 }

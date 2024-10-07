@@ -21,5 +21,23 @@ class EmployeeService {
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
     }
+    async createWorkingSchedule(data) {
+        return (await this.api.post("/create-working-schedule", data)).data;
+    }
+    async getWorkingSchedule(staff_id) {
+        return (await this.api.get(`/lich-lam-viec/${staff_id}`)).data;
+    }
+
+    async getWorkingScheduleAll() {
+        return (await this.api.get("/lich-lam-viec")).data;
+    }
+
+    async updateWorkingSchedule(id, data) {
+        return (await this.api.put(`/lich-lam-viec/${id}`, data)).data;
+    }
+    
+    async deleteWorkingSchedule(id) {
+        return (await this.api.delete(`/lich-lam-viec/${id}`)).data;
+    }
 }
 export default new EmployeeService();
