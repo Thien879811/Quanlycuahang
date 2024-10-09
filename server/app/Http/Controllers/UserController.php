@@ -54,6 +54,7 @@ class UserController extends Controller
             'phone' => $request->phone,
             'gioitinh' => $request->gioitinh,
             'position' => $request->position,
+            'salary' => $request->salary,
             'user_id' => $user->id
         ]);
         return response()->json(['user' => $user, 'staff' => $staff, 'message' => 'User created successfully']);

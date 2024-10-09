@@ -31,6 +31,7 @@ class AuthController extends Controller
 
     }
 
+
     public function register(RegisterRequest $request ,Response $res)
     {
         $data = $request->validated();

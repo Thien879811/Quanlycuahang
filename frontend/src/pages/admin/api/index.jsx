@@ -25,8 +25,10 @@ export const fetchEmployees = async () => {
             age: employee.age,
             address: employee.address,
             phone: employee.phone,
-            position_id: employee.position_id,
+            gender: employee.gioitinh,
+            position: employee.position,
             user_id: employee.user_id,
+            salary: employee.salary,
             created_at: employee.created_at,
             updated_at: employee.updated_at
         }));
@@ -47,11 +49,25 @@ export const fetchSchedules = () => {
     ]);
 };
 
-export const fetchSalaries = () => {
+export const fetchSalaries = async () => {
+
+    const response = await EmployeeService.getAllSalary();
+    const cleanData = handleResponse(response);
+
+    const data = JSON.parse(cleanData);
+
+    const salaries = data.map(salary => ({
+        id: salary.id,
+        employee_id: salary.staff_id,
+        mouth: salary.mouth,
+        bassic_wage: salary.bassic_wage,
+        total: salary.total,
+        work_day: salary.work_day,
+        salary_overtime: salary.salary_overtime,
+        overtime: salary.overtime,
+    }));
+
+    return salaries;
   // TODO: Replace with actual API call
-    return Promise.resolve([
-        { id: 1, employeeId: 1, month: '2023-04', baseSalary: 5000, overtime: 500, deductions: 200, totalSalary: 5300 },
-        { id: 2, employeeId: 2, month: '2023-04', baseSalary: 4500, overtime: 300, deductions: 100, totalSalary: 4700 },
-        // ... more salary data
-    ]);
+    
 };

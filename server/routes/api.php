@@ -31,6 +31,8 @@ Route::post('/employee/create-working-schedule',[LichLamViecController::class,'c
 Route::get('/employee/lich-lam-viec',[LichLamViecController::class,'getAll']);
 Route::put('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'update']);
 Route::delete('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'delete']);
+Route::post('/employee/salary',[SatffController::class,'createSalary']);
+Route::get('/employee/salary',[SatffController::class,'getAllSalary']);
 
 Route::post('login',[AuthController::class,'login']);
 Route::post('register',[AuthController::class,'register']);

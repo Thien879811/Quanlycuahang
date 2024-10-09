@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs } from 'antd';
 import ScheduleTab from '../../components/admin/Staff/ScheduleTab';
 import SalaryTab from '../../components/admin/Staff/SalaryTab';
+import InfoEmployee from '../../components/admin/Staff/InfoEmployee';
 import { fetchEmployees, fetchSchedules, fetchSalaries } from './api/index';
 
 const { TabPane } = Tabs;
@@ -34,6 +35,9 @@ const EmployeeSchedule = () => {
             employees={employees}
             salaries={salaries}
           />
+        </TabPane>
+        <TabPane tab="Thông tin nhân viên" key="3">
+          <InfoEmployee employees={employees} />
         </TabPane>
       </Tabs>
     </div>

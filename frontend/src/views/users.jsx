@@ -258,6 +258,13 @@ export default function Users() {
                                 <Select.Option value="staff">Staff</Select.Option>
                             </Select>
                         </Form.Item>
+                        <Form.Item
+                            name="salary"
+                            label="Salary"
+                            rules={[{ required: true, message: 'Please input the salary!' }]}
+                        >
+                            <Input type="number" />
+                        </Form.Item>
                     </Form>
                 </Modal>
             </Space>

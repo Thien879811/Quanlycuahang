@@ -39,5 +39,11 @@ class EmployeeService {
     async deleteWorkingSchedule(id) {
         return (await this.api.delete(`/lich-lam-viec/${id}`)).data;
     }
+    async createSalary(data) {
+        return (await this.api.post("/salary", data)).data;
+    }
+    async getAllSalary() {
+        return (await this.api.get("/salary")).data;
+    }
 }
 export default new EmployeeService();

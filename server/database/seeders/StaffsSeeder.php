@@ -23,6 +23,7 @@ class StaffsSeeder extends Seeder
             'gioitinh' => 'Nam',
             'position' => 'Nhan vien',
             'user_id' => 1,
+            'salary' => 4700000,
         ]);
 
         Staff::create([
@@ -33,6 +34,7 @@ class StaffsSeeder extends Seeder
             'gioitinh' => 'Nam',
             'position' => 'Nhan vien',
             'user_id' => 1,
+            'salary' => 4700000,
         ]);
 
     }
