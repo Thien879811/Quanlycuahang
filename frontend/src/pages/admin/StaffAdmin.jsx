@@ -4,7 +4,8 @@ import { Tabs } from 'antd';
 import ScheduleTab from '../../components/admin/Staff/ScheduleTab';
 import SalaryTab from '../../components/admin/Staff/SalaryTab';
 import InfoEmployee from '../../components/admin/Staff/InfoEmployee';
-import { fetchEmployees, fetchSchedules, fetchSalaries } from './api/index';
+import AttendanceTab from '../../components/admin/Staff/AttendanceTab';
+import { fetchEmployees, fetchSchedules, fetchSalaries, fetchAttendances } from './api/index';
 
 const { TabPane } = Tabs;
 
@@ -12,11 +13,13 @@ const EmployeeSchedule = () => {
   const [employees, setEmployees] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [salaries, setSalaries] = useState([]);
-
+  const [attendances, setAttendances] = useState([]);
   useEffect(() => {
     fetchEmployees().then(setEmployees);
     fetchSchedules().then(setSchedules);
     fetchSalaries().then(setSalaries);
+    fetchAttendances().then(setAttendances);
+    console.log(attendances);
   }, []);
 
   return (
@@ -30,13 +33,20 @@ const EmployeeSchedule = () => {
             setSchedules={setSchedules}
           />
         </TabPane>
-        <TabPane tab="Lương" key="2">
+        <TabPane tab="Chấm Công" key="2">
+          <AttendanceTab 
+            employees={employees}
+            salaries={salaries}
+            attendances={attendances}
+          />
+        </TabPane>
+        <TabPane tab="Lương" key="3">
           <SalaryTab 
             employees={employees}
             salaries={salaries}
           />
         </TabPane>
-        <TabPane tab="Thông tin nhân viên" key="3">
+        <TabPane tab="Thông tin nhân viên" key="4">
           <InfoEmployee employees={employees} />
         </TabPane>
       </Tabs>

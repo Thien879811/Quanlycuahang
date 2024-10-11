@@ -26,18 +26,43 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */ 
+//factory api
+Route::get('/factory',[FactoryController::class,'getAll']);
+Route::get('/factory/{id}',[FactoryController::class,'getById']);
+Route::post('/factory',[FactoryController::class,'create']);
+Route::put('/factory/{id}',[FactoryController::class,'update']);
+Route::delete('/factory/{id}',[FactoryController::class,'delete']);
 
+//employee api
 Route::post('/employee/create-working-schedule',[LichLamViecController::class,'create']);
 Route::get('/employee/lich-lam-viec',[LichLamViecController::class,'getAll']);
 Route::put('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'update']);
 Route::delete('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'delete']);
+Route::get('employee/lich-lam-viec/{staff_id}',[LichLamViecController::class,'getByStaffId']);
+
+Route::get('employee/',[SatffController::class,'getAll']);
+Route::get('employee/{user_id}',[SatffController::class,'getInfoEmployee']);
 Route::post('/employee/salary',[SatffController::class,'createSalary']);
 Route::get('/employee/salary',[SatffController::class,'getAllSalary']);
+
+Route::post('/employee/cham-cong',[ChamCongController::class,'create']);
+Route::get('/employee/cham-cong',[ChamCongController::class,'index']);
+Route::put('/employee/cham-cong/{id}',[ChamCongController::class,'update']);
+Route::post('employee/check-in',[ChamCongController::class,'create']);
+Route::put('employee/check-out/{id}',[ChamCongController::class,'update']);
+Route::get('employee/cham-cong/{staff_id}/{day}',[ChamCongController::class,'getByStaffIdAndDay']);
+Route::get('employee/cham-cong',[ChamCongController::class,'index']);
+Route::put('employee/{id}',[ChamCongController::class,'update']);
 
 Route::post('login',[AuthController::class,'login']);
 Route::post('register',[AuthController::class,'register']);
 Route::post('/logout',[AuthController::class,'logout']);
 Route::get('/product',[ProductController::class,'getAll']);
+
+
+
+
+
 
 // user manager api
 Route::controller(UserController::class)->group(function () {
@@ -56,21 +81,11 @@ Route::controller(PromotionController::class)->group(function () {
     Route::put('/promotion/{id}', 'update');
 });
 
-Route::prefix('/employee')->group(function () {
 
-    Route::get('/',[SatffController::class,'getAll']);
-    Route::get('/{user_id}',[SatffController::class,'getInfoEmployee']);
 
-    //Route::get('/lich-lam-viec',[LichLamViecController::class,'getAll']);
-    Route::get('/lich-lam-viec/{staff_id}',[LichLamViecController::class,'getByStaffId']);
-   
-    Route::post('/check-in',[ChamCongController::class,'create']);
-    Route::put('/check-out/{id}',[ChamCongController::class,'update']);
-    Route::get('/cham-cong/{staff_id}/{day}',[ChamCongController::class,'getByStaffIdAndDay']);
-    Route::get('/cham-cong',[ChamCongController::class,'index']);
-    Route::put('/{id}',[ChamCongController::class,'update']);
 
-});
+
+
 
 Route::controller(HangSuDungController::class)->group(function () {
     Route::get('/hang-su-dung', 'getAll');
@@ -99,9 +114,6 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::post('/verify-token',[AuthController::class,'verifyToken']);
 });
 
-
-
-Route::get('/factory',[FactoryController::class,'getAll']);
 
 
 Route::post('/product',[ProductController::class,'create']);

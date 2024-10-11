@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import orderService from '../../services/order.service';
+import { handleResponse } from '../../functions';
 
 const Order = () => {
     const [orders, setOrders] = useState([]);
@@ -13,11 +14,10 @@ const Order = () => {
         const fetchOrders = async () => {
             try {
                 const response = await orderService.getAll();
-                console.log(response);
-                const cleanJsonString = response.replace(/^<!--\s*|\s*-->$/g, '');
-                const data = JSON.parse(cleanJsonString);
-                setOrders(data);
-                console.log(data);
+                const dataResponse = handleResponse(response);
+               
+                setOrders(dataResponse);
+              
             } catch (error) {
                 console.error('Lỗi khi lấy danh sách đơn hàng:', error);
             }

@@ -28,7 +28,7 @@ class SatffController extends Controller
     {
         // Lấy danh sách ID nhân viên và tháng từ request
         $employeeIds = $request->input('employeeIds');
-        $month = $request->input('mouth');
+        $month = $request->input('month');
 
         // Validate the month format
         try {

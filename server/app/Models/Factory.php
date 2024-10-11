@@ -15,7 +15,11 @@ class Factory extends Model
         'factory_name',
         'address',
         'phone',
-        'catalogy_id',
+        'email',
     ];
 
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'factory_id');
+    }
 }

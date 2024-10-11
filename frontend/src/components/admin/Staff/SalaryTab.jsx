@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, message, Modal, Form, Input, DatePicker, Select, Space, InputNumber } from 'antd';
 import moment from 'moment';
 import EmployeeService from '../../../services/employee.service';
+import {fetchSalaries} from '../../../pages/admin/api/index';
 
 const { Option } = Select;
 
@@ -100,14 +101,13 @@ const SalaryTab = ({ employees, salaries }) => {
         setIsCreateSalaryModalVisible(true);
     };
 
-    const handleCreateSalaryModalOk = () => {
-        createSalaryForm.validateFields().then((values) => {
+    const handleCreateSalaryModalOk =  () => {
+        createSalaryForm.validateFields().then(async (values) => {
             const data = {
                 employeeIds: values.employees,
-                month: values.month.format('YYYY-MM-DD'),
+                month: values.month,
             }
-            console.log(data);
-            EmployeeService.createSalary(data)
+            const response = await EmployeeService.createSalary(data)
                 .then(() => {
                     message.success('Bảng lương đã được tạo');
                     setIsCreateSalaryModalVisible(false);
@@ -117,6 +117,8 @@ const SalaryTab = ({ employees, salaries }) => {
                     message.error('Có lỗi xảy ra khi tạo bảng lương');
                     console.error(error);
                 });
+
+            fetchSalaries();
         }).catch((info) => {
             console.log('Validate Failed:', info);
         });

@@ -19,19 +19,20 @@ class FactSeeder extends Seeder
             'factory_name' => 'Cty TNHH ABC',
             'address' => 'Hà Nội',
             'phone' => '0987654321',
-            'catalogy_id' => 1,
+            'email' => 'abc@gmail.com',
         ]);
         Factory::create([
             'factory_name' => 'Cty TNHH XYZ',
             'address' => 'Hải Phòng',
             'phone' => '0987654321',
-            'catalogy_id' => 2,
+            'email' => 'xyz@gmail.com',
+            
         ]);
         Factory::create([
             'factory_name' => 'Cty TNHH QWE',
             'address' => 'Cà Mau',
             'phone' => '0987654321',
-            'catalogy_id' => 3,
+            'email' => 'qwe@gmail.com',
         ]);
     }
 }

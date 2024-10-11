@@ -23,6 +23,7 @@ class ChamCongController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    
     public function create(Request $request)
     {
         
@@ -37,7 +38,11 @@ class ChamCongController extends Controller
         }
         else{
             $chamCong = ChamCong::create($chamCong);
-            return response()->json($chamCong);
+            return response()->json([
+                'success' => true,
+                'message' => 'Chấm công đã được tạo thành công',
+                $chamCong
+            ]);
         }
     }
 
@@ -55,8 +60,11 @@ class ChamCongController extends Controller
         $chamCong->save();
 
         return response()->json(
-           $chamCong,
-           200
+           [
+            'success' => true,
+            'message' => 'Chấm công đã được cập nhật thành công',
+            $chamCong
+           ]
         );
     }
 

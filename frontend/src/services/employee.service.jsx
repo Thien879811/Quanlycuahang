@@ -42,8 +42,21 @@ class EmployeeService {
     async createSalary(data) {
         return (await this.api.post("/salary", data)).data;
     }
+
     async getAllSalary() {
         return (await this.api.get("/salary")).data;
+    }
+
+    async createAttendance(data) {
+        return (await this.api.post("/cham-cong", data)).data;
+    }
+
+    async getAllAttendance() {
+        return (await this.api.get("/cham-cong")).data;
+    }
+
+    async updateAttendance(id, data) {
+        return (await this.api.put(`/cham-cong/${id}`, data)).data;
     }
 }
 export default new EmployeeService();

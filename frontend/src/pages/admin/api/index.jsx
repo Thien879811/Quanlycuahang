@@ -68,6 +68,23 @@ export const fetchSalaries = async () => {
     }));
 
     return salaries;
-  // TODO: Replace with actual API call
-    
+  // TODO: Replace with actual API call   
 };
+
+
+export const fetchAttendances = async () => {
+    const response = await EmployeeService.getAllAttendance();
+    const cleanData = handleResponse(response);
+    const data = JSON.parse(cleanData);
+    const attendances = data.map(attendance => ({
+        id: attendance.id,
+        employee_id: attendance.staff_id,
+        date: attendance.date,
+        time_start: attendance.time_start,
+        time_end: attendance.time_end,
+        status: attendance.status,
+        reason: attendance.reason
+    }));
+    return attendances;
+};
+
