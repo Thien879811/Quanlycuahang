@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
-import { Table, Tag, Modal } from 'antd';
+import { Table, Tag, Modal, Button, Form, Image } from 'antd';
 import { Typography, Box, Divider } from '@mui/material';
+import useProducts from "../../../utils/productUtils"
+import moment from 'moment';
+import ProductForm from '../../../pages/admin/products/productForm';
+import useCatalogs from '../../../utils/catalogUtils';
+import useFactories from '../../../utils/factoryUtils';
 
 const ProductsTable = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const {products, updateProduct} = useProducts();
+  const {catalogs} = useCatalogs();
+  const {factories} = useFactories();
 
   const showModal = (product) => {
     setSelectedProduct(product);
@@ -19,17 +28,47 @@ const ProductsTable = () => {
     setIsModalVisible(false);
   };
 
+  const showEditModal = () => {
+    setIsModalVisible(false);
+    setIsEditModalVisible(true);
+  };
+
+  const handleEditCancel = () => {
+    setIsEditModalVisible(false);
+  };
+
+  const handleEditSubmit = (values) => {
+    updateProduct(selectedProduct.id, values);
+    setIsEditModalVisible(false);
+    setIsModalVisible(true);
+  };
+
+  const formatDate = (date) => {
+    return moment(date).format('DD/MM/YYYY');
+  };
+
   const columns = [
     {
       title: 'Sản phẩm',
-      dataIndex: 'name',
-      key: 'name',
-      render: (text, record) => text,
+      dataIndex: 'product_name',
+      key: 'product_name',
+      render: (text, record) => (
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Image
+            src={record.image}
+            alt={text}
+            width={50}
+            height={50}
+            style={{ marginRight: '20px', objectFit: 'cover' }}
+          />
+          <span style={{ marginLeft: '10px' }}>{text}</span>
+        </Box>
+      ),
     },
     {
       title: 'Giá mua',
-      dataIndex: 'buyingPrice',
-      key: 'buyingPrice',
+      dataIndex: 'purchase_price',
+      key: 'purchase_price',
       render: (price) => `₫${price}`,
     },
     {
@@ -38,56 +77,52 @@ const ProductsTable = () => {
       key: 'quantity',
     },
     {
-      title: 'Ngưỡng tồn kho',
-      dataIndex: 'threshold',
-      key: 'threshold',
+      title: 'Ngày sản xuất',
+      dataIndex: 'production_date',
+      key: 'production_date',
+      render: (date) => formatDate(date),
     },
     {
       title: 'Ngày hết hạn',
-      dataIndex: 'expiryDate',
-      key: 'expiryDate',
+      dataIndex: 'expiration_date',
+      key: 'expiration_date',
+      render: (date) => formatDate(date),
     },
     {
       title: 'Tình trạng',
       dataIndex: 'availability',
       key: 'availability',
-      render: (availability) => (
-        <Tag color={availability === 'Còn hàng' ? 'green' : 'red'}>
-          {availability}
+      render: (_, record) => (
+        <Tag color={record.quantity > 0 ? 'green' : 'red'}>
+          {record.quantity > 0 ? 'Còn hàng' : 'Hết hàng'}
         </Tag>
       ),
     },
-  ];
-
-  const data = [
-    {
-      key: '1',
-      name: 'Mì Maggi',
-      buyingPrice: 430,
-      quantity: '43 Gói',
-      threshold: '12 Gói',
-      expiryDate: '11/12/22',
-      availability: 'Còn hàng',
-    },
-    // Thêm dữ liệu cho các sản phẩm khác...
   ];
 
   return (
     <>
       <Table 
         columns={columns} 
-        dataSource={data} 
+        dataSource={products} 
         onRow={(record) => ({
           onClick: () => showModal(record),
         })}
       />
       <Modal
-        title={selectedProduct?.name}
+        title={selectedProduct?.product_name}
         visible={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
         width={800}
-        footer={null}
+        footer={[
+          <Button key="edit" type="primary" onClick={showEditModal}>
+            Chỉnh sửa
+          </Button>,
+          <Button key="back" onClick={handleCancel}>
+            Đóng
+          </Button>,
+        ]}
       >
         {selectedProduct && (
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -95,61 +130,59 @@ const ProductsTable = () => {
               <Typography variant="h6" sx={{ mb: 2 }}>Thông tin chính</Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 1 }}>
                 <Typography color="text.secondary">Tên sản phẩm</Typography>
-                <Typography>{selectedProduct.name}</Typography>
-                <Typography color="text.secondary">Mã sản phẩm</Typography>
-                <Typography>{selectedProduct.id}</Typography>
+                <Typography>{selectedProduct.product_name}</Typography>
+                <Typography color="text.secondary">Mã vạch</Typography>
+                <Typography>{selectedProduct.barcode}</Typography>
                 <Typography color="text.secondary">Danh mục sản phẩm</Typography>
-                <Typography>{selectedProduct.category}</Typography>
+                <Typography>{catalogs.find(cat => cat.id === selectedProduct.catalogy_id)?.catalogy_name}</Typography>
+                <Typography color="text.secondary">Ngày sản xuất</Typography>
+                <Typography>{formatDate(selectedProduct.production_date)}</Typography>
                 <Typography color="text.secondary">Ngày hết hạn</Typography>
-                <Typography>{selectedProduct.expiryDate}</Typography>
-                <Typography color="text.secondary">Ngưỡng tồn kho</Typography>
-                <Typography>{selectedProduct.threshold}</Typography>
+                <Typography>{formatDate(selectedProduct.expiration_date)}</Typography>
               </Box>
 
               <Divider sx={{ my: 2 }} />
 
-              <Typography variant="h6" sx={{ mb: 2 }}>Thông tin nhà cung cấp</Typography>
+              <Typography variant="h6" sx={{ mb: 2 }}>Thông tin nhà máy sản xuất</Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 1 }}>
-                <Typography color="text.secondary">Tên nhà cung cấp</Typography>
-                <Typography>{selectedProduct.supplierName}</Typography>
-                <Typography color="text.secondary">Số điện thoại</Typography>
-                <Typography>{selectedProduct.supplierContact}</Typography>
+                <Typography color="text.secondary">Tên nhà máy</Typography>
+                <Typography>{factories.find(fac => fac.id === selectedProduct.factory_id)?.factory_name}</Typography>
               </Box>
 
               <Divider sx={{ my: 2 }} />
 
-              <Typography variant="h6" sx={{ mb: 2 }}>Vị trí tồn kho</Typography>
+              <Typography variant="h6" sx={{ mb: 2 }}>Thông tin giá</Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography fontWeight="bold">Tên cửa hàng</Typography>
-                <Typography fontWeight="bold">Số lượng tồn kho</Typography>
+                <Typography fontWeight="bold">Giá mua vào</Typography>
+                <Typography fontWeight="bold">Giá bán ra</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography>{selectedProduct.storeName}</Typography>
-                <Typography color="primary">{selectedProduct.stockInHand}</Typography>
+                <Typography>{selectedProduct.purchase_price}</Typography>
+                <Typography color="primary">{selectedProduct.selling_price}</Typography>
               </Box>
             </Box>
             <Box sx={{ width: '30%' }}>
-              <img src={selectedProduct.image} alt={selectedProduct.name} style={{ width: '100%', marginBottom: '20px', border: '1px dashed #ccc', padding: '10px' }} />
+              <Image
+                src={selectedProduct.image}
+                alt={selectedProduct.product_name}
+                style={{ width: '100%', marginBottom: '20px', border: '1px dashed #ccc', padding: '10px' }}
+              />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography color="text.secondary">Tồn kho đầu kỳ</Typography>
-                <Typography>{selectedProduct.openingStock}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography color="text.secondary">Tồn kho hiện tại</Typography>
-                <Typography>{selectedProduct.remainingStock}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography color="text.secondary">Đang vận chuyển</Typography>
-                <Typography>{selectedProduct.onTheWay}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography color="text.secondary">Ngưỡng tồn kho</Typography>
-                <Typography>{selectedProduct.threshold}</Typography>
+                <Typography color="text.secondary">Số lượng</Typography>
+                <Typography>{selectedProduct.quantity}</Typography>
               </Box>
             </Box>
           </Box>
         )}
       </Modal>
+      <ProductForm
+        visible={isEditModalVisible}
+        onCancel={handleEditCancel}
+        onSubmit={handleEditSubmit}
+        initialValues={selectedProduct}
+        catalogs={catalogs}
+        factories={factories}
+      />
     </>
   );
 };

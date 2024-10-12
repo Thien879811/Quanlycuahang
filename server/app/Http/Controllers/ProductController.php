@@ -25,13 +25,19 @@ class ProductController extends Controller
         $existingProduct = $this->checkExistingProduct($productData);
 
         if ($existingProduct) {
-            return response()->json($existingProduct, 400);
+            return response()->json([
+                'success' => false,
+                'message' => 'Sản phẩm đã tồn tại.'
+            ], 200);
         }
 
         //Handle image upload
         $imageResult = $this->handleImageUpload($request);
         if (!$imageResult['success']) {
-            return response()->json($imageResult, 400);
+            return response()->json([
+                'success' => false,
+                'message' => $imageResult['message']
+            ]);
         }
 
         $productData['image'] = $imageResult['imageUrl'];
@@ -50,8 +56,8 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'product' => $product,
-            'message' => 'Product created successfully.'
-        ], 200);
+            'message' => 'Sản phẩm đã tạo thành công.'
+        ]);
     }
 
 
@@ -105,12 +111,16 @@ class ProductController extends Controller
             'message' => 'No image file provided.'
         ];
     }
+
     public function update(Request $request, $id)
     {
         $product = Product::find($id);
         
         if (!$product) {
-            return response()->json(['message' => 'Product not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Sản phẩm không tồn tại'
+            ]);
         }
 
         $data = $request->all();
@@ -127,7 +137,10 @@ class ProductController extends Controller
                 }
                 $data['image'] = $imageResult['imageUrl'];
             } else {
-                return response()->json(['message' => $imageResult['message']], 400);
+                return response()->json([
+                    'success' => false,
+                    'message' => $imageResult['message']
+                ]);
             }
         }
 
@@ -153,8 +166,9 @@ class ProductController extends Controller
         }
 
         return response()->json([
-            'message' => 'Product updated successfully',
+            'success' => true,
+            'message' => 'Sản phẩm đã cập nhật thành công',
             'data' => $product
-        ], 200);
+        ]);
     }
 }

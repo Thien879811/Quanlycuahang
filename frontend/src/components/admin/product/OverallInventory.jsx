@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Row, Col, Card, Typography, Button, Modal, List, Input, Form } from 'antd';
 import { createGlobalStyle } from 'styled-components';
 import { EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import useCatalogs from '../../../utils/catalogUtils';
+import useProducts from '../../../utils/productUtils';
 
 const { Text } = Typography;
 
@@ -52,12 +54,8 @@ const StatisticCard = ({ title, value1, value2, subLabel1, subLabel2, titleColor
 
 const OverallInventory = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [categories, setCategories] = useState([
-    'Điện thoại', 'Laptop', 'Máy tính bảng', 'Phụ kiện',
-    'Đồng hồ thông minh', 'Tai nghe', 'Loa', 'Sạc dự phòng',
-    'Cáp sạc', 'Ốp lưng', 'Màn hình', 'Bàn phím',
-    'Chuột', 'Webcam'
-  ]);
+  const {catalogs, fetchCatalogs, createCatalog } = useCatalogs();
+  const { products } = useProducts();
   const [form] = Form.useForm();
 
   const showModal = () => {
@@ -73,20 +71,18 @@ const OverallInventory = () => {
   };
 
   const handleAddCategory = (values) => {
-    setCategories([...categories, values.newCategory]);
+    createCatalog(values);
+    fetchCatalogs();
     form.resetFields();
   };
 
   return (
     <div>
       <GlobalStyle />
-      <Text strong style={{ fontSize: '24px', display: 'block', marginBottom: '16px', fontWeight: 700 }}>
-        Tổng quan tồn kho
-      </Text>
       <Row gutter={16}>
         <StatisticCard
           title="Danh mục"
-          value1={categories.length}
+          value1={catalogs.length}
           subLabel1="7 ngày qua"
           titleColor="#1890ff"
           showViewButton={true}
@@ -94,8 +90,8 @@ const OverallInventory = () => {
         />
         <StatisticCard
           title="Tổng sản phẩm"
-          value1="868"
-          value2="₹25000"
+          value1={products.length}
+          //value2="₹25000"
           subLabel1="7 ngày qua"
           subLabel2="Doanh thu"
           titleColor="#ffa940"
@@ -130,16 +126,16 @@ const OverallInventory = () => {
       >
         <List
           bordered
-          dataSource={categories}
+          dataSource={catalogs}
           renderItem={(item) => (
             <List.Item>
-              <Typography.Text>{item}</Typography.Text>
+              <Typography.Text>{item.catalogy_name}</Typography.Text>
             </List.Item>
           )}
         />
         <Form form={form} onFinish={handleAddCategory} style={{ marginTop: '20px' }}>
           <Form.Item
-            name="newCategory"
+            name="catalogy_name"
             rules={[{ required: true, message: 'Vui lòng nhập tên danh mục!' }]}
           >
             <Input placeholder="Nhập tên danh mục mới" />

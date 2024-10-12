@@ -20,11 +20,11 @@ class OrdersFactory extends Factory
     public function definition()
     {
         return [
-            'staff_id' => $this->faker->numberBetween(2, 3),
-            'tongcong' => $this->faker->randomFloat(2, 10, 1000),
-            'status' => 1,
+            'customer_id' => null,
+            'staff_id' => $this->faker->numberBetween(1, 2),
+            'tongcong' => $this->faker->numberBetween(10000, 1000000), // Assuming 'tongcong' is in cents
+            'status' => $this->faker->numberBetween(0, 3), // Assuming status can be 0, 1, 2, or 3
             'pays_id' => $this->faker->numberBetween(1, 2),
         ];
     }
 }
-

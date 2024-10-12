@@ -12,15 +12,34 @@ class Product extends Model
     protected $table = 'products';
 
     protected $fillable = [
+        // Tên sản phẩm
         'product_name',
+        
+        // Mã vạch sản phẩm
         'barcode',
+        
+        // Ngày sản xuất
         'production_date',
+        
+        // Ngày hết hạn
         'expiration_date',
+        
+        // Số lượng sản phẩm
         'quantity',
+        
+        // Giá bán
         'selling_price',
+        
+        // ID danh mục sản phẩm
         'catalogy_id',
+        
+        // Đường dẫn hình ảnh sản phẩm
         'image',
+        
+        // ID nhà máy sản xuất
         'factory_id',
+        
+        // Giá mua vào
         'purchase_price',
     ];
 

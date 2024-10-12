@@ -73,9 +73,8 @@ export default function AdminLayout() {
             onClick: handleProductsClick,
             open: openProducts,
             subItems: [
-                { text: 'Danh sách sản phẩm', path: '/admin/products' },
+                { text: 'Tổng quan tồn kho', path: '/admin/products' },
                 { text: 'Thêm sản phẩm', path: '/admin/products/add' },
-                { text: 'Quản lý danh mục', path: '/admin/products/categories' },
                 { text: 'Nhập hàng', icon: <AddShoppingCartIcon />, path: '/admin/import' },
                 { text: 'Kiểm hàng', icon: <FactCheckIcon />, path: '/admin/inventory-check' },
                 { text: 'Lịch sử nhập', icon: <HistoryIcon />, path: '/admin/import-history' },
@@ -101,19 +100,6 @@ export default function AdminLayout() {
                         Hệ thống Quản trị
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <TextField
-                            placeholder="Tìm kiếm..."
-                            variant="outlined"
-                            size="small"
-                            sx={{ mr: 2, backgroundColor: 'white', borderRadius: '4px' }}
-                            InputProps={{
-                                endAdornment: (
-                                    <IconButton>
-                                        <SearchIcon />
-                                    </IconButton>
-                                ),
-                            }}
-                        />
                         <IconButton color="inherit">
                             <Badge badgeContent={4} color="error">
                                 <NotificationsIcon />

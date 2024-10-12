@@ -7,8 +7,11 @@ use Illuminate\Http\Request;
 
 class CataloryController extends Controller
 {
-    public function create(){
-        
+    public function create(Request $request){
+        $catalory = Catalory::create([
+            'catalogy_name' => $request->catalogy_name,
+        ]);
+        return response()->json($catalory);
     }
 
     public function getCatalory(Request $request){

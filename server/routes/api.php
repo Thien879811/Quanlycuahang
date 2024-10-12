@@ -26,6 +26,13 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */ 
+
+
+//catalog api
+Route::get('/catalory',[CataloryController::class,'getCatalory']);
+Route::post('/catalory',[CataloryController::class,'create']);
+
+
 //factory api
 Route::get('/factory',[FactoryController::class,'getAll']);
 Route::get('/factory/{id}',[FactoryController::class,'getById']);
@@ -57,7 +64,10 @@ Route::put('employee/{id}',[ChamCongController::class,'update']);
 Route::post('login',[AuthController::class,'login']);
 Route::post('register',[AuthController::class,'register']);
 Route::post('/logout',[AuthController::class,'logout']);
+
 Route::get('/product',[ProductController::class,'getAll']);
+Route::post('/product',[ProductController::class,'create']);
+Route::post('/product/{id}',[ProductController::class,'update']);
 
 
 
@@ -106,8 +116,6 @@ Route::middleware('auth:sanctum')->group(function() {
         return $request->user();
     });
 
-    Route::get('/catalory',[CataloryController::class,'getCatalory']);
-
 
     Route::post('/check-login-status',[AuthController::class,'checkLoginStatus']);
     Route::get('/current-user',[AuthController::class,'getCurrentUser']);
@@ -116,8 +124,7 @@ Route::middleware('auth:sanctum')->group(function() {
 
 
 
-Route::post('/product',[ProductController::class,'create']);
-Route::put('/product/{id}',[ProductController::class,'update']);
+
 
 
 Route::controller(CustomerController::class)->group(function () {

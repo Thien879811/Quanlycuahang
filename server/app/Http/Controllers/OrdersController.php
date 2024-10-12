@@ -15,8 +15,27 @@ class OrdersController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function getAll(){
-        $orders = Orders::all();
-        return response()->json($orders);
+        $orders = Orders::with('details.product')->get();
+        $data = $orders->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'customer_id' => $order->customer_id,
+                'staff_id' => $order->staff_id,
+                'pays_id' => $order->pays_id,
+                'status' => $order->status,
+                'created_at' => $order->created_at,
+                'details' => $order->details->map(function ($detail) {
+                    return [
+                        'product_id' => $detail->product_id,
+                        'product_name' => $detail->product->product_name,
+                        'soluong' => $detail->soluong,
+                        'dongia' => $detail->dongia,
+                        'discount' => $detail->discount,
+                    ];
+                }),
+            ];
+        });
+        return response()->json($data);
     }
 
     public function getDetail($order_id){

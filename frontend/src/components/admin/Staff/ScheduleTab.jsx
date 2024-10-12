@@ -253,13 +253,10 @@ const ScheduleTab = ({ employees, schedules, setSchedules }) => {
   };
 
   return (
-    <>
+    <Space direction="vertical" size="large" style={{ width: '83%' }}>
       <Space style={{ marginBottom: 16 }}>
         <Button icon={<PlusOutlined />} onClick={handleAddSchedule}>
           Thêm lịch trình cho nhân viên
-        </Button>
-        <Button icon={<ScheduleOutlined />} onClick={() => setIsAddTaskModalVisible(true)}>
-          Thêm công việc
         </Button>
         <Select
           style={{ width: 200 }}
@@ -408,7 +405,7 @@ const ScheduleTab = ({ employees, schedules, setSchedules }) => {
           </Form>
         )}
       </Modal>
-    </>
+    </Space>
   );
 };
 

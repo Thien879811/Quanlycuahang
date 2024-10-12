@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Orders;
+use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,11 +18,13 @@ class DetailOrderFactory extends Factory
      */
     public function definition()
     {
+        $product = Product::inRandomOrder()->first(); 
         return [
-            'order_id' => $this->faker->numberBetween(3, 10),
-            'product_id' => $this->faker->numberBetween(1, 10),
+            'order_id' => Orders::factory(),
+            'product_id' => $product->id,
+            'dongia' => $product->selling_price,
             'soluong' => $this->faker->numberBetween(1, 10),
-            'dongia' => $this->faker->randomFloat(2, 10, 1000),
+            'discount' => null,
         ];
     }
 }

@@ -24,7 +24,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->integer('selling_price');
             $table->integer('purchase_price');
-            $table->integer('barcode');
+            $table->string('barcode');
             $table->timestamps(); 
         });
     }
