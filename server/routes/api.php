@@ -12,6 +12,7 @@ use App\Http\Controllers\LichLamViecController;
 use App\Http\Controllers\ChamCongController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\GoodsReceiptController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,11 @@ use Illuminate\Support\Facades\Route;
 |
 */ 
 
+//goods receipt api
+Route::controller(GoodsReceiptController::class)->group(function () {
+    Route::post('/goods-receipt', 'createGoodsReceipt');
+    Route::get('/goods-receipt', 'getAll');
+});
 
 //catalog api
 Route::get('/catalory',[CataloryController::class,'getCatalory']);

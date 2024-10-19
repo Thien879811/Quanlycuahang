@@ -74,8 +74,7 @@ export default function AdminLayout() {
             open: openProducts,
             subItems: [
                 { text: 'Tổng quan tồn kho', path: '/admin/products' },
-                { text: 'Thêm sản phẩm', path: '/admin/products/add' },
-                { text: 'Nhập hàng', icon: <AddShoppingCartIcon />, path: '/admin/import' },
+                { text: 'Nhập hàng', icon: <AddShoppingCartIcon />, path: '/admin/import-product' },
                 { text: 'Kiểm hàng', icon: <FactCheckIcon />, path: '/admin/inventory-check' },
                 { text: 'Lịch sử nhập', icon: <HistoryIcon />, path: '/admin/import-history' },
             ],

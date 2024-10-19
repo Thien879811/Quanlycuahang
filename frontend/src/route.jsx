@@ -21,8 +21,8 @@ import StaffAdmin from './pages/admin/StaffAdmin.jsx';
 import SupplierAdmin from './pages/admin/SupplierAdmin.jsx';
 import SalesAdmin from './pages/admin/SalesAdmin.jsx';
 import Vnpay from './pages/vnpay.jsx';
-
-
+import ImportAdmin from './pages/admin/products/importAdmin.jsx';
+import HistoryReceipt from './pages/admin/products/HistoryReceipt.jsx';
 
 const router = createBrowserRouter ([
     {
@@ -109,6 +109,14 @@ const router = createBrowserRouter ([
             {
                 path: '/admin/sales',
                 element: <SalesAdmin />
+            },
+            {
+                path: '/admin/import-product',
+                element: <ImportAdmin />
+            },
+            {
+                path: '/admin/import-history',
+                element: <HistoryReceipt />
             }
         ]
     },

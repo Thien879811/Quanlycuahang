@@ -410,6 +410,7 @@ const Home = () => {
 					<Scanner onDetected={handleBarcodeScanned} />
 				</DialogContent>
 			</Dialog>
+			
 		</Grid>
 	);
 };

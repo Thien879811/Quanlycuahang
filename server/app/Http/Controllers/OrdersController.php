@@ -140,13 +140,6 @@ class OrdersController extends Controller
     return response()->json($order, 201);
 }
 
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -158,51 +151,6 @@ class OrdersController extends Controller
         return response()->json( $validated);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Orders  $orders
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Orders $orders)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Orders  $orders
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Orders $orders)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Orders  $orders
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Orders $orders)
-    {
-        
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Orders  $orders
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Orders $orders)
-    {
-        //
-    }
-
     public function getOne(){
         return response()->json([
             'message'=>'thanhcong'
@@ -210,6 +158,7 @@ class OrdersController extends Controller
     }
 
     public function updateOrder(Request $request, $order_id){
+
         $validated = $request->validate([
             'status' => 'required',
             'pays_id' => 'required'
@@ -220,6 +169,17 @@ class OrdersController extends Controller
         $order->pays_id = $validated['pays_id'];
         $order->save();
 
-        return response()->json($order);
+        if($order->status == '1' || $order->status == '2'){
+
+            $detail = DetailOrder::where('order_id', $order->id)->get();
+
+            foreach ($detail as $item) {
+                $product = Product::find($item->product_id);
+                $product->quantity = $product->quantity - $item->soluong;
+                $product->save();
+            }
+        }
+
+        return response()->json($detail);
     }
 }
