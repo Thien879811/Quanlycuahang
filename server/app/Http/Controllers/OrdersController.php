@@ -140,6 +140,16 @@ class OrdersController extends Controller
     return response()->json($order, 201);
 }
 
+<<<<<<< HEAD
+=======
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -151,6 +161,54 @@ class OrdersController extends Controller
         return response()->json( $validated);
     }
 
+<<<<<<< HEAD
+=======
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Orders  $orders
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Orders $orders)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\Orders  $orders
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Orders $orders)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Orders  $orders
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, Orders $orders)
+    {
+        
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\Orders  $orders
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Orders $orders)
+    {
+        //
+    }
+
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
     public function getOne(){
         return response()->json([
             'message'=>'thanhcong'
@@ -158,7 +216,10 @@ class OrdersController extends Controller
     }
 
     public function updateOrder(Request $request, $order_id){
+<<<<<<< HEAD
 
+=======
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
         $validated = $request->validate([
             'status' => 'required',
             'pays_id' => 'required'
@@ -169,6 +230,7 @@ class OrdersController extends Controller
         $order->pays_id = $validated['pays_id'];
         $order->save();
 
+<<<<<<< HEAD
         if($order->status == '1' || $order->status == '2'){
 
             $detail = DetailOrder::where('order_id', $order->id)->get();
@@ -181,5 +243,8 @@ class OrdersController extends Controller
         }
 
         return response()->json($detail);
+=======
+        return response()->json($order);
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
     }
 }

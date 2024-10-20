@@ -16,13 +16,19 @@ class ProductSeeder extends Seeder
     public function run()
     {
         Product::create([
+<<<<<<< HEAD
             'product_name' => 'Sting Dâu chai 330ml'  ,
             'barcode' => '8934588233074',
+=======
+            'product_name' => 'Cà phê'  ,
+            'barcode' => '1234567890',
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
             'production_date' => '2024-01-01',
             'expiration_date' => '2024-01-01',
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
+<<<<<<< HEAD
             'image' => 'http://127.0.0.1:8000/images/sting-dau.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
@@ -290,11 +296,21 @@ class ProductSeeder extends Seeder
         Product::create([
             'product_name' => 'Bánh Snack Poca Bò Lúc Lắc 60g',
             'barcode' => '8936079122249',    
+=======
+            'image' => 'http://127.0.0.1:8000/images/1725266806.png',
+            'factory_id' => 1,
+            'purchase_price' => 10000,
+        ]);
+        Product::create([
+            'product_name' => 'Bánh mì',
+            'barcode' => '1234567890',
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
             'production_date' => '2024-01-01',
             'expiration_date' => '2024-01-01',
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
+<<<<<<< HEAD
             'image' => 'http://127.0.0.1:8000/images/poca-bo-ll.jpg',
             'factory_id' => 3,
             'purchase_price' => 6000,
@@ -394,9 +410,17 @@ class ProductSeeder extends Seeder
             'image' => 'http://127.0.0.1:8000/images/oishi-phomat.jpg',
             'factory_id' => 3,
             'purchase_price' => 3000,
+=======
+            'image' => 'http://127.0.0.1:8000/images/1725266806.png',
+            'factory_id' => 1,
+            'purchase_price' => 10000,
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
         ]);
     }
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
 }

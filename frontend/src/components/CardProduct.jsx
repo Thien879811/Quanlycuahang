@@ -64,7 +64,11 @@ export default function BasicCard({product,onClick}) {
         <div>
           <Typography level="body-xs">Total price:</Typography>
           <Typography sx={{ fontSize: 'lg', fontWeight: 'lg' }}>
+<<<<<<< HEAD
             {product.selling_price}
+=======
+            {product.purchase_price}
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
           </Typography>
         </div>
         <Button

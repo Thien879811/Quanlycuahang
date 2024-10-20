@@ -42,6 +42,12 @@ export default function login(){
                     <input ref={emailRef} type="text" placeholder="Email" />
                     <input ref={passwordRef} type="password" placeholder="Password" />
                     <button className="btn btn-block">Login</button>
+<<<<<<< HEAD
+=======
+                    <p className="message">
+                        Not Registered? <Link to= '/register'>Create a new account</Link>
+                    </p>
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
                 </form>
             </div>
         </div>

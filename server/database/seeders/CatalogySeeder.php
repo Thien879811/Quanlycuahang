@@ -17,6 +17,7 @@ class CatalogySeeder extends Seeder
     public function run()
     {
         Catalory::create([
+<<<<<<< HEAD
             'catalogy_name' => 'Nước giải khác',
         ]);
         Catalory::create([
@@ -27,6 +28,18 @@ class CatalogySeeder extends Seeder
         ]);
         Catalory::create([
             'catalogy_name' => 'Kẹo',
+=======
+            'catalogy_name' => 'Cà phê',
+        ]);
+        Catalory::create([
+            'catalogy_name' => 'Trà',
+        ]);
+        Catalory::create([
+            'catalogy_name' => 'Nước',
+        ]);
+        Catalory::create([
+            'catalogy_name' => 'Đồ ăn',
+>>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
         ]);
     }
 }
