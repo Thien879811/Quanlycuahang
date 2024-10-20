@@ -21,17 +21,11 @@ import StaffAdmin from './pages/admin/StaffAdmin.jsx';
 import SupplierAdmin from './pages/admin/SupplierAdmin.jsx';
 import SalesAdmin from './pages/admin/SalesAdmin.jsx';
 import Vnpay from './pages/vnpay.jsx';
-<<<<<<< HEAD
 import ImportAdmin from './pages/admin/products/importAdmin.jsx';
 import HistoryReceipt from './pages/admin/products/HistoryReceipt.jsx';
 import ReceiptCheck from './pages/admin/products/ReceiptCheck.jsx';
 import ReceiptCheckUser from './pages/Employee/CheckReceipt.jsx';
 import InventoryReport from './pages/Employee/InventoryReport.jsx';
-=======
-
-
-
->>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
 const router = createBrowserRouter ([
     {
         path: '/',
@@ -81,7 +75,6 @@ const router = createBrowserRouter ([
             {
                 path: '/vnpay',
                 element: <Vnpay />
-<<<<<<< HEAD
             },
             {
                 path: '/check-receipt',
@@ -90,8 +83,6 @@ const router = createBrowserRouter ([
             {
                 path: '/inventory-report',
                 element: <InventoryReport />
-=======
->>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
             }
         
         ]
@@ -128,7 +119,6 @@ const router = createBrowserRouter ([
             {
                 path: '/admin/sales',
                 element: <SalesAdmin />
-<<<<<<< HEAD
             },
             {
                 path: '/admin/import-product',
@@ -143,9 +133,6 @@ const router = createBrowserRouter ([
                 element: <ReceiptCheck />
             }
 
-=======
-            }
->>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
         ]
     },
     {

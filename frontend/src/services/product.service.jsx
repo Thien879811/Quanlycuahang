@@ -23,12 +23,9 @@ class ProductService {
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
     }
-<<<<<<< HEAD
 
     async getInventory() {
         return (await this.api.get("/inventory")).data;
     }
-=======
->>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
 }
 export default new ProductService();

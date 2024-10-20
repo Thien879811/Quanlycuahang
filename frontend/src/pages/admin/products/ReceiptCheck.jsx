@@ -48,6 +48,22 @@ const ReceiptCheck = () => {
         const response = await ReceiptService.getAll();
         const data = handleResponse(response);
         if (data.success) {
+              data.goods_receipts.forEach(receipt => {
+                if (receipt.status === '1') {
+                    receipt.status = 'Đã kiểm tra';
+                }
+                receipt.details.forEach(detail => {
+                    if (detail.status === '1') {
+                            detail.status = 'Đủ hàng hóa';
+                    }
+                    if (detail.status === '2') {
+                        detail.status = 'Hư hỏng';
+                    }
+                    if (detail.status === '0') {
+                        detail.status = 'Thiếu';
+                    }
+            });
+          });  
             setReceipts(data.goods_receipts);
             setFilteredReceipts(data.goods_receipts);
             setError('');
@@ -291,15 +307,6 @@ const ReceiptCheck = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>
-        <Button variant="contained" color="secondary" onClick={handleGoBack}>
-          Quay lại
-        </Button>
-        <Button variant="contained" color="primary" onClick={handleGoBack}>
-          Đóng
-        </Button>
-      </Box>
     </Container>
   );
 };

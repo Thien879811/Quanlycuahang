@@ -46,11 +46,7 @@ const Product = () => {
                 product_name: product.product_name,
                 image: product.image,
                 quantity: 1,
-<<<<<<< HEAD
                 price: product.selling_price,
-=======
-                price: product.purchase_price,
->>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
                 discount: 0
             });
         }
