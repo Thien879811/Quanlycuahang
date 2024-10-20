@@ -15,11 +15,7 @@ class HangSuDungController extends Controller
     }
     public function getAll()
     {
-<<<<<<< HEAD
         $hang_su_dung = HangSuDung::with('product')->get();
-=======
-        $hang_su_dung = HangSuDung::all();
->>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
         return response()->json($hang_su_dung);
     }
 

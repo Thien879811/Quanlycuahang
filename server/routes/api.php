@@ -12,10 +12,7 @@ use App\Http\Controllers\LichLamViecController;
 use App\Http\Controllers\ChamCongController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\UserController;
-<<<<<<< HEAD
 use App\Http\Controllers\GoodsReceiptController;
-=======
->>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
@@ -31,15 +28,12 @@ use Illuminate\Support\Facades\Route;
 |
 */ 
 
-<<<<<<< HEAD
 //goods receipt api
 Route::controller(GoodsReceiptController::class)->group(function () {
     Route::post('/goods-receipt', 'createGoodsReceipt');
     Route::get('/goods-receipt', 'getAll');
     Route::put('/goods-receipt/{id}', 'updateReceipt');
 });
-=======
->>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
 
 //catalog api
 Route::get('/catalory',[CataloryController::class,'getCatalory']);
@@ -81,10 +75,7 @@ Route::post('/logout',[AuthController::class,'logout']);
 Route::get('/product',[ProductController::class,'getAll']);
 Route::post('/product',[ProductController::class,'create']);
 Route::post('/product/{id}',[ProductController::class,'update']);
-<<<<<<< HEAD
 Route::get('/product/inventory',[HangSuDungController::class,'getAll']);
-=======
->>>>>>> 60f6a0aa052873cde43c9d5c60ab60def300748c
 
 
 
