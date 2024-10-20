@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Route;
 Route::controller(GoodsReceiptController::class)->group(function () {
     Route::post('/goods-receipt', 'createGoodsReceipt');
     Route::get('/goods-receipt', 'getAll');
+    Route::put('/goods-receipt/{id}', 'updateReceipt');
 });
 
 //catalog api
@@ -74,6 +75,7 @@ Route::post('/logout',[AuthController::class,'logout']);
 Route::get('/product',[ProductController::class,'getAll']);
 Route::post('/product',[ProductController::class,'create']);
 Route::post('/product/{id}',[ProductController::class,'update']);
+Route::get('/product/inventory',[HangSuDungController::class,'getAll']);
 
 
 

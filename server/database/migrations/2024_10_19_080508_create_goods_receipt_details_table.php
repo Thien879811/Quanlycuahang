@@ -20,6 +20,9 @@ return new class extends Migration
             $table->integer('quantity');
             $table->decimal('price', 10, 2);
             $table->string('status')->nullable();
+            $table->string('note')->nullable();
+            $table->date('production_date')->nullable();
+            $table->date('expiration_date')->nullable();
             $table->timestamps();
         });
     }

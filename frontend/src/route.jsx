@@ -23,7 +23,9 @@ import SalesAdmin from './pages/admin/SalesAdmin.jsx';
 import Vnpay from './pages/vnpay.jsx';
 import ImportAdmin from './pages/admin/products/importAdmin.jsx';
 import HistoryReceipt from './pages/admin/products/HistoryReceipt.jsx';
-
+import ReceiptCheck from './pages/admin/products/ReceiptCheck.jsx';
+import ReceiptCheckUser from './pages/Employee/CheckReceipt.jsx';
+import InventoryReport from './pages/Employee/InventoryReport.jsx';
 const router = createBrowserRouter ([
     {
         path: '/',
@@ -73,6 +75,14 @@ const router = createBrowserRouter ([
             {
                 path: '/vnpay',
                 element: <Vnpay />
+            },
+            {
+                path: '/check-receipt',
+                element: <ReceiptCheckUser />
+            },
+            {
+                path: '/inventory-report',
+                element: <InventoryReport />
             }
         
         ]
@@ -117,7 +127,12 @@ const router = createBrowserRouter ([
             {
                 path: '/admin/import-history',
                 element: <HistoryReceipt />
+            },
+            {
+                path: '/admin/inventory-check',
+                element: <ReceiptCheck />
             }
+
         ]
     },
     {
