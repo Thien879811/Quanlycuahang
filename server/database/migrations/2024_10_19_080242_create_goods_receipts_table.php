@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('supplier_id')->constrained('factory');
             $table->date('import_date');
+            $table->date('check_date')->nullable();
             $table->string('status')->nullable();
             $table->timestamps();
         });

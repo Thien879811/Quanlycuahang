@@ -189,14 +189,12 @@ const Home = () => {
 	};
 
 	const handleBarcodeScanned = (scannedBarcode) => {
-		const barcodeNumber = parseInt(scannedBarcode, 10);
-		const foundProduct = products.find(product => product.barcode === barcodeNumber);
+		const foundProduct = products.find(product => product.barcode === scannedBarcode);
 		if (foundProduct) {
 			addProduct(foundProduct.id, foundProduct.product_name, foundProduct.image, foundProduct.selling_price || 0, 1);
 			console.log(`Added product: ${foundProduct.product_name}`);
 			setBarcode('');
 			setIsScannerModalOpen(false); // Close the scanner modal
-
 			// Check for promotions
 			const currentDate = new Date();
 			const foundPromotion = promotions.find(promo => 

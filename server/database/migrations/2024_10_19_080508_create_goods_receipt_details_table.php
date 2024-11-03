@@ -19,8 +19,10 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products');
             $table->integer('quantity');
             $table->decimal('price', 10, 2);
-            $table->string('status')->nullable();
+            $table->integer('quantity_receipt')->default(0);
+            $table->string('status')->nullable(); 
             $table->string('note')->nullable();
+            $table->integer('return_quantity')->nullable()->default(0);
             $table->date('production_date')->nullable();
             $table->date('expiration_date')->nullable();
             $table->timestamps();

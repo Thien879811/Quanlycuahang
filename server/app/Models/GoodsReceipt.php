@@ -9,7 +9,7 @@ class GoodsReceipt extends Model
 {
     use HasFactory;
     protected $table = 'goods_receipts';
-    protected $fillable = ['supplier_id', 'import_date', 'status'];
+    protected $fillable = ['supplier_id', 'import_date', 'status', 'check_date'];
     public function supplier()
     {
         return $this->belongsTo(Factory::class, 'supplier_id');

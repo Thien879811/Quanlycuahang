@@ -21,5 +21,8 @@ class ReceiptService {
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
     }
+    async returnReceipt(data) {
+        return (await this.api.post('/return', data)).data;
+    }
 }
 export default new ReceiptService();

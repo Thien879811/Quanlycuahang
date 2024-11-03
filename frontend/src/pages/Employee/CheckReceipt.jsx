@@ -43,6 +43,7 @@ const ReceiptCheck = () => {
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedReceipt, setSelectedReceipt] = useState(null);
     const [checkResults, setCheckResults] = useState({});
+    const [checkTime, setCheckTime] = useState('');
 
     useEffect(() => {
         fetchAllReceipts();
@@ -94,6 +95,7 @@ const ReceiptCheck = () => {
     const handleOpenCheckDialog = (receipt) => {
         setSelectedReceipt(receipt);
         setCheckResults({});
+        setCheckTime(dayjs().format('YYYY-MM-DD HH:mm:ss'));
         receipt.details.forEach(detail => {
         setCheckResults(prev => ({
             ...prev,
@@ -101,7 +103,8 @@ const ReceiptCheck = () => {
                 status: 'Đủ hàng hóa', 
                 note: '',
                 production_date: null,
-                expiration_date: null
+                expiration_date: null,
+                quantity_receipt: detail.quantity
             }
         }));
         });
@@ -114,10 +117,22 @@ const ReceiptCheck = () => {
   };
 
   const handleCheckResultChange = (detailId, field, value) => {
-    setCheckResults(prev => ({
-      ...prev,
-      [detailId]: { ...prev[detailId], [field]: value }
-    }));
+    setCheckResults(prev => {
+      const updatedResult = {
+        ...prev,
+        [detailId]: { ...prev[detailId], [field]: value }
+      };
+
+      // Nếu thay đổi số lượng và khác với số lượng nhập ban đầu
+      if (field === 'quantity_receipt') {
+        const detail = selectedReceipt.details.find(d => d.id === detailId);
+        if (detail && Number(value) !== detail.quantity) {
+          updatedResult[detailId].status = '0'; // Chuyển trạng thái sang thiếu
+        }
+      }
+
+      return updatedResult;
+    });
   };
 
   const handleSubmitCheck = async () => {
@@ -125,12 +140,14 @@ const ReceiptCheck = () => {
         const updatedReceipt = {
             ...selectedReceipt,
             status: '1',
+            check_date: checkTime,
             details: selectedReceipt.details.map(detail => ({
             ...detail,
             status: checkResults[detail.id].status,
             note: checkResults[detail.id].note,
             production_date: checkResults[detail.id].production_date,
-            expiration_date: checkResults[detail.id].expiration_date
+            expiration_date: checkResults[detail.id].expiration_date,
+            quantity_receipt: checkResults[detail.id].quantity_receipt
             }))
         };
 
@@ -211,6 +228,11 @@ const ReceiptCheck = () => {
                   <Typography>
                     Nhà cung cấp: {receipt.supplier?.factory_name || 'N/A'}
                   </Typography>
+                  {receipt.check_date && (
+                    <Typography>
+                      Thời gian kiểm tra: {dayjs(receipt.check_date).format('DD/MM/YYYY HH:mm:ss')}
+                    </Typography>
+                  )}
                 </Grid>
                 <Grid item xs={12} sm={6} container justifyContent="flex-end" alignItems="center">
                   <Chip 
@@ -277,15 +299,34 @@ const ReceiptCheck = () => {
         ))}
       </Box>
 
-      <Dialog open={openDialog} onClose={handleCloseCheckDialog} maxWidth="md" fullWidth>
-        <DialogTitle>Kiểm tra hàng - Phiếu nhập #{selectedReceipt?.id}</DialogTitle>
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseCheckDialog} 
+        maxWidth="xl"
+        fullWidth
+      >
+        <DialogTitle>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Typography variant="h6">
+                Kiểm tra hàng - Phiếu nhập #{selectedReceipt?.id}
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="body2">
+                Thời gian kiểm tra: {checkTime}
+              </Typography>
+            </Grid>
+          </Grid>
+        </DialogTitle>
         <DialogContent>
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>Sản phẩm</TableCell>
-                  <TableCell align="right">Số lượng</TableCell>
+                  <TableCell align="right">Số lượng nhập</TableCell>
+                  <TableCell align="right">Số lượng kiểm tra</TableCell>
                   <TableCell align="right">Trạng thái</TableCell>
                   <TableCell align="right">Ngày sản xuất</TableCell>
                   <TableCell align="right">Hạn sử dụng</TableCell>
@@ -298,22 +339,30 @@ const ReceiptCheck = () => {
                     <TableCell>{detail.product?.product_name || 'N/A'}</TableCell>
                     <TableCell align="right">{detail.quantity}</TableCell>
                     <TableCell align="right">
+                      <TextField
+                        type="number"
+                        size="small"
+                        fullWidth
+                        value={checkResults[detail.id]?.quantity_receipt || ''}
+                        onChange={(e) => handleCheckResultChange(detail.id, 'quantity_receipt', e.target.value)}
+                        inputProps={{ min: 0, max: detail.quantity }}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
                       <FormControl fullWidth size="small">
-                        <InputLabel>Trạng thái</InputLabel>
                         <Select
                           value={checkResults[detail.id]?.status || ''}
                           onChange={(e) => handleCheckResultChange(detail.id, 'status', e.target.value)}
                         >
                           <MenuItem value="1">Đủ hàng hóa</MenuItem>
                           <MenuItem value="2">Hư hỏng</MenuItem>
-                          <MenuItem value="0">Thiếu</MenuItem>
+                          <MenuItem value="3">Thiếu</MenuItem>
                         </Select>
                       </FormControl>
                     </TableCell>
                     <TableCell align="right">
                       <TextField
                         type="date"
-                        label="Ngày sản xuất"
                         value={checkResults[detail.id]?.production_date || ''}
                         onChange={(e) => handleCheckResultChange(detail.id, 'production_date', e.target.value)}
                         InputLabelProps={{
@@ -326,7 +375,7 @@ const ReceiptCheck = () => {
                     <TableCell align="right">
                       <TextField
                         type="date"
-                        label="Hạn sử dụng"
+                        
                         value={checkResults[detail.id]?.expiration_date || ''}
                         onChange={(e) => handleCheckResultChange(detail.id, 'expiration_date', e.target.value)}
                         InputLabelProps={{

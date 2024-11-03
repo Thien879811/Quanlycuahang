@@ -33,6 +33,7 @@ Route::controller(GoodsReceiptController::class)->group(function () {
     Route::post('/goods-receipt', 'createGoodsReceipt');
     Route::get('/goods-receipt', 'getAll');
     Route::put('/goods-receipt/{id}', 'updateReceipt');
+    Route::post('/goods-receipt/return', 'returnReceipt');
 });
 
 //catalog api
