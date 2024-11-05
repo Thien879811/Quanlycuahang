@@ -14,6 +14,17 @@ class OrderSeeder extends Seeder
      */
     public function run()
     {
-        Orders::factory()->count(10)->create();
+        for ($i = 0; $i < 15; $i++) {
+            Orders::create([
+                'status' => 1,
+                'pays_id' => 1,
+            ]);
+        }
+        for ($i = 0; $i < 5; $i++) {
+            Orders::create([
+                'status' => 2,
+                'pays_id' => 2,
+            ]);
+        }
     }
 }

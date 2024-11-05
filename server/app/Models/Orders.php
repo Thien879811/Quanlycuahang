@@ -15,7 +15,7 @@ class Orders extends Model
         'customer_id',
         'staff_id',
         'tongcong',
-        'status',//0 yêu cầu hủy từ máy 1 thanh toán tại quầy, 2 thanh toán online, 3 đã huỷ
+        'status',//0 yeu cau huy, 1 đã thanh toán, 2 yêu cầu hủy, 3 đã hủy
         'pays_id'
     ];
     
