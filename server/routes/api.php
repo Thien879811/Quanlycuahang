@@ -13,6 +13,7 @@ use App\Http\Controllers\ChamCongController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GoodsReceiptController;
+use App\Http\Controllers\CheckInventoryController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,13 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */ 
+//check inventory api
+Route::controller(CheckInventoryController::class)->group(function () {
+    Route::get('/check-inventory', 'getAllCheckInventories');
+    Route::post('/check-inventory', 'createCheckInventory');
+    Route::delete('/check-inventory/{id}', 'deleteCheckInventory');
+    Route::put('/check-inventory/{id}', 'updateCheckInventory');
+});
 
 //goods receipt api
 Route::controller(GoodsReceiptController::class)->group(function () {

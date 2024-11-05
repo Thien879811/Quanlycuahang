@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\HangSuDung;
 use App\Http\Requests\ProductRequest;
+use App\Models\CheckInventory;
+use App\Models\CheckInventoryDetail;
 class ProductController extends Controller
 {
     public function getAll()   
@@ -171,4 +173,5 @@ class ProductController extends Controller
             'data' => $product
         ]);
     }
+
 }

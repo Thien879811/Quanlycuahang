@@ -10,6 +10,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SearchIcon from '@mui/icons-material/Search';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -74,8 +75,10 @@ export default function AdminLayout() {
             open: openProducts,
             subItems: [
                 { text: 'Tổng quan tồn kho', path: '/admin/products' },
+                { text: 'Báo cáo kiểm kho', icon: <HistoryIcon />, path: '/admin/inventory-report' },
                 { text: 'Nhập hàng', icon: <AddShoppingCartIcon />, path: '/admin/import-product' },
                 { text: 'Kiểm hàng', icon: <FactCheckIcon />, path: '/admin/inventory-check' },
+                { text: 'Hủy sản phẩm', icon: <DeleteSweepIcon />, path: '/admin/product-disposal' },
                 { text: 'Lịch sử nhập', icon: <HistoryIcon />, path: '/admin/import-history' },
             ],
         },

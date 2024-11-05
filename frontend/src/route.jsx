@@ -26,6 +26,8 @@ import HistoryReceipt from './pages/admin/products/HistoryReceipt.jsx';
 import ReceiptCheck from './pages/admin/products/ReceiptCheck.jsx';
 import ReceiptCheckUser from './pages/Employee/CheckReceipt.jsx';
 import InventoryReport from './pages/Employee/InventoryReport.jsx';
+import ProductDisposal from './pages/Employee/ProductDisposal.jsx';
+import InventoryReportAdmin from './pages/admin/products/InventoryReportAdmin.jsx';
 const router = createBrowserRouter ([
     {
         path: '/',
@@ -83,6 +85,10 @@ const router = createBrowserRouter ([
             {
                 path: '/inventory-report',
                 element: <InventoryReport />
+            },
+            {
+                path: '/product-disposal',
+                element: <ProductDisposal />
             }
         
         ]
@@ -131,6 +137,14 @@ const router = createBrowserRouter ([
             {
                 path: '/admin/inventory-check',
                 element: <ReceiptCheck />
+            },
+            {
+                path: '/admin/product-disposal',
+                element: <ProductDisposal />
+            },
+            {
+                path: '/admin/inventory-report',
+                element: <InventoryReportAdmin />
             }
 
         ]

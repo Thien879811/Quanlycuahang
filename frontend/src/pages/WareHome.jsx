@@ -23,7 +23,7 @@ const WareHome = () => {
       title: 'Yêu cầu hủy sản phẩm',
       description: 'Tạo yêu cầu hủy sản phẩm hết hạn hoặc hỏng',
       icon: <DeleteSweepIcon fontSize="large" />,
-      link: '/admin/product-disposal'
+      link: '/product-disposal'
     }
   ];
 

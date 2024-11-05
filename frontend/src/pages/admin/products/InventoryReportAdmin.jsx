@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import CheckInventoryService from '../../services/inventory.service';
-import ProductService from '../../services/product.service';
-import { handleResponse } from '../../functions';
+import CheckInventoryService from '../../../services/inventory.service';
+import ProductService from '../../../services/product.service';
+import { handleResponse } from '../../../functions';
 import { 
   Table,
   Button,
@@ -9,14 +9,15 @@ import {
   Form,
   Input,
   Space,
+  Popconfirm,
   message,
   DatePicker
 } from 'antd';
-import { EditOutlined, PlusOutlined, SearchOutlined, EyeOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 
-const InventoryReport = () => {
+const InventoryReportAdmin = () => {
   const navigate = useNavigate();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,10 +51,9 @@ const InventoryReport = () => {
     try {
       const response = await CheckInventoryService.getAll();
       const data = handleResponse(response);
-      console.log(data);
       setReports(data);
     } catch (error) {
-      message.error('Không thể tải báo cáo kiểm kê');
+      message.error('Không thể tải báo cáo kiểm kho');
     }
     setLoading(false);
   };
@@ -71,7 +71,6 @@ const InventoryReport = () => {
   };
 
   const handleView = (report) => {
-    console.log(report);
     setSelectedReport(report);
     setIsViewModalVisible(true);
   };
@@ -107,6 +106,23 @@ const InventoryReport = () => {
           >
             Sửa
           </Button>
+          <Popconfirm
+            title="Bạn có chắc chắn muốn xóa phiếu kiểm kê này?"
+            onConfirm={(e) => {
+              e.stopPropagation();
+              handleDelete(record.id);
+            }}
+            okText="Đồng ý"
+            cancelText="Hủy"
+          >
+            <Button 
+              danger 
+              icon={<DeleteOutlined />}
+              onClick={e => e.stopPropagation()}
+            >
+              Xóa
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },
@@ -130,6 +146,16 @@ const InventoryReport = () => {
     });
     
     setIsModalVisible(true);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await CheckInventoryService.delete(id);
+      message.success('Xóa phiếu kiểm kê thành công');
+      getReports();
+    } catch (error) {
+      message.error('Không thể xóa phiếu kiểm kê');
+    }
   };
 
   const handleModalOk = async () => {
@@ -170,7 +196,6 @@ const InventoryReport = () => {
       setIsModalVisible(false);
       form.resetFields();
       getReports();
-      setEditingReport(null);
       
     } catch (error) {
       message.error('Vui lòng kiểm tra lại các trường bắt buộc');
@@ -212,21 +237,14 @@ const InventoryReport = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Button
-        icon={<ArrowLeftOutlined />}
-        onClick={() => navigate(-1)}
-        style={{ marginBottom: 16 }}
-      >
-        Quay lại
-      </Button>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <h1>Báo cáo kiểm kho</h1>
+        <h1>Báo cáo Kiểm kho</h1>
         <Button 
           type="primary" 
           icon={<PlusOutlined />}
           onClick={showCreateModal}
         >
-          Tạo báo cáo mới
+          Tạo phiếu kiểm kê
         </Button>
       </div>
       
@@ -251,6 +269,8 @@ const InventoryReport = () => {
         destroyOnClose
         maskClosable={false}
         confirmLoading={loading}
+        okText={editingReport ? "Cập nhật" : "Tạo mới"}
+        cancelText="Hủy"
       >
         <Form
           form={form}
@@ -264,7 +284,7 @@ const InventoryReport = () => {
               rules={[{ required: true, message: 'Vui lòng chọn ngày kiểm kê' }]}
               style={{ flex: 1 }}
             >
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
             </Form.Item>
           </div>
 
@@ -314,7 +334,13 @@ const InventoryReport = () => {
             <Form.List name="products">
               {(fields, { add, remove }) => (
                 <Table
-                  dataSource={fields}
+                  dataSource={fields.map(field => {
+                    const product = form.getFieldValue(['products', field.name]);
+                    return {
+                      ...field,
+                      ...product
+                    };
+                  })}
                   columns={[
                     {
                       title: 'Tên mặt hàng',
@@ -332,10 +358,10 @@ const InventoryReport = () => {
                       title: 'Số lượng thực tế',
                       dataIndex: 'actual_quantity',
                       key: 'actual_quantity',
-                      render: (_, record) => (
+                      render: (_, record, index) => (
                         <Form.Item
-                          name={[record.name, 'actual_quantity']}
-                          rules={[{ required: true, message: 'Bắt buộc' }]}
+                          name={[index, 'actual_quantity']}
+                          rules={[{ required: true, message: 'Bắt buộc nhập' }]}
                           style={{ marginBottom: 0 }}
                         >
                           <Input type="number" placeholder="Nhập số lượng" />
@@ -346,9 +372,9 @@ const InventoryReport = () => {
                       title: 'Lý do chênh lệch',
                       dataIndex: 'note',
                       key: 'note',
-                      render: (_, record) => (
+                      render: (_, record, index) => (
                         <Form.Item
-                          name={[record.name, 'note']}
+                          name={[index, 'note']}
                           style={{ marginBottom: 0 }}
                         >
                           <Input placeholder="Nhập ghi chú" />
@@ -358,11 +384,11 @@ const InventoryReport = () => {
                     {
                       title: 'Thao tác',
                       key: 'actions',
-                      render: (_, record) => (
+                      render: (_, record, index) => (
                         <Button 
                           type="link" 
                           danger 
-                          onClick={() => remove(record.name)}
+                          onClick={() => remove(index)}
                           icon={<DeleteOutlined />}
                         >
                           Xóa
@@ -391,20 +417,24 @@ const InventoryReport = () => {
         title="Chi tiết phiếu kiểm kê"
         open={isViewModalVisible}
         onCancel={() => setIsViewModalVisible(false)}
-        footer={null}
+        footer={[
+          <Button key="back" onClick={() => setIsViewModalVisible(false)}>
+            Đóng
+          </Button>
+        ]}
         width={1000}
       >
         {selectedReport && (
           <div>
             <p><strong>Ngày kiểm kê:</strong> {moment(selectedReport.check_date).format('DD/MM/YYYY')}</p>
-            <p><strong>Ghi chú:</strong> {selectedReport.note}</p>
+            <p><strong>Ghi chú:</strong> {selectedReport.note || 'Không có ghi chú'}</p>
             <Table
               dataSource={selectedReport.check_inventory_details}
               columns={[
                 {
                   title: 'Tên mặt hàng',
+                  dataIndex: ['product', 'product_name'],
                   key: 'product_name',
-                  render: (_, record) => record.product?.product_name
                 },
                 {
                   title: 'Số lượng trên hệ thống',
@@ -425,6 +455,7 @@ const InventoryReport = () => {
                   title: 'Ghi chú',
                   dataIndex: 'note',
                   key: 'note',
+                  render: (note) => note || 'Không có ghi chú'
                 }
               ]}
               pagination={false}
@@ -436,4 +467,4 @@ const InventoryReport = () => {
   );
 };
 
-export default InventoryReport;
+export default InventoryReportAdmin;
