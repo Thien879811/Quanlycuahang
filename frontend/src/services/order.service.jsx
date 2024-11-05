@@ -24,6 +24,9 @@ class OrderService {
     async getDetail(id) {
         return (await this.api.get(`/detail/${id}`)).data;
     }
+    async getSalesOverview(type) {
+        return (await this.api.get(`/sales-overview/${type}`)).data;
+    }
 }
 export default new OrderService();
 

@@ -4,11 +4,11 @@ import { ShoppingOutlined, DollarOutlined, CloseCircleOutlined, RollbackOutlined
 
 const PurchaseOverview = () => {
   return (
-    <Card title="Purchase Overview">
+    <Card title="Tổng quan mua hàng">
       <Row gutter={[16, 16]}>
         <Col span={6}>
           <Statistic
-            title="Purchase"
+            title="Đơn mua"
             value={82}
             prefix={<ShoppingOutlined style={{ color: '#1890ff' }} />}
             valueStyle={{ color: '#1890ff' }}
@@ -16,7 +16,7 @@ const PurchaseOverview = () => {
         </Col>
         <Col span={6}>
           <Statistic
-            title="Cost"
+            title="Chi phí"
             value={13573}
             prefix="₹"
             valueStyle={{ color: '#52c41a' }}
@@ -24,7 +24,7 @@ const PurchaseOverview = () => {
         </Col>
         <Col span={6}>
           <Statistic
-            title="Cancel"
+            title="Đã hủy"
             value={5}
             prefix={<CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
             valueStyle={{ color: '#ff4d4f' }}
@@ -32,7 +32,7 @@ const PurchaseOverview = () => {
         </Col>
         <Col span={6}>
           <Statistic
-            title="Return"
+            title="Hoàn trả"
             value={17432}
             prefix="₹"
             valueStyle={{ color: '#faad14' }}

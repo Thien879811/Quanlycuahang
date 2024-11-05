@@ -2,15 +2,13 @@ import React from 'react';
 import { Card, Row, Col, Statistic } from 'antd';
 import { BarChartOutlined, DollarOutlined, RiseOutlined, FallOutlined } from '@ant-design/icons';
 
-const SalesOverview = () => {
-  const salesOverview = { sales: 832, revenue: 18300, profit: 868, cost: 17432 };
-
+const SalesOverview = ({salesOverview}) => {
   return (
-    <Card title="Sales Overview">
+    <Card title="Tổng quan doanh số">
       <Row gutter={[16, 16]}>
         <Col span={6}>
           <Statistic
-            title="Sales"
+            title="Số đơn hàng"
             value={salesOverview.sales}
             prefix={<BarChartOutlined />}
             valueStyle={{ color: '#3f8600' }}
@@ -18,7 +16,7 @@ const SalesOverview = () => {
         </Col>
         <Col span={6}>
           <Statistic
-            title="Revenue"
+            title="Doanh thu"
             value={salesOverview.revenue}
             prefix={<DollarOutlined />}
             valueStyle={{ color: '#cf1322' }}
@@ -26,18 +24,18 @@ const SalesOverview = () => {
         </Col>
         <Col span={6}>
           <Statistic
-            title="Profit"
-            value={salesOverview.profit}
-            prefix={<RiseOutlined />}
-            valueStyle={{ color: '#3f8600' }}
+            title="Chi phí"
+            value={salesOverview.cost}
+            prefix={<FallOutlined />}
+            valueStyle={{ color: '#cf1322' }}
           />
         </Col>
         <Col span={6}>
           <Statistic
-            title="Cost"
-            value={salesOverview.cost}
-            prefix={<FallOutlined />}
-            valueStyle={{ color: '#cf1322' }}
+            title="Lợi nhuận"
+            value={salesOverview.profit}
+            prefix={<RiseOutlined />}
+            valueStyle={{ color: '#3f8600' }}
           />
         </Col>
       </Row>

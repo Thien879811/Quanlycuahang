@@ -14,6 +14,7 @@ use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GoodsReceiptController;
 use App\Http\Controllers\CheckInventoryController;
+use App\Http\Controllers\DashBoardController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,9 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */ 
+Route::controller(DashBoardController::class)->group(function () {
+    Route::get('/dashboard/sales-overview/{type}', 'getSalesOverview');
+});
 //check inventory api
 Route::controller(CheckInventoryController::class)->group(function () {
     Route::get('/check-inventory', 'getAllCheckInventories');

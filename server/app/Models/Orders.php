@@ -14,7 +14,6 @@ class Orders extends Model
     protected $fillable = [
         'customer_id',
         'staff_id',
-        'tongcong',
         'status',//0 yeu cau huy, 1 đã thanh toán, 2 yêu cầu hủy, 3 đã hủy
         'pays_id'
     ];
@@ -44,5 +43,10 @@ class Orders extends Model
     public function details()
     {
         return $this->hasMany(DetailOrder::class, 'order_id')->with('product');
+    }
+
+    public function scopeOrderByCreatedAt($query)
+    {
+        return $query->orderBy('created_at', 'desc');
     }
 }
