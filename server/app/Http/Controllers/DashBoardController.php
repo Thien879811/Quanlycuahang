@@ -5,6 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Orders;
 use Carbon\Carbon;
+use App\Models\CheckInventory;
+use App\Models\Product;
+use App\Models\GoodsReceipt;
+use App\Models\Factory;
+use App\Models\Catalory;
+use App\Models\DetailOrder;
+use App\Models\GoodsReceiptDetail;
+
 
 class DashBoardController extends Controller
 {
@@ -59,7 +67,7 @@ class DashBoardController extends Controller
 
             $cost = $orders->sum(function ($order) {
                 return $order->details->sum(function ($detail) {
-                    return $detail->soluong * ($detail->product->push - $detail->discount);
+                    return $detail->soluong * ($detail->product->purchase_price - $detail->discount);
                 });
             });
 
@@ -79,6 +87,212 @@ class DashBoardController extends Controller
                 'revenue' => 0, 
                 'profit' => 0,
                 'cost' => 0
+            ]);
+        }
+    }
+
+    public function getInventorySummary(Request $request, $type) {
+        try {
+
+            $query = Product::get();
+            $quantityInHand = $query->sum('quantity');
+
+            $goodsReceipts = GoodsReceipt::with('details')->get();
+
+            $quantityToBeReceived = $goodsReceipts->sum(function ($goodsReceipt) {
+                return $goodsReceipt->details->sum('quantity');
+            });
+
+            return response()->json([
+                'quantityInHand' => $quantityInHand,
+                'quantityToBeReceived' => $quantityToBeReceived
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Database error in getInventorySummary: ' . $e->getMessage());
+        }
+    }
+
+    public function getProductSummary() {
+        try {
+
+            $numberOfSuppliers = Factory::count();
+            $numberOfCategories = Catalory::count();
+
+            return response()->json([
+                'numberOfSuppliers' => $numberOfSuppliers,
+                'numberOfCategories' => $numberOfCategories
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Database error in getProductSummary: ' . $e->getMessage());
+        }
+    }
+
+    public function getOrderSummary() {
+        try {
+            $orders = Orders::get();
+            $orderSummary = $orders->groupBy(function ($order) {
+                return $order->created_at->format('m');
+            })->map(function ($orders) {
+                return $orders->count();
+            }); 
+
+        
+
+            return response()->json($orderSummary);
+        } catch (\Exception $e) {
+            \Log::error('Database error in getOrderSummary: ' . $e->getMessage());
+            return response()->json(array_fill(1, 12, 0));
+        }
+    }
+
+    public function getSalesAndPurchaseChartData() {
+
+        try {
+            $data = DetailOrder::with('product')->get();
+            $data = $data->groupBy(function ($detail) {
+                return $detail->created_at->format('m');
+            })->map(function ($details) {
+                return $details->sum(function ($detail) {
+                    return $detail->soluong * ($detail->dongia - $detail->discount);
+                });
+            });
+
+            $goodsReceipts = GoodsReceiptDetail::get();
+            $goodsReceipts = $goodsReceipts->groupBy(function ($goodsReceipt) {
+                return $goodsReceipt->created_at->format('m');
+            })->map(function ($goodsReceipts) {
+                return $goodsReceipts->sum(function ($goodsReceipt) {
+                    return $goodsReceipt->quantity * $goodsReceipt->price;
+                });
+            });
+
+            return response()->json([
+                'sales' => $data,
+                'purchase' => $goodsReceipts
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Database error in getSalesAndPurchaseChartData: ' . $e->getMessage());
+        }
+    }
+
+
+    public function getTopSellingStock($type) {
+        try {
+            $query = DetailOrder::with('product')
+                ->select('product_id')
+                ->selectRaw('SUM(soluong) as soldQuantity')
+                ->groupBy('product_id');
+
+            switch($type) {
+                case 'today':
+                    $query->where('created_at', '>=', Carbon::today());
+                    break;
+                case 'yesterday':
+                    $query->whereBetween('created_at', [
+                        Carbon::yesterday()->startOfDay(),
+                        Carbon::yesterday()->endOfDay()
+                    ]);
+                    break;
+                case 'week':
+                    $query->where('created_at', '>=', Carbon::now()->startOfWeek());
+                    break;
+                case 'month':
+                    $query->where('created_at', '>=', Carbon::now()->startOfMonth());
+                    break;
+                case 'year':
+                    $query->where('created_at', '>=', Carbon::now()->startOfYear());
+                    break;
+            }
+
+            $topProducts = $query->orderBy('soldQuantity', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'name' => $item->product->product_name,
+                        'soldQuantity' => $item->soldQuantity,
+                        'remainingQuantity' => $item->product->quantity,
+                        'price' => $item->product->price
+                    ];
+                });
+
+            return response()->json($topProducts);
+
+        } catch (\Exception $e) {
+            \Log::error('Database error in getTopSellingStock: ' . $e->getMessage());
+            return response()->json([]);
+        }
+    }
+
+    public function getLowQuantityStock($type) {
+        try {
+            $lowQuantityProducts = Product::orderBy('quantity', 'asc')
+                ->get()
+                ->map(function ($product) {
+                    return [
+                        'title' => $product->product_name,
+                        'avatar' => $product->image,
+                        'description' => "Còn lại: {$product->quantity} sản phẩm"
+                    ];
+                });
+
+            return response()->json($lowQuantityProducts);
+        } catch (\Exception $e) {
+            \Log::error('Database error in getLowQuantityStock: ' . $e->getMessage());
+            return response()->json([]);
+        }
+    }
+
+    public function getPurchaseData($type) {
+        try {
+            $query = GoodsReceiptDetail::query();
+            $goodsReceipts = GoodsReceipt::get();
+
+            switch ($type) {
+                case 'today':
+                    $query->whereDate('created_at', Carbon::today());
+                    $goodsReceipts->whereDate('created_at', Carbon::today());
+                    break;
+                case 'yesterday':
+                    $query->whereDate('created_at', Carbon::yesterday());
+                    $goodsReceipts->whereDate('created_at', Carbon::yesterday());
+                    break;
+                case 'week':
+                    $query->where('created_at', '>=', Carbon::now()->startOfWeek());
+                    $goodsReceipts->where('created_at', '>=', Carbon::now()->startOfWeek());
+                    break;
+                case 'month':
+                    $query->where('created_at', '>=', Carbon::now()->startOfMonth());
+                    $goodsReceipts->where('created_at', '>=', Carbon::now()->startOfMonth());
+                    break;
+                case 'year':
+                    $query->where('created_at', '>=', Carbon::now()->startOfYear());
+                    $goodsReceipts->where('created_at', '>=', Carbon::now()->startOfYear());
+                    break;
+                default:
+                    if (Carbon::hasFormat($type, 'Y-m-d')) {
+                        $query->whereDate('created_at', Carbon::parse($type));
+                        $goodsReceipts->whereDate('created_at', Carbon::parse($type));
+                    }
+            }
+
+            $purchaseData = [
+                'purchaseOrders' => $goodsReceipts->count(),
+                'purchaseCost' => $query->sum(\DB::raw('quantity * price')),
+                'canceledOrders' => $query->where('status', 4)->count(), // 4 is return status
+                'refundedOrders' => $query->whereNotNull('return_quantity')->count()
+            ];
+
+            return response()->json($purchaseData);
+
+        } catch (\Exception $e) {
+            \Log::error('Database error in getPurchaseData: ' . $e->getMessage());
+            return response()->json([
+                'purchaseOrders' => 0,
+                'purchaseCost' => 0, 
+                'canceledOrders' => 0,
+                'refundedOrders' => 0
             ]);
         }
     }

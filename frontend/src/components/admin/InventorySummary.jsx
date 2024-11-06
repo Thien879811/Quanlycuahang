@@ -2,21 +2,21 @@ import React from 'react';
 import { Card, Row, Col, Statistic } from 'antd';
 import { InboxOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 
-const InventorySummary = () => {
+const InventorySummary = ({inventorySummary}) => {
   return (
-    <Card title="Inventory Summary">
+    <Card title="Tổng quan tồn kho">
       <Row gutter={[16, 16]}>
         <Col span={12}>
           <Statistic
-            title="Quantity in Hand"
-            value={868}
+            title="Số lượng trong kho"
+            value={inventorySummary.quantityInHand}
             prefix={<InboxOutlined style={{ color: '#faad14' }} />}
           />
         </Col>
         <Col span={12}>
           <Statistic
-            title="To be received"
-            value={200}
+            title="Sắp nhập kho"
+            value={inventorySummary.quantityToBeReceived}
             prefix={<QuestionCircleOutlined style={{ color: '#722ed1' }} />}
           />
         </Col>

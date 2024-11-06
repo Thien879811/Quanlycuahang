@@ -99,8 +99,6 @@ class OrdersController extends Controller
            ]
         );
     }
-
-    $order->tongcong = $validated['tonghoadon'];
     $order->customer_id = $validated['khachhang'] !== '0' ? $validated['khachhang'] : null;
     $order->save();
 

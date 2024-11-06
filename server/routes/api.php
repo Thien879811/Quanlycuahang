@@ -31,6 +31,13 @@ use Illuminate\Support\Facades\Route;
 */ 
 Route::controller(DashBoardController::class)->group(function () {
     Route::get('/dashboard/sales-overview/{type}', 'getSalesOverview');
+    Route::get('/dashboard/inventory-summary/{type}', 'getInventorySummary');
+    Route::get('/dashboard/product-summary', 'getProductSummary');
+    Route::get('/dashboard/order-summary', 'getOrderSummary');
+    Route::get('/dashboard/sales-and-purchase-chart-data', 'getSalesAndPurchaseChartData');
+    Route::get('/dashboard/top-selling-stock/{type}', 'getTopSellingStock');
+    Route::get('/dashboard/low-quantity-stock/{type}', 'getLowQuantityStock');
+    Route::get('/dashboard/purchase-data/{type}', 'getPurchaseData');
 });
 //check inventory api
 Route::controller(CheckInventoryController::class)->group(function () {

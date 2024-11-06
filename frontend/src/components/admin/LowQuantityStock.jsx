@@ -1,41 +1,57 @@
-import React from 'react';
-import { Card, List, Avatar, Tag } from 'antd';
+import React, { useState } from 'react';
+import { Card, List, Avatar, Tag, Modal } from 'antd';
 
-const LowQuantityStock = () => {
-  const data = [
-    {
-      title: 'Tata Salt',
-      avatar: 'https://example.com/tata-salt.jpg',
-      description: 'Remaining Quantity : 10 Packet',
-    },
-    {
-      title: 'Lays',
-      avatar: 'https://example.com/lays.jpg',
-      description: 'Remaining Quantity : 15 Packet',
-    },
-    {
-      title: 'Lays',
-      avatar: 'https://example.com/lays.jpg',
-      description: 'Remaining Quantity : 15 Packet',
-    },
-  ];
+const LowQuantityStock = ({lowQuantityStock}) => {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
 
   return (
-    <Card title="Low Quantity Stock" extra={<a href="#">See All</a>}>
-      <List
-        itemLayout="horizontal"
-        dataSource={data}
-        renderItem={(item) => (
-          <List.Item extra={<Tag color="red">Low</Tag>}>
-            <List.Item.Meta
-              avatar={<Avatar src={item.avatar} />}
-              title={item.title}
-              description={item.description}
-            />
-          </List.Item>
-        )}
-      />
-    </Card>
+    <>
+      <Card title="Sản phẩm sắp hết hàng" extra={<a onClick={showModal}>Xem tất cả</a>}>
+        <List
+          itemLayout="horizontal"
+          dataSource={lowQuantityStock.slice(0, 5)}
+          renderItem={(item) => (
+            <List.Item extra={<Tag color="red">Sắp hết</Tag>}>
+              <List.Item.Meta
+                avatar={<Avatar src={item.avatar} />}
+                title={item.title}
+                description={item.description}
+              />
+            </List.Item>
+          )}
+        />
+      </Card>
+
+      <Modal
+        title="Tất cả sản phẩm sắp hết hàng"
+        open={isModalVisible}
+        onCancel={handleCancel}
+        footer={null}
+        width={800}
+      >
+        <List
+          itemLayout="horizontal"
+          dataSource={lowQuantityStock}
+          renderItem={(item) => (
+            <List.Item extra={<Tag color="red">Sắp hết</Tag>}>
+              <List.Item.Meta
+                avatar={<Avatar src={item.avatar} />}
+                title={item.title}
+                description={item.description}
+              />
+            </List.Item>
+          )}
+        />
+      </Modal>
+    </>
   );
 };
 

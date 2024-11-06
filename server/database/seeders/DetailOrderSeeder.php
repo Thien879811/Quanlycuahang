@@ -14,7 +14,7 @@ class DetailOrderSeeder extends Seeder
      */
     public function run()
     {
-        for ($i = 21; $i <= 40; $i++) {
+        for ($i = 1; $i <= 20; $i++) {
             for ($j = 0; $j < rand(1, 5); $j++) {
                 $product = \App\Models\Product::find(rand(1, 31)); // Get random product
                 DetailOrder::create([

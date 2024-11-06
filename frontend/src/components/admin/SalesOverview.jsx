@@ -3,6 +3,12 @@ import { Card, Row, Col, Statistic } from 'antd';
 import { BarChartOutlined, DollarOutlined, RiseOutlined, FallOutlined } from '@ant-design/icons';
 
 const SalesOverview = ({salesOverview}) => {
+  const formatter = (value) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'decimal',
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
   return (
     <Card title="Tổng quan doanh số">
       <Row gutter={[16, 16]}>
@@ -10,7 +16,6 @@ const SalesOverview = ({salesOverview}) => {
           <Statistic
             title="Số đơn hàng"
             value={salesOverview.sales}
-            prefix={<BarChartOutlined />}
             valueStyle={{ color: '#3f8600' }}
           />
         </Col>
@@ -18,24 +23,26 @@ const SalesOverview = ({salesOverview}) => {
           <Statistic
             title="Doanh thu"
             value={salesOverview.revenue}
-            prefix={<DollarOutlined />}
             valueStyle={{ color: '#cf1322' }}
+            formatter={formatter}
           />
         </Col>
         <Col span={6}>
           <Statistic
             title="Chi phí"
             value={salesOverview.cost}
-            prefix={<FallOutlined />}
+            //prefix={<FallOutlined />}
             valueStyle={{ color: '#cf1322' }}
+            formatter={formatter}
           />
         </Col>
         <Col span={6}>
           <Statistic
             title="Lợi nhuận"
             value={salesOverview.profit}
-            prefix={<RiseOutlined />}
+          
             valueStyle={{ color: '#3f8600' }}
+            formatter={formatter}
           />
         </Col>
       </Row>
