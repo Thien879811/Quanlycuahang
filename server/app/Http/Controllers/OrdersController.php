@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\customer;
+use App\Models\Customer;
 use App\Models\Orders;
 use Illuminate\Http\Request;
 use App\Models\DetailOrder;
 use App\Models\Product;
+
 class OrdersController extends Controller
 {
     /**
@@ -14,7 +15,8 @@ class OrdersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getAll(){
+    public function getAll()
+    {
         $orders = Orders::with('details.product')->get();
         $data = $orders->map(function ($order) {
             return [
@@ -38,7 +40,8 @@ class OrdersController extends Controller
         return response()->json($data);
     }
 
-    public function getDetail($order_id){
+    public function getDetail($order_id)
+    {
         $order = Orders::findOrFail($order_id);
         $details = DetailOrder::where('order_id', $order_id)->get();
         
@@ -55,10 +58,8 @@ class OrdersController extends Controller
             ];
         });
         
-        // Fetch customer name
-        $customer= customer::find($order->customer_id);
+        $customer = Customer::find($order->customer_id);
         $customerName = $customer ? $customer->name : 'Unknown';
-        // Fetch staff name
         $staffName = $order->staff ? $order->staff->name : 'Unknown';
         
         return response()->json([
@@ -71,72 +72,59 @@ class OrdersController extends Controller
             'status' => $order->status,
             'id' => $order->id
         ]);
-    }   
-// $products = Product::whereIn('id', $detail->pluck('product_id'))->get();
+    }
+
     /**
      * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
      */
     public function create(Request $request)
-{
-    $validated = $request->all();
+    {
+        $validated = $request->all();
 
-    // return response()->json($validated, 201);
+        $order = Orders::where("status", "0")->first();
 
-    // Check for an existing unpaid order
-    $order = Orders::where("status", "0")->first();
-
-    if (!$order) {
-        // Create a new order if none exist
-        $order = Orders::create(
-           [
-            "customer_id" => $validated['khachhang'] !== '0' ? $validated['khachhang'] : null,
-            "staff_id" => $validated['nhanvien'],
-            "status" => "0",
-            "tongcong"=>$validated['tonghoadon'],
-            "pays_id" =>$validated['pays_id'],
-           ]
-        );
-    }
-    $order->customer_id = $validated['khachhang'] !== '0' ? $validated['khachhang'] : null;
-    $order->save();
-
-    if($validated['products']){
-
-    // Handle product details
-        foreach ($validated['products'] as $product) {
-            $product_id = $product['product_id']; // Hoặc $product->product_id nếu là đối tượng
-            
-            // Check if the detail exists
-            $detail = DetailOrder::where('order_id', $order->id)
-                                ->where('product_id', $product_id)
-                                ->first();
-        
-            if ($detail) {
-                // Update the quantity if the detail already exists
-                $detail->soluong = $product['quantity'];
-                $detail->discount = $product['discount'];
-             // Adjust as needed for your logic
-                $detail->save();
-            } else {
-                // Create new detail if it does not exist
-                DetailOrder::create([
-                    'order_id' => $order->id,
-                    'product_id' => $product_id,
-                    'soluong' => $product['quantity'],
-                    'discount' => $product['discount'],
-                    'dongia' => $product['price'],
-                ]);
-            }
+        if (!$order) {
+            $order = Orders::create([
+                "customer_id" => $validated['khachhang'] !== '0' ? $validated['khachhang'] : null,
+                "staff_id" => $validated['nhanvien'],
+                "status" => "0",
+                "tongcong" => $validated['tonghoadon'],
+                "pays_id" => $validated['pays_id'],
+            ]);
         }
-    }
-    else{
-        $detail = DetailOrder::where('order_id', $order->id)->delete();
-    }
+        $order->customer_id = $validated['khachhang'] !== '0' ? $validated['khachhang'] : null;
+        $order->save();
 
-    return response()->json($order, 201);
-}
+        if ($validated['products']) {
+            foreach ($validated['products'] as $product) {
+                $product_id = $product['product_id'];
+                
+                $detail = DetailOrder::where('order_id', $order->id)
+                                    ->where('product_id', $product_id)
+                                    ->first();
+            
+                if ($detail) {
+                    $detail->soluong = $product['quantity'];
+                    $detail->discount = $product['discount'];
+                    $detail->save();
+                } else {
+                    DetailOrder::create([
+                        'order_id' => $order->id,
+                        'product_id' => $product_id,
+                        'soluong' => $product['quantity'],
+                        'discount' => $product['discount'],
+                        'dongia' => $product['price'],
+                    ]);
+                }
+            }
+        } else {
+            DetailOrder::where('order_id', $order->id)->delete();
+        }
+
+        return response()->json($order, 201);
+    }
 
     public function store(Request $request)
     {
@@ -146,16 +134,18 @@ class OrdersController extends Controller
             'price' => 'required|numeric|min:0',
         ]);
 
-        return response()->json( $validated);
+        return response()->json($validated);
     }
 
-    public function getOne(){
+    public function getOne()
+    {
         return response()->json([
-            'message'=>'thanhcong'
+            'message' => 'thanhcong'
         ]);
     }
 
-    public function updateOrder(Request $request, $order_id){
+    public function updateOrder(Request $request, $order_id)
+    {
         $validated = $request->validate([
             'status' => 'required',
             'pays_id' => 'required'
@@ -166,17 +156,16 @@ class OrdersController extends Controller
         $order->pays_id = $validated['pays_id'];
         $order->save();
 
-        if($order->status == '1' || $order->status == '2'){
+        if ($order->status == '1' || $order->status == '2') {
+            $details = DetailOrder::where('order_id', $order->id)->get();
 
-            $detail = DetailOrder::where('order_id', $order->id)->get();
-
-            foreach ($detail as $item) {
+            foreach ($details as $item) {
                 $product = Product::find($item->product_id);
                 $product->quantity = $product->quantity - $item->soluong;
                 $product->save();
             }
         }
 
-        return response()->json($detail);
+        return response()->json($details);
     }
 }

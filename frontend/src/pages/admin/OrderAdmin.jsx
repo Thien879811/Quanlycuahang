@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import orderService from '../../services/order.service';
 import { handleResponse } from '../../functions';
 
-const Order = () => {
+const OrderAdmin = () => {
     const [orders, setOrders] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
@@ -19,7 +19,6 @@ const Order = () => {
         try {
             const response = await orderService.getAll();
             const dataResponse = handleResponse(response);
-            console.log(dataResponse);
             if (orderStatus === 'all') {
                 setOrders(dataResponse);
             } else {
@@ -34,7 +33,7 @@ const Order = () => {
         navigate('/admin');
     };
 
-    const handleOpenDialog = async (order) => {
+    const handleOpenDialog = (order) => {
         setSelectedOrder(order);
         setOpenDialog(true);
     };
@@ -47,7 +46,7 @@ const Order = () => {
         try {
             await orderService.cancelOrder(orderId);
             const updatedOrders = orders.map(order => 
-                order.id === orderId ? { ...order, status: 'Đã hủy' } : order
+                order.id === orderId ? { ...order, status: 3 } : order
             );
             setOrders(updatedOrders);
         } catch (error) {
@@ -84,9 +83,10 @@ const Order = () => {
                             label="Trạng thái"
                         >
                             <MenuItem value="all">Tất cả</MenuItem>
-                            <MenuItem value="0">Chưa thanh toán</MenuItem>
-                            <MenuItem value="1">Đã thanh toán</MenuItem>
-                            <MenuItem value="3">Đã hủy</MenuItem>
+                            <MenuItem value={0}>Chưa thanh toán</MenuItem>
+                            <MenuItem value={1}>Đã thanh toán tại quầy</MenuItem>
+                            <MenuItem value={2}>Đã thanh toán online</MenuItem>
+                            <MenuItem value={3}>Đã hủy</MenuItem>
                         </Select>
                     </FormControl>
                 </Grid>
@@ -116,11 +116,12 @@ const Order = () => {
                                 <TableCell>{calculateTotal(order.details).toLocaleString()} VND</TableCell>
                                 <TableCell>{new Date(order.created_at).toLocaleString()}</TableCell>
                                 <TableCell>
-                                    {order.pays_id === 1 ? 'Thanh toán online' : 'Thanh toán tại quầy'}
+                                    {order.pays_id === 1 ? 'Thanh toán tại quầy' : 'Thanh toán online'}
                                 </TableCell>
                                 <TableCell>
                                     {order.status === 0 ? 'Chưa thanh toán' : 
-                                     order.status === 1 ? 'Đã thanh toán' : 
+                                     order.status === 1 ? 'Đã thanh toán tại quầy' : 
+                                     order.status === 2 ? 'Đã thanh toán online' : 
                                      order.status === 3 ? 'Đã hủy' : 'Không xác định'}
                                 </TableCell>
                                 <TableCell>
@@ -153,10 +154,11 @@ const Order = () => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Typography><strong>Ngày đặt:</strong> {new Date(selectedOrder.created_at).toLocaleString()}</Typography>
-                                        <Typography><strong>Phương thức thanh toán:</strong> {selectedOrder.pays_id === 1 ? 'Thanh toán online' : 'Thanh toán tại quầy'}</Typography>
+                                        <Typography><strong>Phương thức thanh toán:</strong> {selectedOrder.pays_id === 1 ? 'Thanh toán tại quầy' : 'Thanh toán online'}</Typography>
                                         <Typography><strong>Trạng thái:</strong> {
                                             selectedOrder.status === 0 ? 'Chưa thanh toán' : 
-                                            selectedOrder.status === 1 ? 'Đã thanh toán' : 
+                                            selectedOrder.status === 1 ? 'Đã thanh toán tại quầy' : 
+                                            selectedOrder.status === 2 ? 'Đã thanh toán online' : 
                                             selectedOrder.status === 3 ? 'Đã hủy' : 'Không xác định'
                                         }</Typography>
                                     </Grid>
@@ -207,4 +209,4 @@ const Order = () => {
     );
 };
 
-export default Order;
+export default OrderAdmin;
