@@ -61,13 +61,13 @@ class DashBoardController extends Controller
             
             $revenue = $orders->sum(function ($order) {
                 return $order->details->sum(function ($detail) {
-                    return $detail->soluong * ($detail->dongia - $detail->discount);
+                    return $detail->soluong * $detail->dongia - $detail->discount;
                 });
             });
 
             $cost = $orders->sum(function ($order) {
                 return $order->details->sum(function ($detail) {
-                    return $detail->soluong * ($detail->product->purchase_price - $detail->discount);
+                    return $detail->soluong * $detail->product->purchase_price;
                 });
             });
 
@@ -93,8 +93,7 @@ class DashBoardController extends Controller
 
     public function getInventorySummary(Request $request, $type) {
         try {
-
-            $query = Product::get();
+            $query = Product::query();
             $quantityInHand = $query->sum('quantity');
 
             $goodsReceipts = GoodsReceipt::with('details')->get();
@@ -110,12 +109,15 @@ class DashBoardController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Database error in getInventorySummary: ' . $e->getMessage());
+            return response()->json([
+                'quantityInHand' => 0,
+                'quantityToBeReceived' => 0
+            ]);
         }
     }
 
     public function getProductSummary() {
         try {
-
             $numberOfSuppliers = Factory::count();
             $numberOfCategories = Catalory::count();
 
@@ -125,6 +127,10 @@ class DashBoardController extends Controller
             ]);
         } catch (\Exception $e) {
             \Log::error('Database error in getProductSummary: ' . $e->getMessage());
+            return response()->json([
+                'numberOfSuppliers' => 0,
+                'numberOfCategories' => 0
+            ]); 
         }
     }
 
@@ -135,9 +141,7 @@ class DashBoardController extends Controller
                 return $order->created_at->format('m');
             })->map(function ($orders) {
                 return $orders->count();
-            }); 
-
-        
+            });
 
             return response()->json($orderSummary);
         } catch (\Exception $e) {
@@ -147,14 +151,13 @@ class DashBoardController extends Controller
     }
 
     public function getSalesAndPurchaseChartData() {
-
         try {
             $data = DetailOrder::with('product')->get();
             $data = $data->groupBy(function ($detail) {
                 return $detail->created_at->format('m');
             })->map(function ($details) {
                 return $details->sum(function ($detail) {
-                    return $detail->soluong * ($detail->dongia - $detail->discount);
+                    return $detail->soluong * $detail->dongia - $detail->discount;
                 });
             });
 
@@ -173,9 +176,12 @@ class DashBoardController extends Controller
             ]);
         } catch (\Exception $e) {
             \Log::error('Database error in getSalesAndPurchaseChartData: ' . $e->getMessage());
+            return response()->json([
+                'sales' => [],
+                'purchase' => []
+            ]);
         }
     }
-
 
     public function getTopSellingStock($type) {
         try {
@@ -203,6 +209,8 @@ class DashBoardController extends Controller
                 case 'year':
                     $query->where('created_at', '>=', Carbon::now()->startOfYear());
                     break;
+                default:
+                    return response()->json(['error' => 'Invalid time range'], 400);
             }
 
             $topProducts = $query->orderBy('soldQuantity', 'desc')
@@ -213,7 +221,7 @@ class DashBoardController extends Controller
                         'name' => $item->product->product_name,
                         'soldQuantity' => $item->soldQuantity,
                         'remainingQuantity' => $item->product->quantity,
-                        'price' => $item->product->price
+                        'price' => $item->product->selling_price
                     ];
                 });
 
@@ -228,6 +236,7 @@ class DashBoardController extends Controller
     public function getLowQuantityStock($type) {
         try {
             $lowQuantityProducts = Product::orderBy('quantity', 'asc')
+                ->limit(10)
                 ->get()
                 ->map(function ($product) {
                     return [
@@ -247,40 +256,42 @@ class DashBoardController extends Controller
     public function getPurchaseData($type) {
         try {
             $query = GoodsReceiptDetail::query();
-            $goodsReceipts = GoodsReceipt::get();
+            $goodsReceiptsQuery = GoodsReceipt::query();
 
             switch ($type) {
                 case 'today':
                     $query->whereDate('created_at', Carbon::today());
-                    $goodsReceipts->whereDate('created_at', Carbon::today());
+                    $goodsReceiptsQuery->whereDate('created_at', Carbon::today());
                     break;
                 case 'yesterday':
                     $query->whereDate('created_at', Carbon::yesterday());
-                    $goodsReceipts->whereDate('created_at', Carbon::yesterday());
+                    $goodsReceiptsQuery->whereDate('created_at', Carbon::yesterday());
                     break;
                 case 'week':
                     $query->where('created_at', '>=', Carbon::now()->startOfWeek());
-                    $goodsReceipts->where('created_at', '>=', Carbon::now()->startOfWeek());
+                    $goodsReceiptsQuery->where('created_at', '>=', Carbon::now()->startOfWeek());
                     break;
                 case 'month':
                     $query->where('created_at', '>=', Carbon::now()->startOfMonth());
-                    $goodsReceipts->where('created_at', '>=', Carbon::now()->startOfMonth());
+                    $goodsReceiptsQuery->where('created_at', '>=', Carbon::now()->startOfMonth());
                     break;
                 case 'year':
                     $query->where('created_at', '>=', Carbon::now()->startOfYear());
-                    $goodsReceipts->where('created_at', '>=', Carbon::now()->startOfYear());
+                    $goodsReceiptsQuery->where('created_at', '>=', Carbon::now()->startOfYear());
                     break;
                 default:
                     if (Carbon::hasFormat($type, 'Y-m-d')) {
                         $query->whereDate('created_at', Carbon::parse($type));
-                        $goodsReceipts->whereDate('created_at', Carbon::parse($type));
+                        $goodsReceiptsQuery->whereDate('created_at', Carbon::parse($type));
+                    } else {
+                        return response()->json(['error' => 'Invalid date format'], 400);
                     }
             }
 
             $purchaseData = [
-                'purchaseOrders' => $goodsReceipts->count(),
+                'purchaseOrders' => $goodsReceiptsQuery->count(),
                 'purchaseCost' => $query->sum(\DB::raw('quantity * price')),
-                'canceledOrders' => $query->where('status', 4)->count(), // 4 is return status
+                'canceledOrders' => $query->where('status', 4)->count(),
                 'refundedOrders' => $query->whereNotNull('return_quantity')->count()
             ];
 
@@ -290,7 +301,7 @@ class DashBoardController extends Controller
             \Log::error('Database error in getPurchaseData: ' . $e->getMessage());
             return response()->json([
                 'purchaseOrders' => 0,
-                'purchaseCost' => 0, 
+                'purchaseCost' => 0,
                 'canceledOrders' => 0,
                 'refundedOrders' => 0
             ]);

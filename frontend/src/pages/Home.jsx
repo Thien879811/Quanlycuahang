@@ -43,8 +43,6 @@ const Home = () => {
 	const {promotions} = usePromotion();
 	const [activePromotion, setActivePromotion] = useState([]);
 
-	
-
 	const {customer,
 		searchCustomerByPhone, 
 		createCustomer, 
@@ -53,8 +51,6 @@ const Home = () => {
 		setOpenNewCustomer,
 		setOpenCustomerInfo
 	} = useCustomer();
-
-	
 
 	//display promotion
 	useEffect(() => {
@@ -78,15 +74,12 @@ const Home = () => {
 
 				if (foundPromotions.length > 0) {
 					setActivePromotion(foundPromotions);
-					// Apply discount to orderProducts
 					foundPromotions.forEach(promo => {
 						updateProductDiscount(promo.product_id, promo.discount_percentage, promo.quantity, promo.present);
 					});
-
 				} else {
 					setActivePromotion([]);
 				}
-
 			} else {
 				setActivePromotion([]);
 			}
@@ -94,8 +87,6 @@ const Home = () => {
 		searchPromotion();
 	}, [promotions, orderProducts, updateProductDiscount]);
 
-
- 
 	useEffect(() => {
 		if(openNewCustomer){
 			setOpenNewCustomerDialog(true);
@@ -109,7 +100,6 @@ const Home = () => {
 	}, [openCustomerInfo]);
 
 	useEffect(() => {
-
 		const updateHeight = () => {
 			const headerHeight = document.querySelector('header')?.offsetHeight || 0;
 			setContainerHeight(`calc(100vh - ${headerHeight}px)`);
@@ -117,10 +107,7 @@ const Home = () => {
 
 		updateHeight();
 		window.addEventListener('resize', updateHeight);
-
 		return () => window.removeEventListener('resize', updateHeight);
-
-		
 	}, []);
 
 	const handlePayment = async (type) => {
@@ -194,8 +181,8 @@ const Home = () => {
 			addProduct(foundProduct.id, foundProduct.product_name, foundProduct.image, foundProduct.selling_price || 0, 1);
 			console.log(`Added product: ${foundProduct.product_name}`);
 			setBarcode('');
-			setIsScannerModalOpen(false); // Close the scanner modal
-			// Check for promotions
+			setIsScannerModalOpen(false);
+			
 			const currentDate = new Date();
 			const foundPromotion = promotions.find(promo => 
 				promo.product_id === foundProduct.id &&
@@ -206,7 +193,6 @@ const Home = () => {
 				setActivePromotion([...activePromotion, foundPromotion]);
 				updateProductDiscount(foundProduct.id, foundPromotion.discount_percentage);
 			}
-
 		} else {
 			console.log('Product not found');
 		}
@@ -221,22 +207,26 @@ const Home = () => {
 	};
 
 	return (
-
 		<Grid container spacing={2} sx={{ height: containerHeight, overflow: 'hidden' }}>
 			<Grid item xs={8} sx={{ height: '100%', overflow: 'auto' }}>
-				<Paper elevation={3} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-					<Box sx={{ display: 'flex', mb: 2 }}>
+				<Paper elevation={3} sx={{ p: 2, height: '80%', display: 'flex', flexDirection: 'column' }}>
+					<Box sx={{ display: 'flex', mb: 2, gap: 1 }}>
 						<TextField
 							fullWidth
-							label="Scan barcode"
+							label="Quét mã vạch"
 							variant="outlined"
 							value={barcode}
 							onChange={handleBarcodeChange}
 							onKeyPress={handleBarcodeKeyPress}
+							sx={{ flexGrow: 1 }}
 						/>
-						<Button onClick={toggleScanner}>
-							{isScannerModalOpen ? 'Close Scanner' : 'Open Scanner'}
-						</Button>
+						{/* <Button 
+							variant="contained"
+							onClick={toggleScanner}
+							sx={{ minWidth: '120px' }}
+						>
+							{isScannerModalOpen ? 'Đóng Scanner' : 'Mở Scanner'}
+						</Button> */}
 					</Box>
 					<OrderDisplay
 						getTotalDiscount={getTotalDiscount}
@@ -245,72 +235,50 @@ const Home = () => {
 						handleDecreaseQuantity={handleDecreaseQuantity}
 						handleRemoveProduct={handleRemoveProduct}
 					/>
-					<Box sx={{ mt: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
-						<Typography variant="h6" color="primary" gutterBottom>
-							{activePromotion.length > 0 ? 'KHUYẾN MÃI' : 'KHÔNG CÓ KHUYẾN MÃI'}
-						</Typography>
-						{activePromotion.length > 0 && (
-							<List>
-								{activePromotion.map((promo, index) => (
-									<ListItem key={index}>
-										<ListItemIcon>
-											<img src={promo.productImage} alt={promo.productName} style={{ width: 40, height: 40 }} />
-										</ListItemIcon>
-										<ListItemText primary={promo.productName} secondary={promo.description} />
-									</ListItem>
-								))}
-							</List>
-						)}
-					</Box>
+				</Paper>
+				<Paper elevation={3} sx={{ mt: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+					<Typography variant="h6" color="primary" gutterBottom>
+						{activePromotion.length > 0 ? 'KHUYẾN MÃI ĐANG ÁP DỤNG' : 'KHÔNG CÓ KHUYẾN MÃI'}
+					</Typography>
+					{activePromotion.length > 0 && (
+						<List sx={{ maxHeight: '200px', overflow: 'auto' }}>
+							{activePromotion.map((promo, index) => (
+								<ListItem key={index} sx={{ backgroundColor: 'white', mb: 1, borderRadius: 1 }}>
+									<ListItemIcon>
+										<img src={promo.productImage} alt={promo.productName} style={{ width: 40, height: 40, objectFit: 'cover' }} />
+									</ListItemIcon>
+									<ListItemText 
+										primary={promo.productName} 
+										secondary={promo.description}
+										primaryTypographyProps={{ fontWeight: 'bold' }}
+									/>
+								</ListItem>
+							))}
+						</List>
+					)}
 				</Paper>
 			</Grid>
 
 			<Grid item xs={4} sx={{ height: '100%', overflow: 'auto' }}>
 				<Paper elevation={3} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-					<Grid container spacing={2} sx={{ flexGrow: 1 }}>
+					<Grid container spacing={2} sx={{ mb: 2 }}>
 						{['Tiền Mặt', 'Ví Điện Tử', 'E-Voucher', 'Membership'].map((item) => (
-							<Grid item xs={3} key={item}>
+							<Grid item xs={6} key={item}>
 								<Button 
-									variant="outlined" 
-									fullWidth 
-									sx={{ height: '100%' }}
-									onClick={() => {
-										if (item === 'Tiền Mặt') {
-											handlePayment(1);
-										}
-										if (item === 'Ví Điện Tử') {
-											handlePayment(2);
-										}
-										if (item === 'E-Voucher') {
-											handlePayment();
-										}
-										if (item === 'Membership') {
-											handlePayment();
-										}
-									}}
-								>
-									{item}
-								</Button>
-							</Grid>
-						))}
-						{['Hủy Hóa Đơn', 'Tìm Hóa Đơn', 'Thêm Sản Phẩm', 'Khách Hàng'].map((item) => (
-							<Grid item xs={3} key={item}>
-								<Button 
-									variant="contained" 
+									variant="contained"
 									fullWidth 
 									sx={{ 
-										height: '100%', 
-										backgroundColor: item === 'Hủy Hóa Đơn' ? 'white' : '#0000FF', 
-										color: item === 'Hủy Hóa Đơn' ? 'black' : 'white' 
+										height: '50px',
+										backgroundColor: '#1976d2',
+										'&:hover': {
+											backgroundColor: '#1565c0'
+										}
 									}}
 									onClick={() => {
-										if (item === 'Thêm Sản Phẩm') {
-											navigate('/product');
-										} else if (item === 'Khách Hàng') {
-											handleOpenCustomerDialog();
-										} else if (item === 'Tìm Hóa Đơn') {
-											navigate('/orders');
-										}
+										if (item === 'Tiền Mặt') handlePayment(1);
+										if (item === 'Ví Điện Tử') handlePayment(2);
+										if (item === 'E-Voucher') handlePayment();
+										if (item === 'Membership') handlePayment();
 									}}
 								>
 									{item}
@@ -318,20 +286,55 @@ const Home = () => {
 							</Grid>
 						))}
 					</Grid>
-					<Box sx={{ mt: 2 }}>
-						<Typography variant="h6">SỐ LƯỢNG: {getTotalQuantity()}</Typography>
-						<Typography variant="h6" color="primary">THÀNH TIỀN: {getTotalAmount()}</Typography>
-						<Typography variant="h6" color="secondary">CHIẾT KHẤU: {getTotalDiscount()}</Typography>
+
+					<Grid container spacing={2} sx={{ mb: 3 }}>
+						{['Hủy Hóa Đơn', 'Tìm Hóa Đơn', 'Thêm Sản Phẩm', 'Khách Hàng'].map((item) => (
+							<Grid item xs={6} key={item}>
+								<Button 
+									variant="contained"
+									fullWidth 
+									sx={{ 
+										height: '50px',
+										backgroundColor: item === 'Hủy Hóa Đơn' ? '#f44336' : '#2196f3',
+										'&:hover': {
+											backgroundColor: item === 'Hủy Hóa Đơn' ? '#d32f2f' : '#1976d2'
+										}
+									}}
+									onClick={() => {
+										if (item === 'Thêm Sản Phẩm') navigate('/product');
+										else if (item === 'Khách Hàng') handleOpenCustomerDialog();
+										else if (item === 'Tìm Hóa Đơn') navigate('/orders');
+									}}
+								>
+									{item}
+								</Button>
+							</Grid>
+						))}
+					</Grid>
+
+					<Box sx={{ mt: 'auto', p: 2, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+						<Typography variant="h6" sx={{ mb: 1 }}>
+							Số lượng: {getTotalQuantity()}
+						</Typography>
+						<Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+							Thành tiền: {getTotalAmount().toLocaleString('vi-VN')} VNĐ
+						</Typography>
+						<Typography variant="h6" color="error" sx={{ mb: 1 }}>
+							Chiết khấu: {getTotalDiscount().toLocaleString('vi-VN')} VNĐ
+						</Typography>
 						{customer && (
-							<Typography variant="h6" color="info">ĐIỂM TÍCH LŨY: {customer.diem} + {getTotalAmount()}</Typography>
+							<Typography variant="h6" color="success" sx={{ mb: 1 }}>
+								Điểm tích lũy: {customer.diem} + {getTotalAmount()}
+							</Typography>
 						)}
-						<Box sx={{ borderTop: '1px solid #ccc', mt: 2, pt: 2 }}>
-							<Typography variant="h6" color="error">TỔNG CỘNG: {getTotalAmount()}</Typography>
+						<Box sx={{ borderTop: '2px solid #ccc', mt: 2, pt: 2 }}>
+							<Typography variant="h5" color="error" fontWeight="bold">
+								TỔNG CỘNG: {(getTotalAmount() - getTotalDiscount()).toLocaleString('vi-VN')} VNĐ
+							</Typography>
 						</Box>
 					</Box>
 				</Paper>
 			</Grid>
-
 
 			<Dialog open={openCustomerDialog} onClose={handleCloseCustomerDialog}>
 				<DialogTitle>Tìm Khách Hàng</DialogTitle>
@@ -350,7 +353,7 @@ const Home = () => {
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={handleCloseCustomerDialog}>Hủy</Button>
-					<Button onClick={() => handleSearchCustomer()}>Tìm kiếm</Button>
+					<Button onClick={handleSearchCustomer} variant="contained">Tìm kiếm</Button>
 				</DialogActions>
 			</Dialog>
 
@@ -358,15 +361,15 @@ const Home = () => {
 				<DialogTitle>Thông tin Khách Hàng</DialogTitle>
 				<DialogContent>
 					{customer && (
-						<>
-							<Typography>Tên: {customer.name}</Typography>
-							<Typography>Số điện thoại: {customer.phone}</Typography>
-							<Typography>Điểm tích lũy: {customer.diem}</Typography>
-						</>
+						<Box sx={{ p: 2 }}>
+							<Typography variant="h6" sx={{ mb: 2 }}>Tên: {customer.name}</Typography>
+							<Typography variant="h6" sx={{ mb: 2 }}>Số điện thoại: {customer.phone}</Typography>
+							<Typography variant="h6">Điểm tích lũy: {customer.diem}</Typography>
+						</Box>
 					)}
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={handleCloseCustomerInfoDialog}>Đóng</Button>
+					<Button onClick={handleCloseCustomerInfoDialog} variant="contained">Đóng</Button>
 				</DialogActions>
 			</Dialog>
 
@@ -397,11 +400,9 @@ const Home = () => {
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={handleCloseNewCustomerDialog}>Hủy</Button>
-					<Button onClick={handleCreateNewCustomer}>Tạo mới</Button>
+					<Button onClick={handleCreateNewCustomer} variant="contained">Tạo mới</Button>
 				</DialogActions>
 			</Dialog>
-
-	
 
 			<Dialog open={isScannerModalOpen} onClose={toggleScanner} maxWidth="sm" fullWidth>
 				<DialogContent>

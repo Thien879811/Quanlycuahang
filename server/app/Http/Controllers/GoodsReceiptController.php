@@ -7,6 +7,7 @@ use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptDetail;
 use App\Models\Product;
 use App\Models\HangSuDung;
+
 class GoodsReceiptController extends Controller
 {
     public function createGoodsReceipt(Request $request)
@@ -24,7 +25,7 @@ class GoodsReceiptController extends Controller
         ]);
 
         foreach ($validated['products'] as $product) {
-            $goodsReceiptDetail = GoodsReceiptDetail::create([
+            GoodsReceiptDetail::create([
                 'goods_receipt_id' => $goodsReceipt->id,
                 'product_id' => $product['product_id'],
                 'quantity' => $product['quantity'],
@@ -69,39 +70,38 @@ class GoodsReceiptController extends Controller
             'check_date' => 'required',
         ]);
 
-        $goodsReceipt = GoodsReceipt::find($id);    
+        $goodsReceipt = GoodsReceipt::find($id);
         $goodsReceipt->update([
             'status' => $validated['status'],
             'check_date' => $validated['check_date'],
         ]);
 
-        $goodsReceipt->save();
-
         foreach ($validated['details'] as $detail) {
-
             $goodsReceiptDetail = GoodsReceiptDetail::find($detail['id']);
             $goodsReceiptDetail->status = $detail['status'];
             $goodsReceiptDetail->note = $detail['note'];
             $goodsReceiptDetail->production_date = $detail['production_date'];
             $goodsReceiptDetail->quantity_receipt = $detail['quantity_receipt'];
             $goodsReceiptDetail->expiration_date = $detail['expiration_date'];
-            $goodsReceiptDetail->save();  
+            $goodsReceiptDetail->save();
+
+            $product = Product::find($goodsReceiptDetail->product_id);
+            
             if ($goodsReceiptDetail->status === '1') {
-                $product = Product::find($goodsReceiptDetail->product_id);
                 $product->quantity += $goodsReceiptDetail->quantity;
                 $product->save();
-                $hangSuDung = HangSuDung::create([
+                
+                HangSuDung::create([
                     'product_id' => $product->id,
                     'quantity' => $goodsReceiptDetail->quantity,
                     'hang_su_dung' => $detail['expiration_date'],
                     'status' => '1',
                 ]);
-            }
-            if ($goodsReceiptDetail->status === '0') {
-                $product = Product::find($goodsReceiptDetail->product_id);
+            } elseif ($goodsReceiptDetail->status === '0') {
                 $product->quantity += $goodsReceiptDetail->quantity_receipt;
                 $product->save();
-                $hangSuDung = HangSuDung::create([
+                
+                HangSuDung::create([
                     'product_id' => $product->id,
                     'quantity' => $goodsReceiptDetail->quantity_receipt,
                     'hang_su_dung' => $detail['expiration_date'],
@@ -115,7 +115,8 @@ class GoodsReceiptController extends Controller
             'message' => 'Cập nhật phiếu nhập hàng thành công',
             'goods_receipt' => $goodsReceipt,
         ]);
-    }   
+    }
+
     public function returnReceipt(Request $request)
     {
         $validated = $request->validate([
@@ -125,26 +126,21 @@ class GoodsReceiptController extends Controller
         ]);
 
         $goodsReceipt = GoodsReceipt::find($validated['receipt_id']);
-        $goodsReceipt->save();
 
         foreach ($validated['products'] as $product) {
             $detail = GoodsReceiptDetail::find($product['detail_id']);
             if ($detail) {
+                $detail->return_quantity = $product['return_quantity'];
+                $detail->status = '4';
+                $detail->note = $validated['reason'];
+                $detail->save();
+
                 if ($detail->status === '2' || $detail->status === '1') {
-                    $detail->return_quantity = $product['return_quantity'];
-                    $detail->status = '4';
-                    $detail->note = $validated['reason'];
-                    $detail->save();
                     $productModel = Product::find($detail->product_id);
                     if ($productModel) {
                         $productModel->quantity -= $product['return_quantity'];
                         $productModel->save();
                     }
-                }else{
-                    $detail->return_quantity = $product['return_quantity'];
-                    $detail->status = '4';
-                    $detail->note = $validated['reason'];
-                    $detail->save();
                 }
             }
         }

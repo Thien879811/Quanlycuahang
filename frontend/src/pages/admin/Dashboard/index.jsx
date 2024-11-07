@@ -122,9 +122,9 @@ const Dashboard = () => {
     } 
   }
 
-  const getTopSellingStock = async () => {
+  const getTopSellingStock = async (type) => {
     try {
-      const data = await dashboardService.getTopSellingStock();
+      const data = await dashboardService.getTopSellingStock(type);
       setTopSellingStock(handleResponse(data));
     } catch (error) {
       console.error(error);
