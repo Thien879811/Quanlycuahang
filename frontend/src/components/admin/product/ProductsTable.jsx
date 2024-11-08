@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Tag, Modal, Button, Form, Image } from 'antd';
+import { Table, Tag, Modal, Button, Form, Image, Popconfirm } from 'antd';
 import { Typography, Box, Divider } from '@mui/material';
 import useProducts from "../../../utils/productUtils"
 import moment from 'moment';
@@ -11,7 +11,7 @@ const ProductsTable = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const {products, updateProduct} = useProducts();
+  const {products, updateProduct, deleteProduct} = useProducts();
   const {catalogs} = useCatalogs();
   const {factories} = useFactories();
 
@@ -41,6 +41,20 @@ const ProductsTable = () => {
     updateProduct(selectedProduct.id, values);
     setIsEditModalVisible(false);
     setIsModalVisible(true);
+  };
+
+  const handleDelete = async () => {
+    Modal.confirm({
+      title: 'Xác nhận xóa sản phẩm',
+      content: `Bạn có chắc chắn muốn xóa sản phẩm "${selectedProduct.product_name}"? Hành động này không thể hoàn tác.`,
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        await deleteProduct(selectedProduct.id);
+        setIsModalVisible(false);
+      }
+    });
   };
 
   const formatDate = (date) => {
@@ -118,6 +132,9 @@ const ProductsTable = () => {
         footer={[
           <Button key="edit" type="primary" onClick={showEditModal}>
             Chỉnh sửa
+          </Button>,
+          <Button key="delete" type="primary" danger onClick={handleDelete}>
+            Xóa
           </Button>,
           <Button key="back" onClick={handleCancel}>
             Đóng

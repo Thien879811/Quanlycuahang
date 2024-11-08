@@ -15,8 +15,16 @@ return new class extends Migration
     {
         Schema::create('goods_receipt_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('goods_receipt_id')->constrained('goods_receipts');
-            $table->foreignId('product_id')->constrained('products');
+            $table->unsignedBigInteger('goods_receipt_id')->nullable();
+            $table->foreign('goods_receipt_id')
+                ->references('id')
+                ->on('goods_receipts')
+                ->onDelete('set null');
+            $table->unsignedBigInteger('product_id')->nullable(); 
+            $table->foreign('product_id')
+                ->references('id')
+                ->on('products')
+                ->onDelete('set null');
             $table->integer('quantity');
             $table->decimal('price', 10);
             $table->integer('quantity_receipt')->default(0);

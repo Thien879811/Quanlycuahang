@@ -15,7 +15,8 @@ return new class extends Migration
     {
         Schema::create('hang_su_dungs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained('products');
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('set null');
             $table->string('hang_su_dung');
             $table->string('quantity');
             $table->string('status');

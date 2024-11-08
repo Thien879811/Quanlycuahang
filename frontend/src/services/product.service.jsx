@@ -27,5 +27,13 @@ class ProductService {
     async getInventory() {
         return (await this.api.get("/inventory")).data;
     }
+
+    async createDestroyProduct(data) {
+        const headers = { 'Content-Type': 'multipart/form-data' };
+        return (await this.api.post("/destroy/create", data)).data;
+    }
+    async getDestroyProduct() {
+        return (await this.api.get("/destroy")).data;
+    }
 }
 export default new ProductService();

@@ -10,6 +10,8 @@ use App\Models\HangSuDung;
 use App\Http\Requests\ProductRequest;
 use App\Models\CheckInventory;
 use App\Models\CheckInventoryDetail;
+use App\Models\DestroyProduct;
+
 class ProductController extends Controller
 {
     public function getAll()   
@@ -27,10 +29,7 @@ class ProductController extends Controller
         $existingProduct = $this->checkExistingProduct($productData);
 
         if ($existingProduct) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sản phẩm đã tồn tại.'
-            ], 200);
+            return $existingProduct; // Return the response from checkExistingProduct
         }
 
         //Handle image upload
@@ -45,7 +44,6 @@ class ProductController extends Controller
         $productData['image'] = $imageResult['imageUrl'];
 
         // Create the new product
-
         $product = Product::create($productData);
 
         HangSuDung::create([
@@ -62,21 +60,24 @@ class ProductController extends Controller
         ]);
     }
 
-
     private function checkExistingProduct($productData)
     {
         $existingProduct = Product::where('barcode', $productData['barcode'])->first();
         if ($existingProduct) {
             $existingProduct->quantity += $productData['quantity'];
             $existingProduct->save();
-            $hsd = HangSuDung::where('product_id', $existingProduct->id)->first();
-            if ($hsd && $hsd['hang_su_dung'] == $productData['expiration_date']) {
-                $hsd['quantity'] += $productData['quantity'];
+            
+            $hsd = HangSuDung::where('product_id', $existingProduct->id)
+                            ->where('hang_su_dung', $productData['expiration_date'])
+                            ->first();
+                            
+            if ($hsd) {
+                $hsd->quantity += $productData['quantity'];
                 $hsd->save();
                 return response()->json([
                     'success' => true,
-                    'message' => 'Product created successfully.'
-                ], 200);
+                    'message' => 'Sản phẩm đã được cập nhật số lượng.'
+                ]);
             }
 
             HangSuDung::create([
@@ -87,8 +88,9 @@ class ProductController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Product already exists.'
-            ], 200);
+                'success' => true,
+                'message' => 'Sản phẩm đã được thêm hạn sử dụng mới.'
+            ]);
         }
 
         return false;
@@ -174,4 +176,101 @@ class ProductController extends Controller
         ]);
     }
 
+    public function getAllDestroyProduct()
+    {
+        $destroyProducts = DestroyProduct::with('product')->get();
+        return response()->json($destroyProducts);
+    }
+
+    public function createDestroyProduct(Request $request)
+    {
+        $data = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|numeric|min:1',
+            'destroy_date' => 'required|date',
+            'note' => 'required|string',
+            'status' => 'required|string',
+            'expiration_date' => 'nullable|date'
+        ]);
+        
+        if ($request->hasFile('image')) {
+            $imageResult = $this->handleImageUpload($request);
+            if ($imageResult['success']) {
+                $data['image'] = $imageResult['imageUrl'];
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $imageResult['message']
+                ]);
+            }
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $product = Product::findOrFail($data['product_id']);
+            if ($product->quantity < $data['quantity']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Số lượng hủy vượt quá số lượng tồn kho'
+                ], 400);
+            }
+
+            $destroyProduct = DestroyProduct::create([
+                'product_id' => $data['product_id'],
+                'quantity' => $data['quantity'],
+                'destroy_date' => $data['destroy_date'],
+                'note' => $data['note'],
+                'image' => $data['image'] ?? null,
+                'status' => $data['status'],
+                'expiration_date' => $data['expiration_date'] ?? null
+            ]);
+
+            // Update product quantity
+            $product->quantity -= $data['quantity'];
+            $product->save();
+
+            // If expiration date is provided, update HangSuDung
+            if ($data['expiration_date']) {
+                $hangSuDung = HangSuDung::where('product_id', $data['product_id'])
+                    ->where('hang_su_dung', $data['expiration_date'])
+                    ->first();
+
+                if ($hangSuDung) {
+                    if ($hangSuDung->quantity < $data['quantity']) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Số lượng hủy vượt quá số lượng trong lô hàng'
+                        ], 400);
+                    }
+                    
+                    $hangSuDung->quantity -= $data['quantity'];
+                    $hangSuDung->save();
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã tạo phiếu hủy sản phẩm thành công',
+                'data' => $destroyProduct
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi tạo phiếu hủy sản phẩm',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function delete($id)
+    {
+        $product = Product::find($id);
+        $product->delete();
+        return response()->json(['success' => true, 'message' => 'Sản phẩm đã xóa thành công']);
+    }
 }

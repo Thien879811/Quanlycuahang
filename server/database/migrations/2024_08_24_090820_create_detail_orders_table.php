@@ -16,13 +16,15 @@ return new class extends Migration
         Schema::create('detail_orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders');
-            $table->foreignId('product_id')->constrained('products');
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('set null');
             $table->integer('dongia');
             $table->integer('soluong');
             $table->integer('discount')->nullable();
             $table->timestamps();
         });
     }
+    
 
     /**
      * Reverse the migrations.

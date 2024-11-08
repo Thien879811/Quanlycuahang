@@ -19,7 +19,8 @@ return new class extends Migration
             $table->string('name'); // Tên của chương trình khuyến mãi
             $table->string('code')->nullable(); // Mã khuyến mãi, có thể để trống
             $table->decimal('discount_percentage', 5, 2)->nullable(); // Phần trăm giảm giá, tối đa 100.00%, có thể để trống
-            $table->foreignId('product_id')->constrained('products')->nullable(); // Liên kết với bảng 'products', có thể để trống
+            $table->unsignedBigInteger('product_id')->nullable(); // Liên kết với bảng 'products', có thể để trống
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('set null');
             $table->string('present')->nullable(); // Quà tặng kèm, có thể để trống
             $table->string('description')->nullable(); // Mô tả khuyến mãi, có thể để trống
             $table->string('quantity')->nullable(); // Số lượng khuyến mãi, có thể để trống

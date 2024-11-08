@@ -4,8 +4,12 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Carbon\Carbon;
+use Faker\Factory as Faker;
+use App\Models\Staff;
 use App\Models\ChamCong;
-class ChamCongSeeder extends Seeder
+
+class GoodsReceipt extends Seeder
 {
     /**
      * Run the database seeds.
@@ -14,8 +18,8 @@ class ChamCongSeeder extends Seeder
      */
     public function run()
     {
-        $staff_ids = [1, 2];
-        $months = range(1, 12);
+        $staff_ids = Staff::pluck('id')->toArray();
+        $months = range(1, 11);
         
         foreach ($staff_ids as $staff_id) {
             foreach ($months as $month) {
@@ -30,7 +34,9 @@ class ChamCongSeeder extends Seeder
                         'time_start' => '08:00:00',
                         'time_end' => '17:00:00',
                         'status' => 'Chưa tính',
-                        'reason' => 'null'
+                        'reason' => 'null',
+                        'created_at' => $date . ' 08:00:00',
+                        'updated_at' => $date . ' 08:00:00'
                     ]);
                 }
             }

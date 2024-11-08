@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('goods_receipts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('supplier_id')->constrained('factory');
+            $table->foreignId('supplier_id')->nullable()->constrained('factory')->nullOnDelete();
             $table->date('import_date');
             $table->date('check_date')->nullable();
             $table->string('status')->nullable();

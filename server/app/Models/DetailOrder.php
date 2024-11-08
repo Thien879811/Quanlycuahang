@@ -22,4 +22,9 @@ class DetailOrder extends Model
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
+
+    public function order()
+    {
+        return $this->belongsTo(Orders::class, 'order_id');
+    }
 }

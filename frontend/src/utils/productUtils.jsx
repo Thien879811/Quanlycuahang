@@ -43,11 +43,21 @@ const useProducts = () => {
     }
   };
 
+  const deleteProduct = async (id) => {
+    try {
+      const response = await productService.delete(id);
+      const data = handleResponse(response);
+      return data;
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  return { products, createProduct, updateProduct };
+  return { products, createProduct, updateProduct, deleteProduct };
 };
 
 export default useProducts;

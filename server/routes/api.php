@@ -96,6 +96,10 @@ Route::get('/product',[ProductController::class,'getAll']);
 Route::post('/product',[ProductController::class,'create']);
 Route::post('/product/{id}',[ProductController::class,'update']);
 Route::get('/product/inventory',[HangSuDungController::class,'getAll']);
+Route::get('/product/destroy',[ProductController::class,'getAllDestroyProduct']);
+Route::post('/product/destroy/create',[ProductController::class,'createDestroyProduct']);
+Route::delete('/product/{id}',[ProductController::class,'delete']);
+
 
 
 

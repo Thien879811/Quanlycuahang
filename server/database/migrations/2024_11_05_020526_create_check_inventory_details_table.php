@@ -15,8 +15,16 @@ return new class extends Migration
     {
         Schema::create('check_inventory_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('check_inventory_id')->constrained('check_inventories');
-            $table->foreignId('product_id')->constrained('products');
+            $table->unsignedBigInteger('check_inventory_id')->nullable();
+            $table->foreign('check_inventory_id')
+                ->references('id')
+                ->on('check_inventories')
+                ->onDelete('set null');
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->foreign('product_id')
+                ->references('id')
+                ->on('products')
+                ->onDelete('set null');
             $table->integer('quantity');
             $table->integer('actual_quantity');
             $table->string('note')->nullable();

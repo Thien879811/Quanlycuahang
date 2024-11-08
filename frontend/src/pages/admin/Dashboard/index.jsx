@@ -101,6 +101,7 @@ const Dashboard = () => {
     try {
       const data = await dashboardService.getSalesAndPurchaseChartData();
       const salesAndPurchaseChartData = handleResponse(data);
+      console.log(salesAndPurchaseChartData);
       setSalesAndPurchaseChartData(
         [
           { name: 'Th1', purchase: salesAndPurchaseChartData.purchase[1] || 0, sales: salesAndPurchaseChartData.sales[1] || 0 },
@@ -126,6 +127,7 @@ const Dashboard = () => {
     try {
       const data = await dashboardService.getTopSellingStock(type);
       setTopSellingStock(handleResponse(data));
+      console.log(handleResponse(data));
     } catch (error) {
       console.error(error);
     } 

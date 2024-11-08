@@ -96,7 +96,9 @@ class DashBoardController extends Controller
             $query = Product::query();
             $quantityInHand = $query->sum('quantity');
 
-            $goodsReceipts = GoodsReceipt::with('details')->get();
+            $goodsReceipts = GoodsReceipt::with('details')
+                ->where('status', '0') // Only get pending receipts
+                ->get();
 
             $quantityToBeReceived = $goodsReceipts->sum(function ($goodsReceipt) {
                 return $goodsReceipt->details->sum('quantity');
@@ -136,12 +138,19 @@ class DashBoardController extends Controller
 
     public function getOrderSummary() {
         try {
-            $orders = Orders::get();
-            $orderSummary = $orders->groupBy(function ($order) {
-                return $order->created_at->format('m');
-            })->map(function ($orders) {
-                return $orders->count();
-            });
+            // Initialize array with 0 values for all months
+            $orderSummary = array_fill(1, 12, 0);
+
+            // Get orders grouped by month
+            $orders = Orders::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+                ->whereYear('created_at', Carbon::now()->year)
+                ->groupBy('month')
+                ->get();
+
+            // Fill in actual order counts
+            foreach ($orders as $order) {
+                $orderSummary[$order->month] = $order->count;
+            }
 
             return response()->json($orderSummary);
         } catch (\Exception $e) {
@@ -152,62 +161,113 @@ class DashBoardController extends Controller
 
     public function getSalesAndPurchaseChartData() {
         try {
-            $data = DetailOrder::with('product')->get();
-            $data = $data->groupBy(function ($detail) {
-                return $detail->created_at->format('m');
-            })->map(function ($details) {
-                return $details->sum(function ($detail) {
-                    return $detail->soluong * $detail->dongia - $detail->discount;
+            // Initialize arrays for all months with 0 values
+            $salesData = array_fill(1, 12, 0);
+            $purchaseData = array_fill(1, 12, 0);
+
+            // Get sales data
+            $orders = Orders::with('details')
+                ->whereYear('created_at', Carbon::now()->year)
+                ->get();
+                
+            $salesByMonth = $orders->groupBy(function ($order) {
+                return (int)$order->created_at->format('m');
+            })->map(function ($orders) {
+                return $orders->sum(function ($order) {
+                    return $order->details->sum(function ($detail) {
+                        return $detail->soluong * $detail->dongia - $detail->discount;
+                    });
                 });
             });
 
-            $goodsReceipts = GoodsReceiptDetail::get();
-            $goodsReceipts = $goodsReceipts->groupBy(function ($goodsReceipt) {
-                return $goodsReceipt->created_at->format('m');
-            })->map(function ($goodsReceipts) {
-                return $goodsReceipts->sum(function ($goodsReceipt) {
-                    return $goodsReceipt->quantity * $goodsReceipt->price;
+            // Merge sales data with initialized array
+            foreach ($salesByMonth as $month => $value) {
+                $salesData[$month] = $value;
+            }
+
+            // Get purchase data
+            $goodsReceipts = GoodsReceipt::with('details')
+                ->whereYear('created_at', Carbon::now()->year)
+                ->get();
+                
+            $purchaseByMonth = $goodsReceipts->groupBy(function ($receipt) {
+                return (int)$receipt->created_at->format('m');
+            })->map(function ($receipts) {
+                return $receipts->sum(function ($receipt) {
+                    return $receipt->details->sum(function ($detail) {
+                        return $detail->quantity * $detail->price;
+                    });
                 });
             });
+
+            // Merge purchase data with initialized array
+            foreach ($purchaseByMonth as $month => $value) {
+                $purchaseData[$month] = $value;
+            }
 
             return response()->json([
-                'sales' => $data,
-                'purchase' => $goodsReceipts
+                'sales' => $salesData,
+                'purchase' => $purchaseData
             ]);
         } catch (\Exception $e) {
             \Log::error('Database error in getSalesAndPurchaseChartData: ' . $e->getMessage());
             return response()->json([
-                'sales' => [],
-                'purchase' => []
+                'sales' => array_fill(1, 12, 0),
+                'purchase' => array_fill(1, 12, 0)
             ]);
         }
     }
 
     public function getTopSellingStock($type) {
         try {
-            $query = DetailOrder::with('product')
+            $query = DetailOrder::with(['product', 'order'])
                 ->select('product_id')
                 ->selectRaw('SUM(soluong) as soldQuantity')
-                ->groupBy('product_id');
+                ->groupBy('product_id')
+                ->whereHas('order', function($q) {
+                    $q->whereIn('status', [1, 2]); // Only count completed/paid orders
+                });
 
             switch($type) {
                 case 'today':
-                    $query->where('created_at', '>=', Carbon::today());
+                    $query->whereHas('order', function($q) {
+                        $q->where('created_at', '>=', Carbon::today());
+                    });
                     break;
                 case 'yesterday':
-                    $query->whereBetween('created_at', [
-                        Carbon::yesterday()->startOfDay(),
-                        Carbon::yesterday()->endOfDay()
-                    ]);
+                    $query->whereHas('order', function($q) {
+                        $q->whereBetween('created_at', [
+                            Carbon::yesterday()->startOfDay(),
+                            Carbon::yesterday()->endOfDay()
+                        ]);
+                    });
                     break;
                 case 'week':
-                    $query->where('created_at', '>=', Carbon::now()->startOfWeek());
+                    $query->whereHas('order', function($q) {
+                        $q->where('created_at', '>=', Carbon::now()->startOfWeek());
+                    });
                     break;
                 case 'month':
-                    $query->where('created_at', '>=', Carbon::now()->startOfMonth());
+                    $query->whereHas('order', function($q) {
+                        $q->where('created_at', '>=', Carbon::now()->startOfMonth());
+                    });
                     break;
                 case 'year':
-                    $query->where('created_at', '>=', Carbon::now()->startOfYear());
+                    $query->whereHas('order', function($q) {
+                        $q->where('created_at', '>=', Carbon::now()->startOfYear());
+                    });
+                    break;
+                case 'custom':
+                    if (!request()->has('date')) {
+                        return response()->json(['error' => 'Date parameter is required for custom range'], 400);
+                    }
+                    $date = Carbon::parse(request()->date);
+                    $query->whereHas('order', function($q) use ($date) {
+                        $q->whereBetween('created_at', [
+                            $date->startOfDay(),
+                            $date->endOfDay()
+                        ]);
+                    });
                     break;
                 default:
                     return response()->json(['error' => 'Invalid time range'], 400);
@@ -291,7 +351,7 @@ class DashBoardController extends Controller
             $purchaseData = [
                 'purchaseOrders' => $goodsReceiptsQuery->count(),
                 'purchaseCost' => $query->sum(\DB::raw('quantity * price')),
-                'canceledOrders' => $query->where('status', 4)->count(),
+                'canceledOrders' => $goodsReceiptsQuery->where('status', 4)->count(),
                 'refundedOrders' => $query->whereNotNull('return_quantity')->count()
             ];
 

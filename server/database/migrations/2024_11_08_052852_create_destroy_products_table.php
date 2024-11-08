@@ -13,16 +13,21 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('check_inventories', function (Blueprint $table) {
+        Schema::create('destroy_products', function (Blueprint $table) {
             $table->id();
-            $table->date('check_date');
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->integer('quantity');
+            $table->date('destroy_date');
             $table->string('note')->nullable();
-            $table->unsignedBigInteger('user_id')->nullable();
-            $table->foreign('user_id')
-                ->references('id')
-                ->on('users')
-                ->onDelete('set null');
+            $table->string('image')->nullable();
+            $table->string('status')->nullable();
+            $table->date('expiration_date')->nullable();
             $table->timestamps();
+
+            $table->foreign('product_id')
+                ->references('id')
+                ->on('products')
+                ->onDelete('set null');
         });
     }
 
@@ -33,6 +38,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('check_inventories');
+        Schema::dropIfExists('destroy_products');
     }
 };
