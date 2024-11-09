@@ -15,7 +15,9 @@ class Orders extends Model
         'customer_id',
         'staff_id',
         'status',//0 yeu cau huy, 1 đã thanh toán, 2 yêu cầu hủy, 3 đã hủy
-        'pays_id'
+        'pays_id',
+        'voucher_code',
+        'discount'
     ];
     
     // Add relationships

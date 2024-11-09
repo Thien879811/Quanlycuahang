@@ -25,8 +25,5 @@ class CatalogySeeder extends Seeder
         Catalory::create([
             'catalogy_name' => 'Snack',
         ]);
-        Catalory::create([
-            'catalogy_name' => 'Kẹo',
-        ]);
     }
 }

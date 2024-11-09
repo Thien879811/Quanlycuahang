@@ -16,31 +16,34 @@ class OrderSeeder extends Seeder
      */
     public function run()
     {
+        $startDate = Carbon::createFromDate(2024, 1, 1);
+        $endDate = Carbon::createFromDate(2024, 11, 30); // Fixed incorrect date (November has 30 days)
+        
         // Create orders with status 1 across different months and dates
-        for ($i = 0; $i < 1500; $i++) {
-            $month = rand(1, 12);
-            $day = rand(1, 28); // Using 28 to be safe for all months
-            $date = Carbon::create(2024, $month, $day);
+        for ($i = 0; $i < 12000; $i++) {
+            $randomDate = Carbon::createFromTimestamp(
+                rand($startDate->timestamp, $endDate->timestamp)
+            );
             
             Orders::create([
                 'status' => 1,
                 'pays_id' => 1,
-                'created_at' => $date,
-                'updated_at' => $date
+                'created_at' => $randomDate,
+                'updated_at' => $randomDate
             ]);
         }
 
         // Create orders with status 2 across different months and dates
-        for ($i = 0; $i < 500; $i++) {
-            $month = rand(1, 12);
-            $day = rand(1, 28);
-            $date = Carbon::create(2024, $month, $day);
+        for ($i = 0; $i < 3000; $i++) {
+            $randomDate = Carbon::createFromTimestamp(
+                rand($startDate->timestamp, $endDate->timestamp)
+            );
 
             Orders::create([
                 'status' => 2, 
                 'pays_id' => 2,
-                'created_at' => $date,
-                'updated_at' => $date
+                'created_at' => $randomDate,
+                'updated_at' => $randomDate
             ]);
         }
     }

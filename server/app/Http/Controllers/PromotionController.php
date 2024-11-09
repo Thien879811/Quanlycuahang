@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Promotion;
 use Illuminate\Http\Request;
+use App\Models\Product;
 
 class PromotionController extends Controller
 {
@@ -77,6 +78,31 @@ class PromotionController extends Controller
     {
         $promotion = Promotion::find($id);
         $promotion->update($request->all());
+        return response()->json($promotion);
+    }
+
+
+    public function Promotion(Request $request)
+    {
+        $promotions = Promotion::with('product')->where('start_date', '<=', now())->where('end_date', '>=', now())->get();
+        foreach ($promotions as $promotion) {
+            if($promotion->present){
+                $promotion->present = [
+                    'product_id' => $promotion->present,
+                    'product_name' => Product::find($promotion->present)->product_name,
+                    'product_image' => Product::find($promotion->present)->image,
+                    'product_price' => Product::find($promotion->present)->selling_price,
+                ];
+            }
+        }
+        return response()->json($promotions);
+    }
+
+    public function updateQuantity($id)
+    {
+        $promotion = Promotion::find($id);
+        $promotion->quantity = $promotion->quantity - 1;
+        $promotion->save();
         return response()->json($promotion);
     }
 }

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->id(); // Tạo cột 'id' là khóa chính tự động tăng
             $table->string('name'); // Tên của chương trình khuyến mãi
             $table->string('code')->nullable(); // Mã khuyến mãi, có thể để trống
-            $table->decimal('discount_percentage', 5, 2)->nullable(); // Phần trăm giảm giá, tối đa 100.00%, có thể để trống
+            $table->decimal('discount_percentage', 5)->nullable(); // Phần trăm giảm giá, tối đa 100.00%, có thể để trống
             $table->unsignedBigInteger('product_id')->nullable(); // Liên kết với bảng 'products', có thể để trống
             $table->foreign('product_id')->references('id')->on('products')->onDelete('set null');
             $table->string('present')->nullable(); // Quà tặng kèm, có thể để trống

@@ -4,21 +4,36 @@ import { Grid, Paper, Typography, TextField, Button, Box } from '@mui/material';
 import useOrder from '../utils/orderUtils';
 import useCustomer from '../utils/customerUtils';
 import useOrderProduct from '../utils/orderproduct';
+import orderService from '../services/order.service';
+import { handleResponse } from '../functions';
 
 const Pay = () => {
     const navigate = useNavigate();
     const [amountPaid, setAmountPaid] = useState('');
-    const {getTotalAmount} = useOrderProduct();
+    const {getTotalAmount,getTotalDiscount} = useOrderProduct();
     const [change, setChange] = useState(0);
-    const {updateOrder,clearOrder} = useOrder();
+    const {updateOrder,clearOrder,discount} = useOrder();
     const [totalAmount] = useState(getTotalAmount());
     const {updatePointCustomer} = useCustomer();
+    const [order, setOrder] = useState(null);
 
     useEffect(() => {
         if (amountPaid) {
             setChange(parseFloat(amountPaid) - totalAmount);
         }
     }, [amountPaid, totalAmount]);
+
+    const getOrder = async (order_id) => {
+        const response = await orderService.get(order_id);
+        const order = handleResponse(response);
+        setOrder(order);
+        console.log(order);
+    }
+
+    useEffect(() => {
+        const order_id = localStorage.getItem('order_id');
+        getOrder(order_id);
+    }, []);
 
     const handlePayment = () => {
         const order_id = localStorage.getItem('order_id');
@@ -45,18 +60,18 @@ const Pay = () => {
     };
 
     return (
-        <Grid container spacing={2} justifyContent="center">
-            <Grid item xs={12} md={8}>
-                <Paper elevation={3} sx={{ p: 3 }}>
-                    <Typography variant="h4" gutterBottom>
+        <Grid container spacing={2} justifyContent="center" sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5', py: 4 }}>
+            <Grid item xs={12} md={8} lg={6}>
+                <Paper elevation={6} sx={{ p: 4, borderRadius: 2 }}>
+                    <Typography variant="h4" gutterBottom align="center" sx={{ color: '#1976d2', fontWeight: 'bold', mb: 4 }}>
                         Thanh Toán Tiền Mặt
                     </Typography>
-                    <Box sx={{ mb: 2 }}>
-                        <Typography variant="h6">
-                            Tổng cộng: {totalAmount}
+                    <Box sx={{ mb: 4, p: 3, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
+                        <Typography variant="h5" sx={{ color: '#2196f3', fontWeight: 'bold' }}>
+                            Tổng cộng: {(totalAmount - getTotalDiscount() - (order?.discount ? order.discount/100 * totalAmount : 0)).toLocaleString('vi-VN')} VNĐ
                         </Typography>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
                         <TextField
                             fullWidth
                             label="Số tiền khách trả"
@@ -64,54 +79,78 @@ const Pay = () => {
                             type="number"
                             value={amountPaid}
                             onChange={(e) => setAmountPaid(e.target.value)}
-                            sx={{ mr: 1 }}
+                            sx={{ 
+                                '& .MuiOutlinedInput-root': {
+                                    height: '56px',
+                                    fontSize: '1.2rem'
+                                }
+                            }}
                         />
                         <Button
                             variant="contained"
-                            color="secondary"
+                            color="error"
                             onClick={handleClearAmount}
-                            sx={{ height: '56px' }} // Adjusting the height to match the input field
+                            sx={{ height: '56px', width: '120px', fontSize: '1.1rem' }}
                         >
                             Xóa
                         </Button>
                     </Box>
-                    <Box sx={{ mb: 2 }}>
-                        <Typography variant="h6">
-                            Tiền thừa: {change}
+                    <Box sx={{ mb: 4, p: 3, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
+                        <Typography variant="h5" sx={{ color: '#1565c0', fontWeight: 'bold' }}>
+                            Tiền thừa: {change.toLocaleString('vi-VN')} VNĐ
                         </Typography>
                     </Box>
-                    <Grid container spacing={1} sx={{ mb: 2 }}>
+                    <Grid container spacing={2} sx={{ mb: 4 }}>
                         {denominations.map((value) => (
                             <Grid item xs={4} key={value}>
                                 <Button
                                     variant="outlined"
                                     fullWidth
                                     onClick={() => handleDenominationClick(value)}
+                                    sx={{
+                                        height: '50px',
+                                        fontSize: '1.1rem',
+                                        borderColor: '#2196f3',
+                                        color: '#1976d2',
+                                        '&:hover': {
+                                            backgroundColor: '#e3f2fd',
+                                            borderColor: '#1976d2'
+                                        }
+                                    }}
                                 >
                                     {value.toLocaleString()} VND
                                 </Button>
                             </Grid>
                         ))}
                     </Grid>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        fullWidth
-                        onClick={() => navigate('/')}
-                        sx={{ mb: 2 }}
-                    >
-                        Chọn phương thức thanh toán khác
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        fullWidth
-                        onClick={() =>handlePayment()}
-                        disabled={parseFloat(amountPaid) < totalAmount}
-                        sx={{ mb: 2 }}
-                    >
-                        Xác nhận thanh toán
-                    </Button>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            fullWidth
+                            onClick={() => navigate('/')}
+                            sx={{ height: '56px', fontSize: '1.1rem' }}
+                        >
+                            Chọn phương thức thanh toán khác
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            fullWidth
+                            onClick={() => handlePayment()}
+                            disabled={parseFloat(amountPaid) < totalAmount}
+                            sx={{ 
+                                height: '56px', 
+                                fontSize: '1.1rem',
+                                backgroundColor: '#2e7d32',
+                                '&:hover': {
+                                    backgroundColor: '#1b5e20'
+                                }
+                            }}
+                        >
+                            Xác nhận thanh toán
+                        </Button>
+                    </Box>
                 </Paper>
             </Grid>
         </Grid>

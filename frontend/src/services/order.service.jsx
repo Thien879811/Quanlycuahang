@@ -27,6 +27,15 @@ class OrderService {
     async getSalesOverview(type) {
         return (await this.api.get(`/sales-overview/${type}`)).data;
     }
+    async getOrder(type,customDate) {
+        return (await this.api.post(`/${type}`,{date:customDate})).data;
+    }
+    async updateVoucher(id, data) {
+        return (await this.api.put(`/voucher/${id}`, data)).data;
+    }
+    async cancelOrder(id) {
+        return (await this.api.put(`/cancel/${id}`)).data;
+    }
 }
 export default new OrderService();
 

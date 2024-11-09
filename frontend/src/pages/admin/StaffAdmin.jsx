@@ -15,13 +15,61 @@ const EmployeeSchedule = () => {
   const [schedules, setSchedules] = useState([]);
   const [salaries, setSalaries] = useState([]);
   const [attendances, setAttendances] = useState([]);
+  const [currentWeek, setCurrentWeek] = useState(() => {
+    const now = new Date();
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+    return {
+      start: startOfWeek.toISOString().split('T')[0],
+      end: endOfWeek.toISOString().split('T')[0]
+    };
+  });
 
   useEffect(() => {
-    fetchEmployees().then(setEmployees);
-    fetchSchedules().then(setSchedules);
-    fetchSalaries().then(setSalaries);
-    fetchAttendances().then(setAttendances);
-  }, []);
+    const loadData = async () => {
+      const employeesData = await fetchEmployees();
+      setEmployees(employeesData);
+
+      const schedulesData = await fetchSchedules();
+      const filteredSchedules = schedulesData.filter(schedule => {
+        const scheduleDate = new Date(schedule.date);
+        const startDate = new Date(currentWeek.start);
+        const endDate = new Date(currentWeek.end);
+        return scheduleDate >= startDate && scheduleDate <= endDate;
+      });
+      setSchedules(filteredSchedules);
+
+      const salariesData = await fetchSalaries();
+      setSalaries(salariesData);
+
+      const attendancesData = await fetchAttendances();
+      const filteredAttendances = attendancesData.filter(attendance => {
+        const attendanceDate = new Date(attendance.date);
+        const startDate = new Date(currentWeek.start);
+        const endDate = new Date(currentWeek.end);
+        return attendanceDate >= startDate && attendanceDate <= endDate;
+      });
+      setAttendances(filteredAttendances);
+    };
+
+    loadData();
+  }, [currentWeek]);
+
+  const changeWeek = (direction) => {
+    setCurrentWeek(prev => {
+      const startDate = new Date(prev.start);
+      const endDate = new Date(prev.end);
+      const days = direction === 'next' ? 7 : -7;
+      
+      startDate.setDate(startDate.getDate() + days);
+      endDate.setDate(endDate.getDate() + days);
+      
+      return {
+        start: startDate.toISOString().split('T')[0],
+        end: endDate.toISOString().split('T')[0]
+      };
+    });
+  };
 
   return (
     <Layout>
@@ -34,6 +82,8 @@ const EmployeeSchedule = () => {
                 employees={employees}
                 schedules={schedules}
                 setSchedules={setSchedules}
+                currentWeek={currentWeek}
+                onChangeWeek={changeWeek}
               />
             </TabPane>
             <TabPane tab="Chấm Công" key="2">
@@ -41,6 +91,8 @@ const EmployeeSchedule = () => {
                 employees={employees}
                 salaries={salaries}
                 attendances={attendances}
+                currentWeek={currentWeek}
+                onChangeWeek={changeWeek}
               />
             </TabPane>
             <TabPane tab="Lương" key="3">

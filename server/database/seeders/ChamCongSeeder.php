@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\ChamCong;
+use Carbon\Carbon;
+use App\Models\Staff;
 class ChamCongSeeder extends Seeder
 {
     /**
@@ -14,7 +16,7 @@ class ChamCongSeeder extends Seeder
      */
     public function run()
     {
-        $staff_ids = [1, 2];
+        $staff_ids = Staff::pluck('id')->toArray();
         $months = range(1, 12);
         
         foreach ($staff_ids as $staff_id) {

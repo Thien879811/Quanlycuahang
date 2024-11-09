@@ -29,6 +29,13 @@ return new class extends Migration
             
             // Khóa ngoại tới bảng pays (phương thức thanh toán)
             $table->foreignId('pays_id')->constrained('pays');
+
+            // Mã voucher
+            $table->string('voucher_code')->nullable();
+            
+
+            // Số tiền giảm giá
+            $table->decimal('discount', 10)->default(0);
             
             // Thời gian tạo và cập nhật
             $table->timestamps();

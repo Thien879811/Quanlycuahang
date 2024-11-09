@@ -7,6 +7,8 @@ use App\Models\Orders;
 use Illuminate\Http\Request;
 use App\Models\DetailOrder;
 use App\Models\Product;
+use App\Models\Promotion;
+use Carbon\Carbon;
 
 class OrdersController extends Controller
 {
@@ -85,13 +87,15 @@ class OrdersController extends Controller
 
         $order = Orders::where("status", "0")->first();
 
+
         if (!$order) {
             $order = Orders::create([
                 "customer_id" => $validated['khachhang'] !== '0' ? $validated['khachhang'] : null,
                 "staff_id" => $validated['nhanvien'],
                 "status" => "0",
-                "tongcong" => $validated['tonghoadon'],
                 "pays_id" => $validated['pays_id'],
+                "voucher_code" => $validated['voucher_code'] ?? null,
+                "discount" => $validated['discount'] ?? 0
             ]);
         }
         $order->customer_id = $validated['khachhang'] !== '0' ? $validated['khachhang'] : null;
@@ -148,7 +152,8 @@ class OrdersController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required',
-            'pays_id' => 'required'
+            'pays_id' => 'required',
+           
         ]);
         
         $order = Orders::find($order_id);
@@ -156,9 +161,8 @@ class OrdersController extends Controller
         $order->pays_id = $validated['pays_id'];
         $order->save();
 
-        if ($order->status == '1' || $order->status == '2') {
+        if ($order->status == '1' || $order->status == '2' || $validated['status'] == '1' || $validated['status'] == '2') {
             $details = DetailOrder::where('order_id', $order->id)->get();
-
             foreach ($details as $item) {
                 $product = Product::find($item->product_id);
                 $product->quantity = $product->quantity - $item->soluong;
@@ -167,5 +171,76 @@ class OrdersController extends Controller
         }
 
         return response()->json($details);
+    }
+
+
+    public function getOrder($type, Request $request)
+    {
+        try {
+            $query = Orders::with(['details.product', 'pays'])
+                          ->orderBy('created_at', 'desc');
+
+            switch($type) {
+                case 'today':
+                    $query->whereDate('created_at', Carbon::today());
+                    break;
+                case 'yesterday': 
+                    $query->whereDate('created_at', Carbon::yesterday());
+                    break;
+                case 'week':
+                    $query->whereBetween('created_at', [
+                        Carbon::now()->startOfWeek(),
+                        Carbon::now()->endOfWeek()
+                    ]);
+                    break;
+                case 'month':
+                    $query->whereYear('created_at', Carbon::now()->year)
+                          ->whereMonth('created_at', Carbon::now()->month);
+                    break;
+                case 'custom':
+                    if (!$request->has('date')) {
+                        return response()->json(['error' => 'Date parameter is required for custom range'], 400);
+                    }
+                    $date = Carbon::parse($request->date);
+                    $query->whereDate('created_at', $date);
+                    break;
+                default:
+                    return response()->json(['error' => 'Invalid time range'], 400);
+            }
+
+            $orders = $query->get();
+            return response()->json($orders);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+
+    public function updateVoucher(Request $request, $order_id)
+    {
+        $validated = $request->validate([
+            'voucher_code' => 'nullable|string',
+            'discount' => 'nullable|numeric'
+        ]);
+
+        $order = Orders::find($order_id);
+        $order->voucher_code = $validated['voucher_code'];
+        $order->discount = $validated['discount'];
+        $order->save();
+
+        return response()->json($order);
+    }
+
+    public function cancelOrder($order_id)
+    {
+        $order = Orders::find($order_id);
+        $order->status = -1;
+        $order->save();
+    }
+
+    public function get($order_id)
+    {
+        return response()->json(Orders::find($order_id));
     }
 }

@@ -56,6 +56,8 @@ export const fetchSalaries = async () => {
 
     const data = JSON.parse(cleanData);
 
+    console.log(cleanData);
+
     const salaries = data.map(salary => ({
         id: salary.id,
         employee_id: salary.staff_id,
@@ -74,6 +76,7 @@ export const fetchSalaries = async () => {
 
 export const fetchAttendances = async () => {
     const response = await EmployeeService.getAllAttendance();
+    console.log(response);
     const cleanData = handleResponse(response);
     const data = JSON.parse(cleanData);
     const attendances = data.map(attendance => ({

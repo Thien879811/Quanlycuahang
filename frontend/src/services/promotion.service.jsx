@@ -7,13 +7,16 @@ class PromotionService {
         return (await this.api.post("/", data)).data;
     }
     async getPromotion() {
-        return (await this.api.get("/")).data;
+        return (await this.api.get("/product")).data;
     }
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
     }
     async update(id, data) {
         return (await this.api.put(`/${id}`, data)).data;
+    }
+    async updateQuantity(id) {
+        return (await this.api.put(`/voucher/quantity/${id}`)).data;
     }
 }
 export default new PromotionService();  

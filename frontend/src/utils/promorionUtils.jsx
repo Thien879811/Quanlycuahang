@@ -54,12 +54,23 @@ const usePromotion = () => {
         }
     }
 
+    const updateQuantity = async (id) => {
+        try {
+            const res = await PromotionService.updateQuantity(id);
+            const data = handleResponse(res);
+            return data;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     return {
         promotions,
         createPromotion,
         deletePromotion,
         updatePromotion,
-        fetchPromotion
+        fetchPromotion,
+        updateQuantity
     };
 }
 

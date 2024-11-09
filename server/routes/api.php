@@ -29,6 +29,17 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */ 
+Route::controller(PromotionController::class)->group(function () {
+    Route::get('/promotion', 'getPromotion');
+    Route::post('/promotion', 'create');
+    Route::delete('/promotion/{id}', 'delete');
+    Route::put('/promotion/{id}', 'update');
+    Route::put('/promotion/voucher/quantity/{id}', 'updateQuantity');
+    Route::get('/promotion/product', 'Promotion');
+});
+
+
+
 Route::controller(DashBoardController::class)->group(function () {
     Route::get('/dashboard/sales-overview/{type}', 'getSalesOverview');
     Route::get('/dashboard/inventory-summary/{type}', 'getInventorySummary');
@@ -115,18 +126,6 @@ Route::controller(UserController::class)->group(function () {
     Route::get('/users', 'getAll');
     Route::delete('/users/{id}', 'deleteUser');
 });
-//manager discount api
-Route::controller(PromotionController::class)->group(function () {
-    Route::get('/promotion', 'getPromotion');
-    Route::post('/promotion', 'create');
-    Route::delete('/promotion/{id}', 'delete');
-    Route::put('/promotion/{id}', 'update');
-});
-
-
-
-
-
 
 
 Route::controller(HangSuDungController::class)->group(function () {
@@ -174,6 +173,10 @@ Route::post('/orders', [OrdersController::class, 'create']);
 Route::put('/orders/{order_id}', [OrdersController::class, 'updateOrder']);
 Route::get('/orders/detail/{order_id}', [OrdersController::class, 'getDetail']);
 Route::get('/orders', [OrdersController::class, 'getAll']);
+Route::post('/orders/{type}', [OrdersController::class, 'getOrder']);
+Route::put('/orders/voucher/{order_id}', [OrdersController::class, 'updateVoucher']);
+Route::get('/orders/{order_id}', [OrdersController::class, 'get']);
+Route::put('/orders/cancel/{order_id}', [OrdersController::class, 'cancelOrder']);
 
 
 

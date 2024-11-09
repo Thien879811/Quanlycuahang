@@ -21,14 +21,14 @@ class GoodsReceiptDetail extends Seeder
         $products = ProductModel::all();
         foreach ($goodsReceipts as $goodsReceipt) {
             // Random number of products between 5-10 for each receipt
-            $numProducts = rand(5, 10);
+            $numProducts = rand(1, 10);
             $selectedProducts = $products->random($numProducts);
             
             foreach ($selectedProducts as $product) {
                 $goodsReceiptDetail = GoodsReceiptDetailModel::create([
                     'goods_receipt_id' => $goodsReceipt->id,
                     'product_id' => $product->id,
-                    'quantity' => rand(1, 5),
+                    'quantity' => rand(1, 10),
                     'price' => $product->purchase_price,
                     'quantity_receipt' => 0,
                     'status' => 1,

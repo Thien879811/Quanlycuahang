@@ -38,53 +38,73 @@ const useOrderProduct = () => {
                 }
                 return product;
             });
-            localStorage.setItem('order_product', JSON.stringify(updatedProducts));
             return updatedProducts;
         });
     }, []);
 
-    const updateProductDiscount = useCallback((productCode, discount, quantity, present) => {
+    const updateDiscount = useCallback((productCode, discount) => {
+        setOrderProducts(prevProducts => {
+            const updatedProducts = prevProducts.map(product => {
+                if (product.product_id == productCode) {
+                    return { ...product, discount: product.price * discount / 100 * 1};
+                }
+                return product;
+            });
+            return updatedProducts;
+        });
+    }, []);
+    const updateProductDiscount = useCallback((productCode, promotions) => {
         setOrderProducts(prevProducts => {
             const updatedProducts = prevProducts.map(product => {
                 if (product.product_id === productCode) {
-                    if (quantity) {
-                        const discountMultiplier = Math.floor(product.quantity / quantity);
-                        if (discountMultiplier > 0) {
+                    const promotion = promotions.find(promo => 
+                        promo.product_id === productCode &&
+                        new Date(promo.start_date) <= new Date() &&
+                        new Date(promo.end_date) >= new Date()
+                    );
+
+                    if (!promotion) {
+                        return { ...product, discount: 0 };
+                    }
+
+                    if (promotion.quantity > 0) {
+                        // Tính số lần đủ điều kiện khuyến mãi dựa trên số lượng mua
+                        const timesQualified = Math.floor(product.quantity / promotion.quantity);
+                        if (timesQualified > 0) {
+                            // Chỉ áp dụng giảm giá cho số lượng sản phẩm đủ điều kiện
+                            const discountedQuantity = timesQualified * promotion.quantity;
                             return {
                                 ...product,
-                                discount: (product.price * discount / 100) * discountMultiplier,
-                                present: present ? present * discountMultiplier : null
+                                discount: (product.price * promotion.discount_percentage / 100) * discountedQuantity
                             };
+                        } else {
+                            return { ...product, discount: 0 };
                         }
-                    } else {    // If quantity is not provided, apply discount to all products
+                    }
+
+                    if (promotion.present) {
+                        updateDiscount(promotion.present.product_id, promotion.discount_percentage);
                         return {
-                            ...product,
-                            discount: (product.price * discount / 100) * product.quantity,
-                            present: present || null
+                             ...product,
+                            discount: 0 // Không giảm giá sản phẩm chính
                         };
                     }
-                    return { ...product, discount: 0, present: null };
+
+                    return {
+                        ...product,
+                        discount: (product.price * promotion.discount_percentage / 100) * product.quantity
+                    };
                 }
                 return product;
             });
 
-            // Apply discount to present product if it exists
-            if (present) {
-                const presentProduct = updatedProducts.find(p => p.product_id === present);
-                if (presentProduct) {
-                    presentProduct.discount = presentProduct.price; // 100% discount for the present product
-                }
-            }
-
-            localStorage.setItem('order_product', JSON.stringify(updatedProducts)); 
-           
             return updatedProducts;
         });
     }, []);
 
     const getTotalAmount = useCallback(() => {
         return orderProducts.reduce((total, product) => { 
-            return total + (product.price * product.quantity - product.discount);
+            return total + (product.price * product.quantity - (product.discount || 0));
         }, 0);
     }, [orderProducts]);
 
@@ -102,6 +122,14 @@ const useOrderProduct = () => {
     const clearOrderProduct = useCallback(() => {
         setOrderProducts([]);
         localStorage.removeItem('order_product');
+    }, []);
+
+    const setVoucherCode = useCallback((voucherCode) => {
+        setVoucherCode(voucherCode);
+    }, []);
+
+    const updateVoucherDiscount = useCallback((discount) => {
+        
     }, []);
 
     return {
