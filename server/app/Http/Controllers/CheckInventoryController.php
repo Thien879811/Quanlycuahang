@@ -32,7 +32,7 @@ class CheckInventoryController extends Controller
         $checkInventory = CheckInventory::create([
             'check_date' => $data['check_date'],
             'note' => $data['note'],
-            'user_id' => $data['user_id']
+            'user_id' => $data['user_id'] ?? Auth::id()
         ]);
 
         foreach ($data['products'] as $productData) {
@@ -49,7 +49,7 @@ class CheckInventoryController extends Controller
             $product->save();
         }
 
-        return response()->json($checkInventory->load('products', 'user', 'checkInventoryDetails'));
+        return response()->json($checkInventory->load(['user', 'checkInventoryDetails.product']));
     }
 
     public function deleteCheckInventory($id)
@@ -77,6 +77,14 @@ class CheckInventoryController extends Controller
 
     public function updateCheckInventory(Request $request, $id)
     {
+        $checkInventory = CheckInventory::findOrFail($id);
+        
+        // Check if this is the latest inventory check
+        $latestCheck = CheckInventory::latest('check_date')->first();
+        if ($checkInventory->id !== $latestCheck->id) {
+            return response()->json(['message' => 'Only the latest inventory check can be updated'], 403);
+        }
+
         $data = $request->validate([
             'check_date' => 'required|date',
             'note' => 'nullable|string',
@@ -88,13 +96,18 @@ class CheckInventoryController extends Controller
             'products.*.note' => 'nullable|string'
         ]);
 
-        $checkInventory = CheckInventory::findOrFail($id);
-        
         $checkInventory->update([
             'check_date' => $data['check_date'],
             'note' => $data['note'],
-            'user_id' => $data['user_id']
+            'user_id' => $data['user_id'] ?? Auth::id()
         ]);
+
+        // Restore previous quantities before updating
+        foreach ($checkInventory->checkInventoryDetails as $detail) {
+            $product = Product::findOrFail($detail->product_id);
+            $product->quantity = $detail->quantity;
+            $product->save();
+        }
 
         $checkInventory->checkInventoryDetails()->delete();
 
@@ -112,6 +125,6 @@ class CheckInventoryController extends Controller
             $product->save();
         }
 
-        return response()->json($checkInventory->load('products', 'user', 'checkInventoryDetails'));
+        return response()->json($checkInventory->load(['user', 'checkInventoryDetails.product']));
     }
 }

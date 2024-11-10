@@ -14,9 +14,16 @@ import {
   TableRow,
   IconButton,
   Autocomplete,
+  Box,
+  Card,
+  CardContent,
+  Divider,
+  useTheme
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import InventoryIcon from '@mui/icons-material/Inventory';
 import Factory from '../../../services/factory.service';
 import Product from '../../../services/product.service';
 import Receipt from '../../../services/receipt.service';
@@ -24,6 +31,7 @@ import Receipt from '../../../services/receipt.service';
 import { handleResponse } from '../../../functions';
 
 const ImportAdmin = () => {
+  const theme = useTheme();
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [products, setProducts] = useState([]);
@@ -83,126 +91,198 @@ const ImportAdmin = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-        const importData = {
-            supplier_id: selectedSupplier.id,
-            import_date: importDate,
-            products: selectedProducts.map(item => ({
-            product_id: item.product.id,
-            quantity: item.quantity,
-            price: item.price
-            }))
-        };
-        console.log(importData);
-        const response = await Receipt.create(importData);
-        const data = handleResponse(response);
-        if(data.success){
-            alert('Phiếu nhập đã được tạo thành công!');
-        }else{
-            alert('Có lỗi xảy ra khi tạo phiếu nhập.');
-        }
-        setSelectedProducts([]);
-        setSelectedSupplier(null);
-        setImportDate('');
-    } catch (error) {
-        console.error('Error creating import:', error);
+      const importData = {
+        supplier_id: selectedSupplier.id,
+        import_date: importDate,
+        products: selectedProducts.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: item.price
+        }))
+      };
+      console.log(importData);
+      const response = await Receipt.create(importData);
+      const data = handleResponse(response);
+      if(data.success){
+        alert('Phiếu nhập đã được tạo thành công!');
+      }else{
         alert('Có lỗi xảy ra khi tạo phiếu nhập.');
+      }
+      setSelectedProducts([]);
+      setSelectedSupplier(null);
+      setImportDate('');
+    } catch (error) {
+      console.error('Error creating import:', error);
+      alert('Có lỗi xảy ra khi tạo phiếu nhập.');
     }
   };
 
   return (
-    <Container maxWidth="lg">
-      <Typography variant="h4" gutterBottom>
-        Tạo Phiếu Nhập Hàng
-      </Typography>
-      <form onSubmit={handleSubmit}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Autocomplete
-              options={suppliers}
-              getOptionLabel={(option) => option.factory_name}
-              renderInput={(params) => <TextField {...params} label="Nhà cung cấp" required />}
-              onChange={(_, newValue) => setSelectedSupplier(newValue)}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="Ngày nhập"
-              type="date"
-              fullWidth
-              required
-              InputLabelProps={{ shrink: true }}
-              value={importDate}
-              onChange={(e) => setImportDate(e.target.value)}
-            />
-          </Grid>
-        </Grid>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Card elevation={3} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Box sx={{ 
+          bgcolor: theme.palette.primary.main, 
+          py: 3, 
+          px: 4,
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2
+        }}>
+          <LocalShippingIcon fontSize="large" />
+          <Typography variant="h4">
+            Tạo Phiếu Nhập Hàng
+          </Typography>
+        </Box>
+        
+        <CardContent sx={{ p: 4 }}>
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={6}>
+                <Autocomplete
+                  options={suppliers}
+                  getOptionLabel={(option) => option.factory_name}
+                  renderInput={(params) => 
+                    <TextField 
+                      {...params} 
+                      label="Nhà cung cấp" 
+                      required 
+                      variant="outlined"
+                      fullWidth
+                      sx={{ 
+                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                        minWidth: '400px'
+                      }}
+                    />
+                  }
+                  onChange={(_, newValue) => setSelectedSupplier(newValue)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Ngày nhập"
+                  type="date"
+                  fullWidth
+                  required
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  value={importDate}
+                  onChange={(e) => setImportDate(e.target.value)}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+              </Grid>
+            </Grid>
 
-        <Typography variant="h6" gutterBottom style={{ marginTop: '20px' }}>
-          Sản phẩm nhập
-        </Typography>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Sản phẩm</TableCell>
-                <TableCell>Số lượng</TableCell>
-                <TableCell>Giá nhập</TableCell>
-                <TableCell>Hành động</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {selectedProducts.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Autocomplete
-                      options={filteredProducts}
-                      getOptionLabel={(option) => option.product_name}
-                      renderInput={(params) => <TextField {...params} required />}
-                      onChange={(_, newValue) => handleProductChange(index, 'product', newValue)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => handleProductChange(index, 'quantity', e.target.value)}
-                      required
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      type="number"
-                      value={item.price}
-                      onChange={(e) => handleProductChange(index, 'price', e.target.value)}
-                      required
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => handleRemoveProduct(index)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <Button
-          startIcon={<AddIcon />}
-          onClick={handleAddProduct}
-          style={{ marginTop: '10px' }}
-        >
-          Thêm sản phẩm
-        </Button>
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          style={{ marginTop: '20px' }}
-        >
-          Tạo phiếu nhập
-        </Button>
-      </form>
+            <Box sx={{ mt: 5, mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+              <InventoryIcon color="primary" fontSize="large" />
+              <Typography variant="h5" color="primary" fontWeight="bold">
+                Danh sách sản phẩm nhập
+              </Typography>
+            </Box>
+
+            <TableContainer component={Paper} elevation={2} sx={{ borderRadius: 2, mb: 4 }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: theme.palette.primary }}>
+                    <TableCell width="40%" sx={{ color: 'dark', fontWeight: 'bold' }}>Sản phẩm</TableCell>
+                    <TableCell width="20%" sx={{ color: 'dark', fontWeight: 'bold' }}>Số lượng</TableCell>
+                    <TableCell width="20%" sx={{ color: 'dark', fontWeight: 'bold' }}>Giá nhập</TableCell>
+                    <TableCell width="20%" sx={{ color: 'dark', fontWeight: 'bold' }}>Hành động</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {selectedProducts.map((item, index) => (
+                    <TableRow key={index} sx={{ '&:nth-of-type(odd)': { bgcolor: '#f9f9f9' } }}>
+                      <TableCell>
+                        <Autocomplete
+                          options={filteredProducts}
+                          getOptionLabel={(option) => option.product_name}
+                          renderInput={(params) => 
+                            <TextField 
+                              {...params} 
+                              required 
+                              variant="outlined"
+                              size="small"
+                              sx={{ 
+                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                minWidth: '300px'
+                              }}
+                            />
+                          }
+                          onChange={(_, newValue) => handleProductChange(index, 'product', newValue)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => handleProductChange(index, 'quantity', e.target.value)}
+                          required
+                          variant="outlined"
+                          size="small"
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          type="number"
+                          value={item.price}
+                          onChange={(e) => handleProductChange(index, 'price', e.target.value)}
+                          required
+                          variant="outlined"
+                          size="small"
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton 
+                          onClick={() => handleRemoveProduct(index)}
+                          color="error"
+                          sx={{ '&:hover': { transform: 'scale(1.1)' } }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}>
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={handleAddProduct}
+                color="primary"
+                sx={{ 
+                  borderRadius: 2,
+                  px: 3,
+                  '&:hover': { transform: 'translateY(-2px)' },
+                  transition: 'transform 0.2s'
+                }}
+              >
+                Thêm sản phẩm
+              </Button>
+
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                size="large"
+                sx={{ 
+                  borderRadius: 2,
+                  px: 4,
+                  '&:hover': { transform: 'translateY(-2px)' },
+                  transition: 'transform 0.2s'
+                }}
+              >
+                Tạo phiếu nhập
+              </Button>
+            </Box>
+          </form>
+        </CardContent>
+      </Card>
     </Container>
   );
 };

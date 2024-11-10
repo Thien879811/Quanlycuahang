@@ -222,33 +222,9 @@ class ProductController extends Controller
                 'destroy_date' => $data['destroy_date'],
                 'note' => $data['note'],
                 'image' => $data['image'] ?? null,
-                'status' => $data['status'],
+                'status' => 'pending',
                 'expiration_date' => $data['expiration_date'] ?? null
             ]);
-
-            // Update product quantity
-            $product->quantity -= $data['quantity'];
-            $product->save();
-
-            // If expiration date is provided, update HangSuDung
-            if ($data['expiration_date']) {
-                $hangSuDung = HangSuDung::where('product_id', $data['product_id'])
-                    ->where('hang_su_dung', $data['expiration_date'])
-                    ->first();
-
-                if ($hangSuDung) {
-                    if ($hangSuDung->quantity < $data['quantity']) {
-                        DB::rollBack();
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Số lượng hủy vượt quá số lượng trong lô hàng'
-                        ], 400);
-                    }
-                    
-                    $hangSuDung->quantity -= $data['quantity'];
-                    $hangSuDung->save();
-                }
-            }
 
             DB::commit();
 
@@ -272,5 +248,73 @@ class ProductController extends Controller
         $product = Product::find($id);
         $product->delete();
         return response()->json(['success' => true, 'message' => 'Sản phẩm đã xóa thành công']);
+    }
+
+    public function getDestroyProduct()
+    {
+        $destroyProducts = DestroyProduct::with('product')->get();
+        return response()->json($destroyProducts);
+    }
+
+    public function updateDestroyProductStatus(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $destroyProduct = DestroyProduct::findOrFail($id);
+            $data = $request->validate([
+                'status' => 'required|in:approved,rejected',
+                'note' => 'nullable|string' // Changed to nullable
+            ]);
+
+            if ($data['status'] === 'approved') {
+                // Get the product
+                $product = Product::findOrFail($destroyProduct->product_id);
+                
+                // Check if there's enough quantity
+                if ($product->quantity < $destroyProduct->quantity) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Số lượng sản phẩm không đủ để hủy'
+                    ], 400);
+                }
+
+                // Update product quantity
+                $product->quantity -= $destroyProduct->quantity;
+                $product->save();
+
+                // If there's an expiration date, update HangSuDung
+                if ($destroyProduct->expiration_date) {
+                    $hangSuDung = HangSuDung::where('product_id', $destroyProduct->product_id)
+                                          ->where('hang_su_dung', $destroyProduct->expiration_date)
+                                          ->first();
+                    if ($hangSuDung) {
+                        $hangSuDung->quantity -= $destroyProduct->quantity;
+                        $hangSuDung->save();
+                    }
+                }
+            }
+
+            // Update destroy product status
+            $destroyProduct->status = $data['status'];
+            $destroyProduct->note = $data['note'] ?? null; // Use null if note is not provided
+            $destroyProduct->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã cập nhật trạng thái phiếu hủy thành công',
+                'data' => $destroyProduct
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi cập nhật trạng thái phiếu hủy',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

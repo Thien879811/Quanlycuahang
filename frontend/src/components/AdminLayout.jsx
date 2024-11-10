@@ -34,15 +34,15 @@ export default function AdminLayout() {
     const theme = useTheme();
     const [openProducts, setOpenProducts] = useState(false);
 
-    if (!token) {
-        return <Navigate to='/login' />;
-    }
-
     useEffect(() => {
         if (localStorage.getItem('admin')) {
             setAdmin(JSON.parse(localStorage.getItem('admin')));
         }
     }, []);
+
+    if (!token) {
+        return <Navigate to='/login' />;
+    }
 
     const handleMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -82,6 +82,7 @@ export default function AdminLayout() {
                 { text: 'Lịch sử nhập', icon: <HistoryIcon />, path: '/admin/import-history' },
             ],
         },
+        { text: 'Khách hàng', icon: <PeopleIcon />, path: '/admin/customers' },
         { text: 'Nhà cung cấp', icon: <BusinessIcon />, path: '/admin/suppliers' },
         { text: 'Đơn hàng', icon: <AssignmentIcon />, path: '/admin/orders' },
         { text: 'Nhân sự', icon: <GroupIcon />, path: '/admin/staff' },
@@ -102,11 +103,6 @@ export default function AdminLayout() {
                         Hệ thống Quản trị
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton color="inherit">
-                            <Badge badgeContent={4} color="error">
-                                <NotificationsIcon />
-                            </Badge>
-                        </IconButton>
                         <IconButton color="inherit" onClick={handleMenuOpen}>
                             <AccountCircleIcon />
                         </IconButton>
@@ -118,7 +114,6 @@ export default function AdminLayout() {
                             open={Boolean(anchorEl)}
                             onClose={handleMenuClose}
                         >
-                            <MenuItem onClick={() => { handleMenuClose(); navigate('/admin/profile'); }}>Hồ sơ</MenuItem>
                             <MenuItem onClick={() => { handleMenuClose(); handleLogout(); }}>Đăng xuất</MenuItem>
                         </Menu>
                     </Box>
@@ -184,14 +179,6 @@ export default function AdminLayout() {
                     </List>
                     <Divider sx={{ backgroundColor: '#34495e' }} />
                     <List>
-                        <ListItem button onClick={() => navigate('/admin/settings')} sx={{
-                            '&:hover': {
-                                backgroundColor: '#34495e',
-                            },
-                        }}>
-                            <ListItemIcon sx={{ color: 'white' }}><SettingsIcon /></ListItemIcon>
-                            <ListItemText primary="Cài đặt" />
-                        </ListItem>
                         <ListItem button onClick={handleLogout} sx={{
                             '&:hover': {
                                 backgroundColor: '#34495e',

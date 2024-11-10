@@ -351,7 +351,7 @@ class DashBoardController extends Controller
                 'purchaseOrders' => $goodsReceiptsQuery->count(),
                 'purchaseCost' => $query->sum(\DB::raw('quantity * price')),
                 'canceledOrders' => $goodsReceiptsQuery->where('status', 4)->count(),
-                'refundedOrders' => $query->whereNotNull('return_quantity')->count()
+                'refundedOrders' => $query->whereNotNull('return_quantity')->sum('return_quantity')
             ];
 
             return response()->json($purchaseData);

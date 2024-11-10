@@ -7,7 +7,7 @@ use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptDetail;
 use App\Models\Product;
 use App\Models\HangSuDung;
-
+use Carbon\Carbon;
 class GoodsReceiptController extends Controller
 {
     public function createGoodsReceipt(Request $request)
@@ -73,9 +73,9 @@ class GoodsReceiptController extends Controller
         $goodsReceipt = GoodsReceipt::find($id);
         $goodsReceipt->update([
             'status' => $validated['status'],
-            'check_date' => $validated['check_date'],
+            'check_date' => Carbon::parse($validated['check_date'])->format('Y-m-d H:i:s'),
         ]);
-
+        $goodsReceipt->save();
         foreach ($validated['details'] as $detail) {
             $goodsReceiptDetail = GoodsReceiptDetail::find($detail['id']);
             $goodsReceiptDetail->status = $detail['status'];
@@ -129,6 +129,7 @@ class GoodsReceiptController extends Controller
 
         foreach ($validated['products'] as $product) {
             $detail = GoodsReceiptDetail::find($product['detail_id']);
+
             if ($detail) {
                 $detail->return_quantity = $product['return_quantity'];
                 $detail->status = '4';
@@ -150,5 +151,49 @@ class GoodsReceiptController extends Controller
             'message' => 'Trả hàng thành công',
             'goods_receipt' => $goodsReceipt,
         ]);
+    }
+    public function getReceipt($type, Request $request)
+    {
+        try {
+            $query = GoodsReceipt::with(['details.product', 'supplier'])
+                          ->orderBy('created_at', 'desc');
+
+            switch($type) {
+                case 'today':
+                    $query->whereDate('created_at', Carbon::today());
+                    break;
+                case 'yesterday': 
+                    $query->whereDate('created_at', Carbon::yesterday());
+                    break;
+                case 'week':
+                    $query->whereBetween('created_at', [
+                        Carbon::now()->startOfWeek(),
+                        Carbon::now()->endOfWeek()
+                    ]);
+                    break;
+                case 'month':
+                    $query->whereYear('created_at', Carbon::now()->year)
+                          ->whereMonth('created_at', Carbon::now()->month);
+                    break;
+                case 'custom':
+                    $date = $request->get('date');
+                    if (!$date) {
+                        return response()->json(['error' => 'Date is required for custom type'], 400);
+                    }
+                    $query->whereDate('created_at', Carbon::parse($date));
+                    break;
+                default:
+                    return response()->json(['error' => 'Invalid time range'], 400);
+            }
+
+            $receipts = $query->get();
+            return response()->json([
+                'success' => true,
+                'goods_receipts' => $receipts
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

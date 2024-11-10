@@ -35,5 +35,8 @@ class ProductService {
     async getDestroyProduct() {
         return (await this.api.get("/destroy")).data;
     }
+    async updateDestroyProductStatus(id, data) {
+        return (await this.api.put(`/destroy/${id}`, data)).data;
+    }
 }
 export default new ProductService();

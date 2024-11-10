@@ -64,6 +64,7 @@ Route::controller(GoodsReceiptController::class)->group(function () {
     Route::get('/goods-receipt', 'getAll');
     Route::put('/goods-receipt/{id}', 'updateReceipt');
     Route::post('/goods-receipt/return', 'returnReceipt');
+    Route::get('/goods-receipt/{type}', 'getReceipt');
 });
 
 //catalog api
@@ -110,7 +111,8 @@ Route::get('/product/inventory',[HangSuDungController::class,'getAll']);
 Route::get('/product/destroy',[ProductController::class,'getAllDestroyProduct']);
 Route::post('/product/destroy/create',[ProductController::class,'createDestroyProduct']);
 Route::delete('/product/{id}',[ProductController::class,'delete']);
-
+Route::get('/product/destroy',[ProductController::class,'getDestroyProduct']);
+Route::put('/product/destroy/{id}',[ProductController::class,'updateDestroyProductStatus']);
 
 
 

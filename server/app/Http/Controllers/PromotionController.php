@@ -10,7 +10,7 @@ class PromotionController extends Controller
 {
     public function getPromotion()
     {
-        $promotions = Promotion::all();
+        $promotions = Promotion::with('product')->get();
         return response()->json($promotions);
     }
 
@@ -39,14 +39,14 @@ class PromotionController extends Controller
                 $promotion = Promotion::create([
                     'catalory' => $promotion['catalory'],
                     'name' => $promotion['name'],
-                    'code' => $promotion['code'],
+                    'code' => $promotion['code'] ?? null,
                     'discount_percentage' => $promotion['discount_percentage'],
                     'product_id' => $value,
-                    'present' => $promotion['present'],
-                    'description' => $promotion['description'],
-                    'quantity' => $promotion['quantity'],
-                    'start_date' => $promotion['start_date'],
-                    'end_date' => $promotion['end_date'],
+                    'present' => $promotion['present'] ?? null,
+                    'description' => $promotion['description'] ?? null,
+                    'quantity' => $promotion['quantity'] ?? null,
+                    'start_date' => $promotion['start_date'] ?? null,
+                    'end_date' => $promotion['end_date'] ?? null,
                 ]);
             }
             return response()->json($promotion);
@@ -54,14 +54,14 @@ class PromotionController extends Controller
             $promotion = Promotion::create([
                 'catalory' => $promotion['catalory'],
                 'name' => $promotion['name'],
-                'code' => $promotion['code'],
+                'code' => $promotion['code'] ?? null,
                 'discount_percentage' => $promotion['discount_percentage'],
-                'present' => $promotion['present'],
+                'present' => $promotion['present'] ?? null,
                 'product_id' => null,
-                'description' => $promotion['description'],
-                'quantity' => $promotion['quantity'],
-                'start_date' => $promotion['start_date'],
-                'end_date' => $promotion['end_date'],
+                'description' => $promotion['description'] ?? null,
+                'quantity' => $promotion['quantity'] ?? null,
+                'start_date' => $promotion['start_date'] ?? null,
+                'end_date' => $promotion['end_date'] ?? null,
             ]);
         }
         return response()->json($promotion);

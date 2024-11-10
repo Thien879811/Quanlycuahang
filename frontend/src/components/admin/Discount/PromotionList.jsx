@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Popconfirm, message, Input, Modal, Form, DatePicker, InputNumber, Row, Col, Select, Card, Typography } from 'antd';
-import { EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Popconfirm, message, Input, Modal, Form, DatePicker, InputNumber, Row, Col, Select, Card, Typography, Tag, Tabs } from 'antd';
+import { EditOutlined, DeleteOutlined, SearchOutlined, GiftOutlined, PercentageOutlined, TagOutlined, ShoppingCartOutlined, CalendarOutlined, FileTextOutlined, NumberOutlined } from '@ant-design/icons';
 import usePromotion from '../../../utils/promorionUtils';
 import moment from 'moment';
+import useProduct from '../../../utils/productUtils';
 
 const { Title } = Typography;
+const { TabPane } = Tabs;
+const { Option } = Select;
 
 function PromotionList() {
     const { promotions, deletePromotion, updatePromotion, fetchPromotion } = usePromotion();
+    const { products } = useProduct();
     const [searchText, setSearchText] = useState('');
     const [filteredPromotions, setFilteredPromotions] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -16,46 +20,101 @@ function PromotionList() {
     const [filterType, setFilterType] = useState(null);
     const [filterMonth, setFilterMonth] = useState(null);
 
-    const columns = [
-        { title: 'Loại khuyến mãi', dataIndex: 'catalory', key: 'catalory' },
-        { title: 'Tên', dataIndex: 'name', key: 'name' },
-        { title: 'Mã', dataIndex: 'code', key: 'code' },
-        { title: 'Giảm giá (%)', dataIndex: 'discount_percentage', key: 'discount_percentage' },
-        { title: 'ID sản phẩm', dataIndex: 'product_id', key: 'product_id' },
-        { title: 'Quà tặng', dataIndex: 'present', key: 'present' },
-        { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity' },
-        { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date' },
-        { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date' },
-        {
-            title: 'Hành động',
-            key: 'action',
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>Sửa</Button>
-                    <Popconfirm
-                        title="Bạn có chắc chắn muốn xóa khuyến mãi này?"
-                        onConfirm={() => handleDelete(record.id)}
-                        okText="Có"
-                        cancelText="Không"
-                    >
-                        <Button icon={<DeleteOutlined />} danger>Xóa</Button>
-                    </Popconfirm>
-                </Space>
-            ),
-        },
-    ];
+    const getColumns = (promotions) => {
+        const baseColumns = {
+            catalory: { 
+                title: 'Loại khuyến mãi', 
+                dataIndex: 'catalory', 
+                key: 'catalory',
+                render: (text) => {
+                    let color = text === 'Voucher' ? 'blue' : 'green';
+                    let icon = text === 'Voucher' ? <TagOutlined /> : <PercentageOutlined />;
+                    return (
+                        <Tag color={color} icon={icon}>
+                            {text}
+                        </Tag>
+                    );
+                }
+            },
+            name: { title: 'Tên', dataIndex: 'name', key: 'name' },
+            code: { title: 'Mã', dataIndex: 'code', key: 'code' },
+            discount_percentage: { 
+                title: 'Giảm giá (%)', 
+                dataIndex: 'discount_percentage', 
+                key: 'discount_percentage',
+                render: (text) => text ? `${text}%` : '-'
+            },
+            product: { 
+                title: 'Sản phẩm', 
+                dataIndex: 'product', 
+                key: 'product',
+                render: (product) => product ? product.product_name : '-'
+            },
+            present: { 
+                title: 'Quà tặng', 
+                dataIndex: 'present', 
+                key: 'present',
+                render: (text, record) => {
+                    if (text && record.present.product_name) {
+                        return <Tag icon={<GiftOutlined />} color="purple">{record.present.product_name}</Tag>;
+                    }
+                    return '-';
+                }
+            },
+            quantity: { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity' },
+            start_date: { 
+                title: 'Ngày bắt đầu', 
+                dataIndex: 'start_date', 
+                key: 'start_date',
+                render: (date) => moment(date).format('DD/MM/YYYY')
+            },
+            end_date: { 
+                title: 'Ngày kết thúc', 
+                dataIndex: 'end_date', 
+                key: 'end_date',
+                render: (date) => moment(date).format('DD/MM/YYYY')
+            },
+            action: {
+                title: 'Hành động',
+                key: 'action',
+                render: (_, record) => (
+                    <Space size="middle">
+                        <Button type="primary" ghost icon={<EditOutlined />} onClick={() => handleEdit(record)}>
+                            Sửa
+                        </Button>
+                        <Popconfirm
+                            title="Bạn có chắc chắn muốn xóa khuyến mãi này?"
+                            onConfirm={() => handleDelete(record.id)}
+                            okText="Có"
+                            cancelText="Không"
+                        >
+                            <Button danger icon={<DeleteOutlined />}>Xóa</Button>
+                        </Popconfirm>
+                    </Space>
+                ),
+            }
+        };
+
+        // Kiểm tra xem có dữ liệu nào trong cột không
+        const hasData = (field) => {
+            return promotions.some(promo => promo[field] !== null && promo[field] !== undefined && promo[field] !== '');
+        };
+
+        // Lọc các cột có dữ liệu
+        const visibleColumns = Object.entries(baseColumns)
+            .filter(([key]) => key === 'action' || hasData(key))
+            .map(([_, column]) => column);
+
+        return visibleColumns;
+    };
 
     const handleEdit = (promotion) => {
-        const editableFields = Object.keys(promotion).filter(key => promotion[key] !== null && promotion[key] !== undefined && promotion[key] !== '');
-        const editablePromotion = {};
-        editableFields.forEach(field => {
-            editablePromotion[field] = promotion[field];
-        });
-        setEditingPromotion(editablePromotion);
+        setEditingPromotion(promotion);
         form.setFieldsValue({
-            ...editablePromotion,
-            start_date: editablePromotion.start_date ? moment(editablePromotion.start_date) : null,
-            end_date: editablePromotion.end_date ? moment(editablePromotion.end_date) : null,
+            ...promotion,
+            start_date: promotion.start_date ? moment(promotion.start_date) : null,
+            end_date: promotion.end_date ? moment(promotion.end_date) : null,
+            product_id: promotion.product ? promotion.product.id : null
         });
         setIsModalVisible(true);
     };
@@ -146,93 +205,243 @@ function PromotionList() {
         fetchPromotion();
     }, []);
 
+    const getPromotionsByCategory = (category) => {
+        return filteredPromotions.filter(promotion => promotion.catalory === category);
+    };
+
     return (
-        <Card>
-            <Title level={2}>Danh sách khuyến mãi</Title>
-            <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Card className="promotion-list-card" style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <Title level={2} style={{ marginBottom: '24px', color: '#1890ff' }}>Danh sách khuyến mãi</Title>
+            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                 <Col xs={24} sm={24} md={8}>
                     <Input.Search
                         placeholder="Tìm kiếm khuyến mãi"
                         onChange={(e) => handleSearch(e.target.value)}
                         enterButton={<SearchOutlined />}
+                        size="large"
                     />
-                </Col>
-                <Col xs={24} sm={12} md={8}>
-                    <Select
-                        style={{ width: '100%' }}
-                        placeholder="Lọc theo loại"
-                        onChange={handleTypeFilter}
-                        allowClear
-                    >
-                        <Select.Option value="Giảm giá sản phẩm">Giảm giá sản phẩm</Select.Option>
-                        <Select.Option value="Voucher">Voucher</Select.Option>
-                    </Select>
                 </Col>
                 <Col xs={24} sm={12} md={8}>
                     <DatePicker.MonthPicker
                         style={{ width: '100%' }}
                         placeholder="Lọc theo tháng"
                         onChange={handleMonthFilter}
+                        size="large"
                     />
                 </Col>
             </Row>
-            <Table 
-                columns={columns} 
-                dataSource={filteredPromotions}
-                rowKey="id"
-                pagination={{ pageSize: 10 }}
-                scroll={{ x: true }}
-            />
+
+            <Tabs defaultActiveKey="1">
+                <TabPane tab="Giảm giá sản phẩm" key="1">
+                    <Table 
+                        columns={getColumns(getPromotionsByCategory('Giảm giá sản phẩm'))} 
+                        dataSource={getPromotionsByCategory('Giảm giá sản phẩm')}
+                        rowKey="id"
+                        pagination={{ 
+                            pageSize: 10,
+                            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} khuyến mãi`
+                        }}
+                        scroll={{ x: true }}
+                        bordered
+                    />
+                </TabPane>
+                <TabPane tab="Voucher" key="2">
+                    <Table 
+                        columns={getColumns(getPromotionsByCategory('Voucher'))} 
+                        dataSource={getPromotionsByCategory('Voucher')}
+                        rowKey="id"
+                        pagination={{ 
+                            pageSize: 10,
+                            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} khuyến mãi`
+                        }}
+                        scroll={{ x: true }}
+                        bordered
+                    />
+                </TabPane>
+                <TabPane tab="Khuyến mãi mua nhiều" key="3">
+                    <Table 
+                        columns={getColumns(getPromotionsByCategory('Khuyến mãi mua nhiều'))} 
+                        dataSource={getPromotionsByCategory('Khuyến mãi mua nhiều')}
+                        rowKey="id"
+                        pagination={{ 
+                            pageSize: 10,
+                            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} khuyến mãi`
+                        }}
+                        scroll={{ x: true }}
+                        bordered
+                    />
+                </TabPane>
+                <TabPane tab="Giảm giá sản phẩm mua kèm" key="4">
+                    <Table 
+                        columns={getColumns(getPromotionsByCategory('Giảm giá sản phẩm mua kèm'))} 
+                        dataSource={getPromotionsByCategory('Giảm giá sản phẩm mua kèm')}
+                        rowKey="id"
+                        pagination={{ 
+                            pageSize: 10,
+                            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} khuyến mãi`
+                        }}
+                        scroll={{ x: true }}
+                        bordered
+                    />
+                </TabPane>
+            </Tabs>
+
             <Modal
-                title="Chỉnh sửa khuyến mãi"
+                title={
+                    <Space align="center" style={{ width: '100%', justifyContent: 'center' }}>
+                        <EditOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
+                        <Title level={3} style={{ margin: 0, color: '#1890ff' }}>Chỉnh sửa khuyến mãi</Title>
+                    </Space>
+                }
                 visible={isModalVisible}
                 onOk={handleOk}
                 onCancel={handleCancel}
                 width={800}
+                okText="Lưu thay đổi"
+                cancelText="Hủy"
+                centered
+                bodyStyle={{ padding: '24px' }}
             >
                 <Form form={form} layout="vertical">
-                    <Row gutter={16}>
+                    <Row gutter={24}>
                         <Col xs={24} sm={12}>
-                            {editingPromotion && editingPromotion.name !== null && (
-                                <Form.Item name="name" label="Tên">
-                                    <Input />
+                            {editingPromotion?.name && (
+                                <Form.Item 
+                                    name="name" 
+                                    label={
+                                        <Space>
+                                            <ShoppingCartOutlined />
+                                            <span>Tên khuyến mãi</span>
+                                        </Space>
+                                    }
+                                    rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}
+                                >
+                                    <Input size="large" placeholder="Nhập tên khuyến mãi" />
                                 </Form.Item>
                             )}
-                            {editingPromotion && editingPromotion.code !== null && (
-                                <Form.Item name="code" label="Mã">
-                                    <Input />
+                            {editingPromotion?.code && (
+                                <Form.Item 
+                                    name="code" 
+                                    label={
+                                        <Space>
+                                            <TagOutlined />
+                                            <span>Mã khuyến mãi</span>
+                                        </Space>
+                                    }
+                                    rules={[{ required: true, message: 'Vui lòng nhập mã!' }]}
+                                >
+                                    <Input size="large" placeholder="Nhập mã khuyến mãi" />
                                 </Form.Item>
                             )}
-                            {editingPromotion && editingPromotion.discount_percentage !== null && (
-                                <Form.Item name="discount_percentage" label="Phần trăm giảm giá">
-                                    <InputNumber min={0} max={100} style={{ width: '100%' }} />
+                            {editingPromotion?.discount_percentage && (
+                                <Form.Item 
+                                    name="discount_percentage" 
+                                    label={
+                                        <Space>
+                                            <PercentageOutlined />
+                                            <span>Phần trăm giảm giá</span>
+                                        </Space>
+                                    }
+                                    rules={[{ required: true, message: 'Vui lòng nhập phần trăm giảm giá!' }]}
+                                >
+                                    <InputNumber 
+                                        min={0} 
+                                        max={100} 
+                                        size="large"
+                                        style={{ width: '100%' }} 
+                                        placeholder="Nhập phần trăm giảm giá"
+                                    />
                                 </Form.Item>
                             )}
-                            {editingPromotion && editingPromotion.product_id !== null && (
-                                <Form.Item name="product_id" label="ID sản phẩm">
-                                    <Input />
+                            {editingPromotion?.product && (
+                                <Form.Item 
+                                    name="product_id" 
+                                    label={
+                                        <Space>
+                                            <ShoppingCartOutlined />
+                                            <span>Sản phẩm</span>
+                                        </Space>
+                                    }
+                                >
+                                    <Select size="large" placeholder="Chọn sản phẩm">
+                                        {products.map(product => (
+                                            <Option key={product.id} value={product.id}>{product.product_name}</Option>
+                                        ))}
+                                    </Select>
                                 </Form.Item>
                             )}
                         </Col>
                         <Col xs={24} sm={12}>
-                            {editingPromotion && editingPromotion.description !== null && (
-                                <Form.Item name="description" label="Mô tả">
-                                    <Input.TextArea rows={4} />
+                            {editingPromotion?.description && (
+                                <Form.Item 
+                                    name="description" 
+                                    label={
+                                        <Space>
+                                            <FileTextOutlined />
+                                            <span>Mô tả</span>
+                                        </Space>
+                                    }
+                                >
+                                    <Input.TextArea 
+                                        rows={4} 
+                                        placeholder="Nhập mô tả khuyến mãi"
+                                        size="large"
+                                    />
                                 </Form.Item>
                             )}
-                            {editingPromotion && editingPromotion.quantity !== null && (
-                                <Form.Item name="quantity" label="Số lượng">
-                                    <InputNumber min={0} style={{ width: '100%' }} />
+                            {editingPromotion?.quantity && (
+                                <Form.Item 
+                                    name="quantity" 
+                                    label={
+                                        <Space>
+                                            <NumberOutlined />
+                                            <span>Số lượng</span>
+                                        </Space>
+                                    }
+                                    rules={[{ required: true, message: 'Vui lòng nhập số lượng!' }]}
+                                >
+                                    <InputNumber 
+                                        min={0} 
+                                        size="large"
+                                        style={{ width: '100%' }} 
+                                        placeholder="Nhập số lượng"
+                                    />
                                 </Form.Item>
                             )}
-                            {editingPromotion && editingPromotion.start_date !== null && (
-                                <Form.Item name="start_date" label="Ngày bắt đầu">
-                                    <DatePicker style={{ width: '100%' }} />
+                            {editingPromotion?.start_date && (
+                                <Form.Item 
+                                    name="start_date" 
+                                    label={
+                                        <Space>
+                                            <CalendarOutlined />
+                                            <span>Ngày bắt đầu</span>
+                                        </Space>
+                                    }
+                                    rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu!' }]}
+                                >
+                                    <DatePicker 
+                                        style={{ width: '100%' }} 
+                                        size="large"
+                                        placeholder="Chọn ngày bắt đầu"
+                                    />
                                 </Form.Item>
                             )}
-                            {editingPromotion && editingPromotion.end_date !== null && (
-                                <Form.Item name="end_date" label="Ngày kết thúc">
-                                    <DatePicker style={{ width: '100%' }} />
+                            {editingPromotion?.end_date && (
+                                <Form.Item 
+                                    name="end_date" 
+                                    label={
+                                        <Space>
+                                            <CalendarOutlined />
+                                            <span>Ngày kết thúc</span>
+                                        </Space>
+                                    }
+                                    rules={[{ required: true, message: 'Vui lòng chọn ngày kết thúc!' }]}
+                                >
+                                    <DatePicker 
+                                        style={{ width: '100%' }} 
+                                        size="large"
+                                        placeholder="Chọn ngày kết thúc"
+                                    />
                                 </Form.Item>
                             )}
                         </Col>

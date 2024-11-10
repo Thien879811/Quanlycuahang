@@ -24,5 +24,8 @@ class ReceiptService {
     async returnReceipt(data) {
         return (await this.api.post('/return', data)).data;
     }
+    async getReceipt(type, data) {
+        return (await this.api.get(`/${type}`, {params: {date: data}})).data;
+    }
 }
 export default new ReceiptService();
