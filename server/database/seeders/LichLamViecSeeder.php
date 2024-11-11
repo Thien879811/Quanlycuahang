@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\LichLamViec;
+use App\Models\Staff;
+
 class LichLamViecSeeder extends Seeder
 {
     /**
@@ -14,63 +16,25 @@ class LichLamViecSeeder extends Seeder
      */
     public function run()
     {
-        LichLamViec::create([
-            'staff_id' => 2,
-            'date' => '2024-09-23',
-            'time_start' => '07:00',
-            'time_end' => '15:00',
-            'reason' => '',
-        ]);
-  
-        LichLamViec::create([
-            'staff_id' => 2,
-            'date' => '2024-09-24',
-            'time_start' => '07:00',
-            'time_end' => '15:00',
-            'reason' => '',
-        ]); 
-      
-        LichLamViec::create([
-            'staff_id' => 2,
-            'date' => '2024-09-25',
-            'time_start' => '07:00',
-            'time_end' => '15:00',
-            'reason' => '',
-        ]); 
-         
-        LichLamViec::create([
-            'staff_id' => 2,
-            'date' => '2024-09-26',
-            'time_start' => '07:00',
-            'time_end' => '15:00',
-            'reason' => '',
-        ]); 
+        $staff_ids = Staff::pluck('id')->toArray();
+        $months = range(9, 11);
         
-        LichLamViec::create([
-            'staff_id' => 2,
-            'date' => '2024-09-27',
-            'time_start' => '07:00',
-            'time_end' => '15:00',
-            'reason' => '',
-        ]); 
-         
-        LichLamViec::create([
-            'staff_id' => 2,
-            'date' => '2024-09-28',
-            'time_start' => '07:00',
-            'time_end' => '15:00',
-            'reason' => '',
-        ]); 
-     
-      
-        LichLamViec::create([
-            'staff_id' => 2,
-            'date' => '2024-09-29',
-            'time_start' => '07:00',
-            'time_end' => '15:00',
-            'reason' => '',
-        ]); 
-       
-      
+        foreach ($staff_ids as $staff_id) {
+            foreach ($months as $month) {
+                $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, 2024);
+                
+                for ($day = 1; $day <= $days_in_month; $day++) {
+                    $date = sprintf('2024-%02d-%02d', $month, $day);
+                    
+                    LichLamViec::create([
+                        'staff_id' => $staff_id,
+                        'date' => $date,
+                        'time_start' => '07:00',
+                        'time_end' => '15:00',
+                        'reason' => ''
+                    ]);
+                }
+            }
+        }
     }
 }

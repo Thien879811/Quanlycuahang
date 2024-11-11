@@ -1,39 +1,58 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import useOrder from '../utils/orderUtils'
+import { useParams } from 'react-router-dom';
+import orderUtils from '../utils/orderUtils';
 import VnpayService from '../services/vnpay';
 import { handleResponse } from '../functions';
 import { Spin } from 'antd';
 
 const Vnpay = () => {
-    const { tonghoadon } = useOrder();
+
+    const { id, amount } = useParams();
+    
     const [isLoading, setIsLoading] = useState(true);
 
-    const order_id = localStorage.getItem('order_id');
-
     const getUrlAndRedirect = async () => {
-        const data = {
-            order_id: order_id,
-            amount: tonghoadon
+        // Prepare payment data with parsed amount
+        const paymentData = {
+            order_id: id,
+            amount: parseInt(amount, 10)  // Parse amount to integer
         };
+        console.log(paymentData);
         try {
-            const res = await VnpayService.vnpay(data);
-            const url = handleResponse(res);
-            console.log(url);
-            window.location.href = url.url;
+            // Call VNPAY service to get payment URL
+            const response = await VnpayService.vnpay(paymentData);
+            const { url } = handleResponse(response);
+            
+            // Redirect to VNPAY payment page
+            window.location.href = url;
         } catch (error) {
-            console.log(error);
+            console.error('VNPAY payment error:', error);
             setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        getUrlAndRedirect();
+        const initializePayment = async () => {
+            try {
+                await getUrlAndRedirect();
+            } catch (error) {
+                console.error('Payment initialization error:', error);
+                setIsLoading(false);
+            }
+        };
+        
+        initializePayment();
     }, []);
 
     if (isLoading) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100vh' 
+            }}>
                 <Spin size="large" />
             </div>
         );

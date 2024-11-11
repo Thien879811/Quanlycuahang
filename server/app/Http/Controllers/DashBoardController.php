@@ -166,6 +166,7 @@ class DashBoardController extends Controller
 
             // Get sales data
             $orders = Orders::with('details')
+                ->whereIn('status', [1, 2])
                 ->whereYear('created_at', Carbon::now()->year)
                 ->get();
                 

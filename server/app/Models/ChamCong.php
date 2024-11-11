@@ -17,4 +17,9 @@ class ChamCong extends Model
         'status',
         'reason',
     ];
+
+    public function staff()
+    {
+        return $this->belongsTo(Staff::class);
+    }
 }

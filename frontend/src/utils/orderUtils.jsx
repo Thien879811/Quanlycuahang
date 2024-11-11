@@ -1,138 +1,300 @@
-import { useState, useEffect } from 'react';
-import useOrderProduct from './orderproduct';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import orderService from '../services/order.service';
-import useEmployee from './userUtils';
 import { handleResponse } from '../functions/index';
+import useCustomer from './customerUtils';
 
-// import useCustomer from './customerUtils';
-// Hàm tạo đơn hàng
-const createOrder = (products, nhanvien, khachhang, pays_id, voucher_code, discount) => {
-    return {
-        products,
-        pays_id,
-        nhanvien,
-        khachhang,
-        voucher_code,
-        discount
-    };
-};
-
-const useOrder = () => {
-    const { 
-        orderProducts,
-        getTotalAmount,
-        getTotalQuantity,
-        clearOrderProduct,
-     } = useOrderProduct();
-     
-    const [pays_id, setPays_id] = useState('1');
-    const [employee, setEmployee] = useState();
-    const [nhanvien, setNhanvien] = useState(() => {
-        if (employee) {
-            return employee.id;
-        } else {
-            return '1';
-        }
-    });
-    const customer = JSON.parse(localStorage.getItem('customer'));
-    const [khachhang, setKhachhang] = useState('0');
-    const [loading, setLoading] = useState(false);
+const orderUtils = () => {
+    const [order_id, setOrder_id] = useState(null);
+    const [orders, setOrders] = useState({details: []});
+    const [loading, setLoading] = useState(false); 
     const [error, setError] = useState(null);
-    const [voucherCode, setVoucherCode] = useState('');
-    const [discount, setDiscount] = useState(0);
+    const {customer} = useCustomer();
 
-    useEffect(() => {
-        if (localStorage.getItem('employee')) {
-            setEmployee(JSON.parse(localStorage.getItem('employee')));
+    const getTotalAmount = useMemo(() => {
+        if (!orders?.details) return 0;
+        return orders.details.reduce((total, detail) => {
+            return total + (detail.soluong * detail.dongia);
+        }, 0);
+    }, [orders?.details]);
+
+    const getTotalQuantity = useMemo(() => {
+        if (!orders?.details) return 0;
+        return orders.details.reduce((total, detail) => {
+            return total + detail.soluong;
+        }, 0);
+    }, [orders?.details]);
+
+    const getTotalDiscount = useMemo(() => {
+        if (!orders?.details) return 0;
+        return orders.details.reduce((total, detail) => {
+            return total + detail.discount;
+        }, 0);
+    }, [orders?.details]);
+
+    const getOrders = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await orderService.get();
+            const data = handleResponse(response);
+            setOrders(data);
+            localStorage.setItem('order_id', data.id);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        if (customer && customer.id) {
-            setKhachhang(customer.id);
+        const savedOrderId = localStorage.getItem('order_id');
+        if (savedOrderId) {
+            setOrder_id(savedOrderId);
+        }
+        getOrders();
+    }, [getOrders]);
+
+    useEffect(() => {
+        if(customer?.id) {
+            updateCustomer(customer.id);
         }
     }, [customer]);
-    const createAndSendOrder = async () => {
-        if (orderProducts.length === 0) {
-            setError('Không có sản phẩm trong đơn hàng');
-            return;
-        }
-        setLoading(true);
-        setError(null);
 
+    const updateOrderProducts = useCallback(async (order_id, data) => {
         try {
-            const orderDetails = createOrder(orderProducts, nhanvien, khachhang, pays_id, voucherCode, discount);
-            const response = await orderService.create(orderDetails);
-            const data = handleResponse(response);
-            localStorage.setItem('order_id', data.id);
-            return data;
+            setLoading(true);
+            const response = await orderService.updateOrderProducts(order_id, data);
+            const responseData = handleResponse(response);
+            await getOrders();
+            return responseData;
         } catch (err) {
             setError(err.message);
-            console.error('Lỗi khi tạo đơn hàng:', err);
             throw err;
         } finally {
             setLoading(false);
         }
-    };
+    }, [getOrders]);
 
-    const updateOrder = async (order_id, status, pays_id) => {
-        if (status === -1) {
-            await orderService.cancelOrder(order_id);
-            return;
-        }
+    const updateProductQuantity = useCallback(async (order_id, product_id, quantity) => {
         try {
-            const response = await orderService.update(order_id, { status, pays_id });
-            return handleResponse(response);
+            setLoading(true);
+            if (!orders) throw new Error('Order not found');
+
+            const existingProduct = orders.details.find(detail => detail.product_id === product_id);
+            
+            let updatedProducts;
+            if (existingProduct) {
+                const newQuantity = existingProduct.soluong + quantity;
+                if (newQuantity <= 0) {
+                    // Remove product if quantity becomes 0 or negative
+                    updatedProducts = orders.details
+                        .filter(detail => detail.product_id !== product_id)
+                        .map(detail => ({
+                            order_id: detail.order_id,
+                            product_id: detail.product_id,
+                            soluong: detail.soluong,
+                            dongia: detail.dongia,
+                            discount: detail.discount
+                        }));
+                } else {
+                    // Update quantity if greater than 0
+                    updatedProducts = orders.details.map(detail => ({
+                        order_id: detail.order_id,
+                        product_id: detail.product_id,
+                        soluong: detail.product_id === product_id ? newQuantity : detail.soluong,
+                        dongia: detail.dongia,
+                        discount: detail.discount
+                    }));
+                }
+            } else {
+                // Add new product if quantity is positive
+                if (quantity > 0) {
+                    updatedProducts = [
+                        ...orders.details.map(detail => ({
+                            order_id: detail.order_id,
+                            product_id: detail.product_id,
+                            soluong: detail.soluong,
+                            dongia: detail.dongia,
+                            discount: detail.discount
+                        })),
+                        {
+                            order_id,
+                            product_id,
+                            soluong: quantity,
+                            dongia: 0,
+                            discount: 0
+                        }
+                    ];
+                } else {
+                    updatedProducts = orders.details.map(detail => ({
+                        order_id: detail.order_id,
+                        product_id: detail.product_id,
+                        soluong: detail.soluong,
+                        dongia: detail.dongia,
+                        discount: detail.discount
+                    }));
+                }
+            }
+
+            const data = {
+                details: updatedProducts,
+                customer_id: orders.customer_id || null,
+                staff_id: orders.staff_id || 1,
+                status: orders.status || 0,
+                pays_id: orders.pays_id || 1,
+                voucher_code: orders.voucher_code || null,
+                discount: orders.discount || 0
+            };
+
+            return await updateOrderProducts(order_id, data);
         } catch (err) {
             setError(err.message);
             throw err;
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [orders, updateOrderProducts]);
 
-    const clearOrder = () => {
-        localStorage.removeItem('order_id');
-        setKhachhang('0');
-        clearOrderProduct();
-    };
+   
 
-    const handleCreateOrder = async () => {
-        if (orderProducts.length > 0) {
-            return await createAndSendOrder();
-        }
-        return null;
-    };
-
-    const updateVoucherDiscount = async (voucherCode, discountPercentage) => {
-        setVoucherCode(voucherCode);
-        setDiscount(discountPercentage);    
+   const removeProduct = useCallback(async (order_id, product_id) => {
         try {
-            const order_id = localStorage.getItem('order_id');
-            await orderService.updateVoucher(order_id, { voucher_code: voucherCode, discount: discountPercentage });
-            return true;
+            setLoading(true);
+            if (!orders) throw new Error('Order not found');
+
+            const updatedProducts = orders.details
+                .filter(detail => detail.product_id !== product_id)
+                .map(detail => ({
+                    order_id: detail.order_id,
+                    product_id: detail.product_id,
+                    soluong: detail.soluong,
+                    dongia: detail.dongia,
+                    discount: detail.discount
+                }));
+
+            const data = {
+                details: updatedProducts,
+                customer_id: orders.customer_id || null,
+                staff_id: orders.staff_id || 1,
+                status: orders.status || 0,
+                pays_id: orders.pays_id || 1,
+                voucher_code: orders.voucher_code || null,
+                discount: orders.discount || 0
+            };
+
+            return await updateOrderProducts(order_id, data);
         } catch (err) {
             setError(err.message);
             throw err;
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [orders, updateOrderProducts]);
+
+    const addProduct = useCallback(async (order_id, product_id, quantity, price) => {
+        try {
+            setLoading(true);
+            if (!orders) throw new Error('Order not found');
+
+            const existingProduct = orders.details.find(detail => detail.product_id === product_id);
+            const updatedProducts = existingProduct
+                ? orders.details.map(detail => ({
+                    order_id: detail.order_id,
+                    product_id: detail.product_id,
+                    soluong: detail.product_id === product_id ? detail.soluong + quantity : detail.soluong,
+                    dongia: detail.product_id === product_id ? price : detail.dongia,
+                    discount: detail.discount,
+                }))
+                : [
+                    ...orders.details.map(detail => ({
+                        order_id: detail.order_id,
+                        product_id: detail.product_id,
+                        soluong: detail.soluong,
+                        dongia: detail.dongia,
+                        discount: detail.discount
+                    })),
+                    {
+                        order_id,
+                        product_id,
+                        soluong: quantity,
+                        dongia: price,
+                        discount: 0
+                    }
+                ];
+
+            const data = {
+                details: updatedProducts,
+                customer_id: orders.customer_id || null,
+                staff_id: orders.staff_id || 1,
+                status: orders.status || 0,
+                pays_id: orders.pays_id || 1,
+                voucher_code: orders.voucher_code || null,
+                discount: orders.discount || 0
+            };
+
+            return await updateOrderProducts(order_id, data);
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [orders, updateOrderProducts]);
+
+    const updateVoucherDiscount = useCallback(async (voucher_code, discount_percentage) => {
+        try {
+            setLoading(true);
+            if (!orders) throw new Error('Order not found');
+
+            const data = {
+                ...orders,
+                voucher_code,
+                discount: discount_percentage
+            };
+
+            return await updateOrderProducts(orders.id, data);
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [orders, updateOrderProducts]);
+
+    const updateCustomer = useCallback(async (customer_id) => {
+        try {
+            setLoading(true);
+            if (!orders) throw new Error('Order not found');
+         
+            const data = {
+                ...orders,
+                customer_id
+            };
+
+            return await updateOrderProducts(orders.id, data);
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [orders, updateOrderProducts]);
 
     return {
-        orderProducts,
-        nhanvien,
-        setNhanvien,
-        khachhang,
-        setKhachhang,
+        order_id,
+        orders,
         loading,
         error,
-        handleCreateOrder,
-        updateOrder,
-        clearOrder,
-        createAndSendOrder,
+        getOrders,
+        updateOrderProducts,
+        updateProductQuantity,
+        removeProduct,
+        addProduct,
         updateVoucherDiscount,
-        setVoucherCode,
-        voucherCode,
-        setDiscount,
-        discount
+        updateCustomer,
+        getTotalAmount,
+        getTotalQuantity,
+        getTotalDiscount
     };
-};
+}
 
-export default useOrder;
+export default orderUtils;

@@ -58,5 +58,9 @@ class EmployeeService {
     async updateAttendance(id, data) {
         return (await this.api.put(`/cham-cong/${id}`, data)).data;
     }
+
+    async getAttendance() {
+        return (await this.api.get(`/attendance`)).data;
+    }
 }
 export default new EmployeeService();

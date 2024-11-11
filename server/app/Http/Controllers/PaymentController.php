@@ -25,10 +25,14 @@ class PaymentController extends Controller
 
     public function pay(Request $request)
     {
-        $vnp_TxnRef = $request->input('order_id');
+        $validated = $request->validate([
+            'order_id' => 'nullable|exists:orders,id',
+            'amount' => 'nullable|numeric'
+        ]);
+        $vnp_TxnRef = $validated['order_id'];
         $vnp_OrderInfo = 'Thanh toan';
         $vnp_OrderType = 'billpayment';
-        $vnp_Amount = $request->input('amount', 100000) * 100; // Convert to VND cents
+        $vnp_Amount = $validated['amount'] * 100; // Convert to VND cents
         $vnp_Locale = 'vn';
         $vnp_BankCode = 'QR';
         $vnp_IpAddr = $request->ip();

@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Table, DatePicker, TimePicker, Button, message, Space, Select, Row, Col, Modal, Form, Input, Popconfirm } from 'antd';
-import { PlusOutlined, SaveOutlined, UserAddOutlined, ScheduleOutlined, LeftOutlined, RightOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, DatePicker, TimePicker, Button, message, Space, Select, Row, Col, Modal, Form, Input, Popconfirm, Card, Typography } from 'antd';
+import { PlusOutlined, SaveOutlined, UserAddOutlined, ScheduleOutlined, LeftOutlined, RightOutlined, EditOutlined, DeleteOutlined, CalendarOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import AddEmployeeModal from './Modal/AddEmployeeModal';
 import AddTaskModal from './Modal/AddTaskModal';
 import employeeService from '../../../services/employee.service';
+import { fetchSchedules } from '../../../pages/admin/api';
 import { handleResponse } from '../../../functions';
 const { Option } = Select;
 const { RangePicker } = DatePicker;
+const { Title, Text } = Typography;
 
-const ScheduleTab = ({ employees, schedules, setSchedules }) => {
+const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChangeWeek }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [currentWeek, setCurrentWeek] = useState(moment().startOf('week'));
   const [isAddEmployeeModalVisible, setIsAddEmployeeModalVisible] = useState(false);
   const [isAddTaskModalVisible, setIsAddTaskModalVisible] = useState(false);
   const [isScheduleModalVisible, setIsScheduleModalVisible] = useState(false);
@@ -19,68 +20,15 @@ const ScheduleTab = ({ employees, schedules, setSchedules }) => {
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [form] = Form.useForm();
   const [selectedWeek, setSelectedWeek] = useState(null);
-
-  useEffect(() => {
-    fetchSchedules();
-  }, []);
-
-  const fetchSchedules = async () => {
-    try {
-      const response = await employeeService.getWorkingScheduleAll();
-      const dataResponse = handleResponse(response);
-      console.log(dataResponse);
-      if(dataResponse.data){
-        setSchedules(dataResponse.data);
-      }else{
-        message.error(dataResponse.message);
-      }
-    } catch (error) {
-      console.error('Error fetching schedules:', error);
-      message.error('Failed to fetch schedules');
-    }
-  };
-
-  const handleDateChange = (id, date) => {
-    setSchedules(schedules.map(s => 
-      s.id === id ? { ...s, date: date ? date.format('YYYY-MM-DD') : null } : s
-    ));
-  };
-
-  const handleTimeChange = (id, field, time) => {
-    setSchedules(schedules.map(s => 
-      s.id === id ? { ...s, [field]: time ? time.format('HH:mm') : null } : s
-    ));
-  };
-
-  const handleSave = async (record) => {
-    try {
-      await employeeService.update(record.id, record);
-      message.success('Schedule saved successfully');
-      fetchSchedules();
-    } catch (error) {
-      console.error('Error saving schedule:', error);
-      message.error('Failed to save schedule');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      const  response = await employeeService.deleteWorkingSchedule(id);
-      const dataResponse = handleResponse(response);
-      if(dataResponse.success){
-        message.success(dataResponse.message);
-        fetchSchedules();
-      }else{
-        message.error(dataResponse.message);
-      }
-    } catch (error) {
-      console.error('Error deleting schedule:', error);
-      message.error('Failed to delete schedule');
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleEdit = (record) => {
     setEditingSchedule(record);
+    form.setFieldsValue({
+      date: moment(record.date),
+      timeRange: [moment(record.time_start, 'HH:mm'), moment(record.time_end, 'HH:mm')],
+      reason: record.reason
+    });
     setIsEditModalVisible(true);
   };
 
@@ -94,14 +42,17 @@ const ScheduleTab = ({ employees, schedules, setSchedules }) => {
         time_start: values.timeRange[0].format('HH:mm'),
         time_end: values.timeRange[1].format('HH:mm'),
       };
+
       const response = await employeeService.updateWorkingSchedule(updatedSchedule.id, updatedSchedule);
       const dataResponse = handleResponse(response);
-      console.log(dataResponse);
-      if(dataResponse.success){
+
+      if(dataResponse.success) {
         message.success(dataResponse.message);
         setIsEditModalVisible(false);
         fetchSchedules();
-      }else{
+        form.resetFields();
+        setEditingSchedule(null);
+      } else {
         message.error(dataResponse.message);
       }
     } catch (error) {
@@ -110,69 +61,62 @@ const ScheduleTab = ({ employees, schedules, setSchedules }) => {
     }
   };
 
-  const handleEditModalCancel = () => {
-    setIsEditModalVisible(false);
-    setEditingSchedule(null);
-  };
-
-  const handleAddSchedule = () => {
-    setIsScheduleModalVisible(true);
-    setSelectedWeek(currentWeek);
+  const handleDelete = async (id) => {
+    try {
+      const response = await employeeService.deleteWorkingSchedule(id);
+      const dataResponse = handleResponse(response);
+      
+      if(dataResponse.success) {
+        message.success(dataResponse.message);
+        fetchSchedules();
+      } else {
+        message.error(dataResponse.message);
+      }
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      message.error('Failed to delete schedule');
+    }
   };
 
   const handleScheduleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      const schedulePromises = Array.from({ length: 7 }, (_, i) => {
+      const schedules = Array.from({ length: 7 }, (_, i) => {
         const date = selectedWeek.clone().add(i, 'days');
-        return {
+        const timeRange = values[`timeRange_${i}`];
+        
+        return timeRange ? {
           date: date.format('YYYY-MM-DD'),
-          time_start: values[`timeRange_${i}`] ? values[`timeRange_${i}`][0].format('HH:mm') : null,
-          time_end: values[`timeRange_${i}`] ? values[`timeRange_${i}`][1].format('HH:mm') : null,
+          time_start: timeRange[0].format('HH:mm'),
+          time_end: timeRange[1].format('HH:mm'),
           reason: values[`reason_${i}`] || null,
-        };
-      });
-      
+        } : null;
+      }).filter(Boolean);
+
+      if (schedules.length === 0) {
+        message.error('Please add at least one schedule');
+        return;
+      }
+
       const data = {
         staff_id: values.employee,
-        schedules: schedulePromises,
-      }
+        schedules
+      };
 
       const response = await employeeService.createWorkingSchedule(data);
       const dataResponse = handleResponse(response);
     
-      if(dataResponse.success){
+      if(dataResponse.success) {
         message.success(dataResponse.message);
         setIsScheduleModalVisible(false);
         form.resetFields();
         fetchSchedules();
-      }else{
+      } else {
         message.error(dataResponse.message);
       }
     } catch (error) {
       console.error('Error adding schedule:', error);
       message.error('Failed to add schedule');
-    }
-  };
-
-  const handleScheduleModalCancel = () => {
-    setIsScheduleModalVisible(false);
-    form.resetFields();
-  };
-
-  const handlePreviousWeek = () => {
-    setCurrentWeek(currentWeek.clone().subtract(1, 'week'));
-  };
-
-  const handleNextWeek = () => {
-    setCurrentWeek(currentWeek.clone().add(1, 'week'));
-  };
-
-  const handleWeekChange = (date) => {
-    if (date) {
-      setSelectedWeek(date.startOf('week'));
-    } else {
-      setSelectedWeek(null);
     }
   };
 
@@ -182,230 +126,258 @@ const ScheduleTab = ({ employees, schedules, setSchedules }) => {
       dataIndex: 'name',
       key: 'name',
       fixed: 'left',
-      width: 150,
+      width: 120,
+      render: (text) => <Text strong>{text}</Text>
     },
     ...Array.from({ length: 7 }, (_, i) => ({
       title: currentWeek.clone().add(i, 'days').format('DD/MM (ddd)'),
       dataIndex: `day${i}`,
       key: `day${i}`,
-      width: 250,
+      width: 180,
       render: (_, record) => {
-        if (!Array.isArray(schedules)) {
-          console.error('schedules is not an array:', schedules);
-          return null;
-        }
-
-        const daySchedule = schedules.find(
+        const daySchedules = schedules?.filter(
           s => s.staff_id === record.id && 
           moment(s.date).isSame(currentWeek.clone().add(i, 'days'), 'day')
         );
 
-        return daySchedule ? (
-          <div>
-            <div>{`${daySchedule.time_start} - ${daySchedule.time_end}`}</div>
-            <div>{daySchedule.reason}</div>
-            <Space>
-              <Button icon={<EditOutlined />} onClick={() => handleEdit(daySchedule)} size="small">
-                Sửa
-              </Button>
-              <Popconfirm
-                title="Bạn có chắc chắn muốn xóa lịch này?"
-                onConfirm={() => handleDelete(daySchedule.id)}
-                okText="Có"
-                cancelText="Không"
+        if (!daySchedules?.length) return null;
+
+        return (
+          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+            {daySchedules.map(schedule => (
+              <Card 
+                key={schedule.id} 
+                size="small" 
+                style={{ 
+                  borderRadius: '6px',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                }}
               >
-                <Button icon={<DeleteOutlined />} size="small" danger>
-                  Xóa
-                </Button>
-              </Popconfirm>
-            </Space>
-          </div>
-        ) : null;
+                <Space direction="vertical" size={2}>
+                  <Text strong style={{ color: '#1890ff', fontSize: '12px' }}>
+                    <CalendarOutlined style={{ marginRight: 4 }} />
+                    {`${schedule.time_start} - ${schedule.time_end}`}
+                  </Text>
+                  {schedule.reason && (
+                    <Text type="secondary" style={{ fontSize: '11px' }}>
+                      {schedule.reason}
+                    </Text>
+                  )}
+                  <Space size="small">
+                    <Button 
+                      type="primary"
+                      ghost
+                      icon={<EditOutlined />} 
+                      onClick={() => handleEdit(schedule)} 
+                      size="small"
+                      style={{ fontSize: '11px', padding: '0 4px' }}
+                    >
+                      Sửa
+                    </Button>
+                    <Popconfirm
+                      title="Bạn có chắc chắn muốn xóa lịch này?"
+                      onConfirm={() => handleDelete(schedule.id)}
+                      okText="Có"
+                      cancelText="Không"
+                    >
+                      <Button 
+                        danger 
+                        ghost 
+                        icon={<DeleteOutlined />} 
+                        size="small"
+                        style={{ fontSize: '11px', padding: '0 4px' }}
+                      >
+                        Xóa
+                      </Button>
+                    </Popconfirm>
+                  </Space>
+                </Space>
+              </Card>
+            ))}
+          </Space>
+        );
       },
     })),
   ];
 
-  const dataSource = employees.map(employee => ({
-    id: employee.id,
-    name: employee.name,
-  }));
-
-  const handleAddEmployee = async (employeeData) => {
-    try {
-      const response = await axios.post('/api/employees', employeeData);
-      message.success('Employee added successfully');
-      setIsAddEmployeeModalVisible(false);
-    } catch (error) {
-      console.error('Error adding employee:', error);
-      message.error('Failed to add employee');
-    }
-  };
-
-  const handleAddTask = async (taskData) => {
-    try {
-      const response = await axios.post('/api/tasks', taskData);
-      message.success('Task added successfully');
-      setIsAddTaskModalVisible(false);
-    } catch (error) {
-      console.error('Error adding task:', error);
-      message.error('Failed to add task');
-    }
-  };
-
   return (
-    <Space direction="vertical" size="large" style={{ width: '83%' }}>
-      <Space style={{ marginBottom: 16 }}>
-        <Button icon={<PlusOutlined />} onClick={handleAddSchedule}>
-          Thêm lịch trình cho nhân viên
-        </Button>
-        <Select
-          style={{ width: 200 }}
-          placeholder="Chọn nhân viên"
-          onChange={setSelectedEmployee}
-          allowClear
-        >
-          {employees.map((employee) => (
-            <Option key={employee.id} value={employee.id}>
-              {employee.name}
-            </Option>
-          ))}
-        </Select>
-      </Space>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-        <Col>
-          <Button icon={<LeftOutlined />} onClick={handlePreviousWeek}>
-            Tuần trước
-          </Button>
-        </Col>
-        <Col>
-          <RangePicker
-            value={[currentWeek, currentWeek.clone().endOf('week')]}
-            format="DD/MM/YYYY"
-            disabled
-          />
-        </Col>
-        <Col>
-          <Button icon={<RightOutlined />} onClick={handleNextWeek}>
-            Tuần sau
-          </Button>
-        </Col>
-      </Row>
-      <Table
-        columns={columns}
-        dataSource={dataSource}
-        rowKey="id"
-        scroll={{ x: 'max-content' }}
-        pagination={false}
-      />
-      <AddEmployeeModal
-        visible={isAddEmployeeModalVisible}
-        onCancel={() => setIsAddEmployeeModalVisible(false)}
-        onAddEmployee={handleAddEmployee}
-      />
-      <AddTaskModal
-        visible={isAddTaskModalVisible}
-        onCancel={() => setIsAddTaskModalVisible(false)}
-        onAddTask={handleAddTask}
-        employees={employees}
-      />
-      <Modal
-        title="Thêm lịch trình cho nhân viên"
-        visible={isScheduleModalVisible}
-        onOk={handleScheduleModalOk}
-        onCancel={handleScheduleModalCancel}
-        width={800}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="employee"
-            label="Chọn nhân viên"
-            rules={[{ required: true, message: 'Vui lòng chọn nhân viên' }]}
-          >
-            <Select placeholder="Chọn nhân viên">
-              {employees.map(employee => (
-                <Option key={employee.id} value={employee.id}>
-                  {employee.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="selectedWeek"
-            label="Chọn tuần"
-            rules={[{ required: true, message: 'Vui lòng chọn tuần' }]}
-          >
-            <DatePicker
-              picker="week"
-              onChange={handleWeekChange}
-              style={{ width: '100%' }}
+    <Card style={{ width: '100%', borderRadius: '6px' }}>
+      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        <Row justify="space-between" align="middle">
+          <Col>
+            <Title level={4} style={{ fontSize: '18px', margin: 0 }}>Lịch làm việc nhân viên</Title>
+          </Col>
+          <Col>
+            <Space size="small">
+              <Button 
+                type="primary"
+                icon={<PlusOutlined />} 
+                onClick={() => setIsScheduleModalVisible(true)}
+                size="middle"
+              >
+                Thêm lịch trình
+              </Button>
+              <Select
+                style={{ width: 160 }}
+                placeholder="Chọn nhân viên"
+                onChange={setSelectedEmployee}
+                allowClear
+                size="middle"
+              >
+                {employees.map((employee) => (
+                  <Option key={employee.id} value={employee.id}>
+                    {employee.name}
+                  </Option>
+                ))}
+              </Select>
+            </Space>
+          </Col>
+        </Row>
+        
+        <Row justify="space-between" align="middle">
+          <Col>
+            <Button 
+              type="default"
+              icon={<LeftOutlined />} 
+              onClick={() => onChangeWeek(currentWeek.clone().subtract(1, 'week'))}
+              size="middle"
+            >
+              Tuần trước
+            </Button>
+          </Col>
+          <Col>
+            <RangePicker
+              value={[currentWeek, currentWeek.clone().endOf('week')]}
+              format="DD/MM/YYYY"
+              disabled
+              style={{ width: '240px' }}
+              size="middle"
             />
-          </Form.Item>
-          {selectedWeek && Array.from({ length: 7 }, (_, i) => (
-            <Row key={i} gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name={`date_${i}`}
-                  label={`Ngày ${selectedWeek.clone().add(i, 'days').format('DD/MM (ddd)')}`}
-                >
-                  <Input disabled value={selectedWeek.clone().add(i, 'days').format('DD/MM/YYYY')} />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name={`timeRange_${i}`}
-                  label="Thời gian làm việc"
-                >
-                  <TimePicker.RangePicker format="HH:mm" />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name={`reason_${i}`}
-                  label="Lý do"
-                >
-                  <Input.TextArea />
-                </Form.Item>
-              </Col>
-            </Row>
-          ))}
-        </Form>
-      </Modal>
-      <Modal
-        title="Chỉnh sửa lịch trình"
-        visible={isEditModalVisible}
-        onOk={handleEditModalOk}
-        onCancel={handleEditModalCancel}
-      >
-        {editingSchedule && (
-          <Form form={form} layout="vertical" initialValues={{
-            date: moment(editingSchedule.date),
-            timeRange: [moment(editingSchedule.time_start, 'HH:mm'), moment(editingSchedule.time_end, 'HH:mm')],
-            reason: editingSchedule.reason
-          }}>
-            <Form.Item
-              name="date"
-              label="Ngày"
-              rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
+          </Col>
+          <Col>
+            <Button 
+              type="default"
+              icon={<RightOutlined />} 
+              onClick={() => onChangeWeek(currentWeek.clone().add(1, 'week'))}
+              size="middle"
             >
-              <DatePicker />
-            </Form.Item>
+              Tuần sau
+            </Button>
+          </Col>
+        </Row>
+
+        <Table
+          loading={loading}
+          columns={columns}
+          dataSource={employees}
+          rowKey="id"
+          scroll={{ x: 'max-content' }}
+          pagination={false}
+          bordered
+          size="small"
+          style={{ marginTop: '12px' }}
+        />
+
+        <Modal
+          title={<Title level={4} style={{ fontSize: '16px', margin: 0 }}>Thêm lịch trình cho nhân viên</Title>}
+          visible={isScheduleModalVisible}
+          onOk={handleScheduleModalOk}
+          onCancel={() => {
+            setIsScheduleModalVisible(false);
+            form.resetFields();
+          }}
+          width={720}
+          okText="Lưu"
+          cancelText="Hủy"
+        >
+          <Form form={form} layout="vertical" size="middle">
             <Form.Item
-              name="timeRange"
-              label="Thời gian làm việc"
-              rules={[{ required: true, message: 'Vui lòng chọn thời gian làm việc' }]}
+              name="employee"
+              label="Chọn nhân viên"
+              rules={[{ required: true, message: 'Vui lòng chọn nhân viên' }]}
             >
-              <TimePicker.RangePicker format="HH:mm" />
+              <Select placeholder="Chọn nhân viên">
+                {employees.map(employee => (
+                  <Option key={employee.id} value={employee.id}>
+                    {employee.name}
+                  </Option>
+                ))}
+              </Select>
             </Form.Item>
+            
             <Form.Item
-              name="reason"
-              label="Lý do"
+              name="selectedWeek"
+              label="Chọn tuần"
+              rules={[{ required: true, message: 'Vui lòng chọn tuần' }]}
             >
-              <Input.TextArea />
+              <DatePicker
+                picker="week"
+                onChange={date => setSelectedWeek(date?.startOf('week'))}
+                style={{ width: '100%' }}
+              />
             </Form.Item>
+
+            {selectedWeek && Array.from({ length: 7 }, (_, i) => (
+              <Card key={i} style={{ marginBottom: '12px' }} size="small">
+                <Row gutter={12}>
+                  <Col span={8}>
+                    <Form.Item label={`Ngày ${selectedWeek.clone().add(i, 'days').format('DD/MM (ddd)')}`}>
+                      <Input disabled value={selectedWeek.clone().add(i, 'days').format('DD/MM/YYYY')} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item name={`timeRange_${i}`} label="Thời gian làm việc">
+                      <TimePicker.RangePicker format="HH:mm" style={{ width: '100%' }} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item name={`reason_${i}`} label="Lý do">
+                      <Input.TextArea rows={2} />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Card>
+            ))}
           </Form>
-        )}
-      </Modal>
-    </Space>
+        </Modal>
+
+        <Modal
+          title={<Title level={4} style={{ fontSize: '16px', margin: 0 }}>Chỉnh sửa lịch trình</Title>}
+          visible={isEditModalVisible}
+          onOk={handleEditModalOk}
+          onCancel={() => {
+            setIsEditModalVisible(false);
+            setEditingSchedule(null);
+            form.resetFields();
+          }}
+          okText="Lưu thay đổi"
+          cancelText="Hủy"
+          width={480}
+        >
+          {editingSchedule && (
+            <Form form={form} layout="vertical" size="middle">
+              <Form.Item
+                name="date"
+                label="Ngày"
+                rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
+              >
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+              <Form.Item
+                name="timeRange"
+                label="Thời gian làm việc"
+                rules={[{ required: true, message: 'Vui lòng chọn thời gian làm việc' }]}
+              >
+                <TimePicker.RangePicker format="HH:mm" style={{ width: '100%' }} />
+              </Form.Item>
+              <Form.Item name="reason" label="Lý do">
+                <Input.TextArea rows={3} />
+              </Form.Item>
+            </Form>
+          )}
+        </Modal>
+      </Space>
+    </Card>
   );
 };
 

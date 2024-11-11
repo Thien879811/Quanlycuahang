@@ -1,47 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid, Paper, Typography, TextField, Button, Box } from '@mui/material';
-import useOrder from '../utils/orderUtils';
+import orderUtils from '../utils/orderUtils';
 import useCustomer from '../utils/customerUtils';
-import useOrderProduct from '../utils/orderproduct';
-import orderService from '../services/order.service';
-import { handleResponse } from '../functions';
 
 const Pay = () => {
     const navigate = useNavigate();
     const [amountPaid, setAmountPaid] = useState('');
-    const {getTotalAmount,getTotalDiscount} = useOrderProduct();
+    const {
+        orders,
+        getTotalAmount,
+        getTotalDiscount,
+        updateOrderProducts,
+        clearOrder,
+    } = orderUtils();
     const [change, setChange] = useState(0);
-    const {updateOrder,clearOrder,discount} = useOrder();
-    const [totalAmount] = useState(getTotalAmount());
     const {updatePointCustomer} = useCustomer();
-    const [order, setOrder] = useState(null);
 
     useEffect(() => {
         if (amountPaid) {
+            const totalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * getTotalAmount : 0);
             setChange(parseFloat(amountPaid) - totalAmount);
         }
-    }, [amountPaid, totalAmount]);
-
-    const getOrder = async (order_id) => {
-        const response = await orderService.get(order_id);
-        const order = handleResponse(response);
-        setOrder(order);
-        console.log(order);
-    }
-
-    useEffect(() => {
-        const order_id = localStorage.getItem('order_id');
-        getOrder(order_id);
-    }, []);
+    }, [amountPaid, getTotalAmount, getTotalDiscount, orders]);
 
     const handlePayment = () => {
-        const order_id = localStorage.getItem('order_id');
-        const status = '1';
-        const pays_id = '1';
-        updateOrder(order_id, status, pays_id);
-        updatePointCustomer(totalAmount);
-        clearOrder();
+        if (!orders?.id) return;
+        const data = {
+            ...orders,
+            status: '1',
+            pays_id: '1'
+        };
+        updateOrderProducts(orders.id, data);
+        updatePointCustomer(getTotalAmount);
         navigate('/');
     };
 
@@ -59,6 +50,8 @@ const Pay = () => {
         });
     };
 
+    const finalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * getTotalAmount : 0);
+
     return (
         <Grid container spacing={2} justifyContent="center" sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5', py: 4 }}>
             <Grid item xs={12} md={8} lg={6}>
@@ -68,7 +61,7 @@ const Pay = () => {
                     </Typography>
                     <Box sx={{ mb: 4, p: 3, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
                         <Typography variant="h5" sx={{ color: '#2196f3', fontWeight: 'bold' }}>
-                            Tổng cộng: {(totalAmount - getTotalDiscount() - (order?.discount ? order.discount/100 * totalAmount : 0)).toLocaleString('vi-VN')} VNĐ
+                            Tổng cộng: {finalAmount.toLocaleString('vi-VN')} VNĐ
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
@@ -137,8 +130,8 @@ const Pay = () => {
                             variant="contained"
                             color="success"
                             fullWidth
-                            onClick={() => handlePayment()}
-                            disabled={parseFloat(amountPaid) < totalAmount}
+                            onClick={handlePayment}
+                            disabled={parseFloat(amountPaid) < finalAmount}
                             sx={{ 
                                 height: '56px', 
                                 fontSize: '1.1rem',

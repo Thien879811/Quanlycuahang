@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TablePagination } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TablePagination, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import orderService from '../services/order.service';
 import { handleResponse } from "../functions/index";
 import useOrder from '../utils/orderUtils';
-import CataloryService from '../services/catalory.service';
 
 const Order = () => {
     const [orders, setOrders] = useState([]);
@@ -14,9 +13,9 @@ const Order = () => {
     const [orderToCancel, setOrderToCancel] = useState(null);
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(20);
+    const [filterStatus, setFilterStatus] = useState('all');
     const navigate = useNavigate();
     const { updateOrder } = useOrder();
-    const [categories, setCategories] = useState([]);
 
     const fetchOrders = async () => {
         try {
@@ -84,11 +83,7 @@ const Order = () => {
         if (orderToCancel) {
             await updateOrder(orderToCancel.id, -1, 1);
             handleCloseCancelDialog();
-            const updatedOrders = orders.map(order => 
-                order.id === orderToCancel.id ? {...order, status: '0'} : order
-            );
             fetchOrders();
-            setOrders(updatedOrders);
         }
     };
 
@@ -96,11 +91,7 @@ const Order = () => {
         if (orderToCancel) {
             await updateOrder(orderToCancel.id, 1, 1);
             handleCloseCancelDialog();
-            const updatedOrders = orders.map(order => 
-                order.id === orderToCancel.id ? {...order, status: '1'} : order
-            );
             fetchOrders();
-            setOrders(updatedOrders);
         }
     };
 
@@ -108,24 +99,77 @@ const Order = () => {
         setPage(newPage);
     };
 
+    const handleFilterChange = (event) => {
+        setFilterStatus(event.target.value);
+        setPage(0);
+    };
+
+    const getStatusColor = (status) => {
+        switch(status) {
+            case -1: return { bg: '#ffebee', text: '#d32f2f' };
+            case 1: return { bg: '#e8f5e9', text: '#2e7d32' };
+            case 2: return { bg: '#e3f2fd', text: '#1976d2' };
+            case 3: return { bg: '#fafafa', text: '#757575' };
+            default: return { bg: '#e3f2fd', text: '#1976d2' };
+        }
+    };
+
+    const getStatusText = (status) => {
+        switch(status) {
+            case -1: return 'Đang yêu cầu hủy';
+            case 1: return 'Thanh toán tại quầy';
+            case 2: return 'Thanh toán online';
+            case 3: return 'Đã hủy';
+            default: return 'Không xác định';
+        }
+    };
+
+    const filteredOrders = orders.filter(order => {
+        switch(filterStatus) {
+            case 'paid':
+                return order.status === 1 || order.status === 2;
+            case 'cancelled':
+                return order.status === 3;
+            case 'pending':
+                return order.status === -1;
+            default:
+                return true;
+        }
+    });
+
     return (
         <div style={{ padding: '20px' }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
                     Tất cả đơn hàng
                 </Typography>
-                <Button 
-                    variant="contained" 
-                    color="primary" 
-                    onClick={handleClose}
-                    sx={{ 
-                        borderRadius: '8px',
-                        textTransform: 'none',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}
-                >
-                    Đóng
-                </Button>
+                <Box display="flex" gap={2}>
+                    <FormControl sx={{ minWidth: 200 }}>
+                        <InputLabel>Trạng thái</InputLabel>
+                        <Select
+                            value={filterStatus}
+                            onChange={handleFilterChange}
+                            label="Trạng thái"
+                        >
+                            <MenuItem value="all">Tất cả</MenuItem>
+                            <MenuItem value="paid">Đã thanh toán</MenuItem>
+                            <MenuItem value="cancelled">Đã hủy</MenuItem>
+                            <MenuItem value="pending">Đang yêu cầu hủy</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <Button 
+                        variant="contained" 
+                        color="primary" 
+                        onClick={handleClose}
+                        sx={{ 
+                            borderRadius: '8px',
+                            textTransform: 'none',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                    >
+                        Đóng
+                    </Button>
+                </Box>
             </Box>
 
             <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderRadius: '12px' }}>
@@ -139,7 +183,7 @@ const Order = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {orders
+                        {filteredOrders
                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                             .map((order) => (
                             <TableRow 
@@ -165,13 +209,10 @@ const Order = () => {
                                         display: 'inline-block',
                                         padding: '6px 12px',
                                         borderRadius: '16px',
-                                        backgroundColor: order.status === -1 ? '#ffebee' : 
-                                                      order.status === 1 ? '#e8f5e9' : '#e3f2fd',
-                                        color: order.status === -1 ? '#d32f2f' :
-                                              order.status === 1 ? '#2e7d32' : '#1976d2'
+                                        backgroundColor: getStatusColor(order.status).bg,
+                                        color: getStatusColor(order.status).text
                                     }}>
-                                        {order.status === -1 ? 'Đang yêu cầu hủy' :
-                                         order.status === 1 ? 'Thanh toán tại quầy' : 'Thanh toán online'}
+                                        {getStatusText(order.status)}
                                     </Box>
                                 </TableCell>
                                 <TableCell align="right">
@@ -186,17 +227,19 @@ const Order = () => {
                                     >
                                         Xem
                                     </Button>
-                                    <Button 
-                                        onClick={() => handleOpenCancelDialog(order)} 
-                                        variant="contained" 
-                                        color="error"
-                                        sx={{
-                                            backgroundColor: '#d32f2f',
-                                            '&:hover': { backgroundColor: '#c62828' }
-                                        }}
-                                    >
-                                        Hủy
-                                    </Button>
+                                    {order.status !== 3 && (
+                                        <Button 
+                                            onClick={() => handleOpenCancelDialog(order)} 
+                                            variant="contained" 
+                                            color="error"
+                                            sx={{
+                                                backgroundColor: '#d32f2f',
+                                                '&:hover': { backgroundColor: '#c62828' }
+                                            }}
+                                        >
+                                            Hủy
+                                        </Button>
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -204,7 +247,7 @@ const Order = () => {
                 </Table>
                 <TablePagination
                     component="div"
-                    count={orders.length}
+                    count={filteredOrders.length}
                     page={page}
                     onPageChange={handleChangePage}
                     rowsPerPage={rowsPerPage}
@@ -239,13 +282,10 @@ const Order = () => {
                                         marginLeft: '8px',
                                         padding: '4px 12px',
                                         borderRadius: '16px',
-                                        backgroundColor: selectedOrder.status === -1 ? '#ffebee' :
-                                                      selectedOrder.status === 1 ? '#e8f5e9' : '#e3f2fd',
-                                        color: selectedOrder.status === -1 ? '#d32f2f' :
-                                              selectedOrder.status === 1 ? '#2e7d32' : '#1976d2'
+                                        backgroundColor: getStatusColor(selectedOrder.status).bg,
+                                        color: getStatusColor(selectedOrder.status).text
                                     }}>
-                                        {selectedOrder.status === -1 ? 'Đang yêu cầu hủy' :
-                                         selectedOrder.status === 1 ? 'Thanh toán tại quầy' : 'Thanh toán online'}
+                                        {getStatusText(selectedOrder.status)}
                                     </span>
                                 </Typography>
                             </Box>

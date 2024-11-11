@@ -12,9 +12,8 @@ class OrderService {
     async deleteAll() {
         return (await this.api.delete("/")).data;
     }
-    async get(id) {
-        return (await this.api.get(`/${id}`)).data;
-    }
+
+
     async update(id, data) {
         return (await this.api.put(`/${id}`, data)).data;
     }
@@ -36,6 +35,15 @@ class OrderService {
     async cancelOrder(id) {
         return (await this.api.put(`/cancel/${id}`)).data;
     }
+
+
+    async get() {
+        return (await this.api.get(`/order-products`)).data;
+    }
+    async updateOrderProducts(id, data) {
+        return (await this.api.post(`/order-products/${id}`, data)).data;
+    }
+
 }
 export default new OrderService();
 

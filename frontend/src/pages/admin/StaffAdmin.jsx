@@ -5,37 +5,34 @@ import SalaryTab from '../../components/admin/Staff/SalaryTab';
 import InfoEmployee from '../../components/admin/Staff/InfoEmployee';
 import AttendanceTab from '../../components/admin/Staff/AttendanceTab';
 import { fetchEmployees, fetchSchedules, fetchSalaries, fetchAttendances } from './api/index';
+import employeeService from '../../services/employee.service';
+import moment from 'moment';
 
 const { TabPane } = Tabs;
 const { Content } = Layout;
 const { Title } = Typography;
 
-const EmployeeSchedule = () => {
+const StaffAdmin = () => {
   const [employees, setEmployees] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [salaries, setSalaries] = useState([]);
   const [attendances, setAttendances] = useState([]);
-  const [currentWeek, setCurrentWeek] = useState(() => {
-    const now = new Date();
-    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-    const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
-    return {
-      start: startOfWeek.toISOString().split('T')[0],
-      end: endOfWeek.toISOString().split('T')[0]
-    };
-  });
+  const [currentWeek, setCurrentWeek] = useState(moment().startOf('week'));
 
-  useEffect(() => {
-    const loadData = async () => {
+  const loadData = async () => {
+    try {
       const employeesData = await fetchEmployees();
       setEmployees(employeesData);
 
       const schedulesData = await fetchSchedules();
       const filteredSchedules = schedulesData.filter(schedule => {
-        const scheduleDate = new Date(schedule.date);
-        const startDate = new Date(currentWeek.start);
-        const endDate = new Date(currentWeek.end);
-        return scheduleDate >= startDate && scheduleDate <= endDate;
+        const scheduleDate = moment(schedule.date);
+        return scheduleDate.isBetween(
+          currentWeek.clone().startOf('week'), 
+          currentWeek.clone().endOf('week'), 
+          'day', 
+          '[]'
+        );
       });
       setSchedules(filteredSchedules);
 
@@ -44,31 +41,26 @@ const EmployeeSchedule = () => {
 
       const attendancesData = await fetchAttendances();
       const filteredAttendances = attendancesData.filter(attendance => {
-        const attendanceDate = new Date(attendance.date);
-        const startDate = new Date(currentWeek.start);
-        const endDate = new Date(currentWeek.end);
-        return attendanceDate >= startDate && attendanceDate <= endDate;
+        const attendanceDate = moment(attendance.date);
+        return attendanceDate.isBetween(
+          currentWeek.clone().startOf('week'), 
+          currentWeek.clone().endOf('week'), 
+          'day', 
+          '[]'
+        );
       });
       setAttendances(filteredAttendances);
-    };
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  };
 
+  useEffect(() => {
     loadData();
   }, [currentWeek]);
 
-  const changeWeek = (direction) => {
-    setCurrentWeek(prev => {
-      const startDate = new Date(prev.start);
-      const endDate = new Date(prev.end);
-      const days = direction === 'next' ? 7 : -7;
-      
-      startDate.setDate(startDate.getDate() + days);
-      endDate.setDate(endDate.getDate() + days);
-      
-      return {
-        start: startDate.toISOString().split('T')[0],
-        end: endDate.toISOString().split('T')[0]
-      };
-    });
+  const changeWeek = (newWeek) => {
+    setCurrentWeek(newWeek);
   };
 
   return (
@@ -89,16 +81,10 @@ const EmployeeSchedule = () => {
             <TabPane tab="Chấm Công" key="2">
               <AttendanceTab 
                 employees={employees}
-                salaries={salaries}
                 attendances={attendances}
+                setAttendances={setAttendances}
                 currentWeek={currentWeek}
                 onChangeWeek={changeWeek}
-              />
-            </TabPane>
-            <TabPane tab="Lương" key="3">
-              <SalaryTab 
-                employees={employees}
-                salaries={salaries}
               />
             </TabPane>
             <TabPane tab="Thông tin nhân viên" key="4">
@@ -111,4 +97,4 @@ const EmployeeSchedule = () => {
   );
 };
 
-export default EmployeeSchedule;
+export default StaffAdmin;

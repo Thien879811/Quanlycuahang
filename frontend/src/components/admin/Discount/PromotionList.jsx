@@ -27,8 +27,8 @@ function PromotionList() {
                 dataIndex: 'catalory', 
                 key: 'catalory',
                 render: (text) => {
-                    let color = text === 'Voucher' ? 'blue' : 'green';
-                    let icon = text === 'Voucher' ? <TagOutlined /> : <PercentageOutlined />;
+                    let color = text == 'Voucher' ? 'blue' : 'green';
+                    let icon = text == 'Voucher' ? <TagOutlined /> : <PercentageOutlined />;
                     return (
                         <Tag color={color} icon={icon}>
                             {text}
@@ -156,7 +156,7 @@ function PromotionList() {
         }
 
         if (type) {
-            filtered = filtered.filter(promotion => promotion.catalory === type);
+            filtered = filtered.filter(promotion => promotion.catalory == type);
         }
 
         if (month) {
@@ -174,7 +174,7 @@ function PromotionList() {
             const values = await form.validateFields();
             const updatedValues = {};
             Object.keys(values).forEach(key => {
-                if (values[key] !== undefined && values[key] !== null && values[key] !== '') {
+                if (values[key] != undefined && values[key] != null && values[key] != '') {
                     updatedValues[key] = values[key];
                 }
             });
@@ -206,7 +206,7 @@ function PromotionList() {
     }, []);
 
     const getPromotionsByCategory = (category) => {
-        return filteredPromotions.filter(promotion => promotion.catalory === category);
+        return filteredPromotions.filter(promotion => promotion.catalory == category);
     };
 
     return (
@@ -247,8 +247,8 @@ function PromotionList() {
                 </TabPane>
                 <TabPane tab="Voucher" key="2">
                     <Table 
-                        columns={getColumns(getPromotionsByCategory('Voucher'))} 
-                        dataSource={getPromotionsByCategory('Voucher')}
+                        columns={getColumns(getPromotionsByCategory(2))} 
+                        dataSource={getPromotionsByCategory(2)}
                         rowKey="id"
                         pagination={{ 
                             pageSize: 10,

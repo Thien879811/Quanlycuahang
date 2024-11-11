@@ -14,7 +14,7 @@ class ChamCongController extends Controller
      */
     public function index()
     {
-        $chamCong = ChamCong::all();
+        $chamCong = ChamCong::with('staff')->get();
         return response()->json($chamCong);
     }
 
@@ -23,27 +23,27 @@ class ChamCongController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    
     public function create(Request $request)
     {
-        
         $chamCong = $request->all();
 
-        $checkIn = ChamCong::where('staff_id', $chamCong['staff_id'])->where('date', $chamCong['date'])->first();
-        if($checkIn){
-            return response()->json(
-                ['message' => 'Check in already exists'],
-                400
-            );
-        }
-        else{
-            $chamCong = ChamCong::create($chamCong);
+        $checkIn = ChamCong::where('staff_id', $chamCong['staff_id'])
+                          ->where('date', $chamCong['date'])
+                          ->first();
+
+        if ($checkIn) {
             return response()->json([
-                'success' => true,
-                'message' => 'Chấm công đã được tạo thành công',
-                $chamCong
-            ]);
+                'success' => false,
+                'message' => 'Check in already exists'
+            ], 400);
         }
+
+        $newChamCong = ChamCong::create($chamCong);
+        return response()->json([
+            'success' => true,
+            'message' => 'Chấm công đã được tạo thành công',
+            'data' => $newChamCong
+        ]);
     }
 
     /**
@@ -52,26 +52,42 @@ class ChamCongController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    
     public function update(Request $request, $id)
     {
         $chamCong = ChamCong::find($id);
+        
+        if (!$chamCong) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy bản ghi chấm công'
+            ], 404);
+        }
+
         $chamCong->update($request->all());
         $chamCong->save();
 
-        return response()->json(
-           [
+        return response()->json([
             'success' => true,
             'message' => 'Chấm công đã được cập nhật thành công',
-            $chamCong
-           ]
-        );
+            'data' => $chamCong
+        ]);
     }
 
     public function getByStaffIdAndDay($staff_id, $day)
     {
-        $chamCong = ChamCong::where('staff_id', $staff_id)->where('date', $day)->first();
-        return response()->json($chamCong);
+        $chamCong = ChamCong::where('staff_id', $staff_id)
+                           ->where('date', $day)
+                           ->first();
+                           
+        return response()->json([
+            'success' => true,
+            'data' => $chamCong
+        ]);
+    }
+
+    public function getAttendance(Request $request)
+    {
+        $attendance = ChamCong::with('staff')->get();
+        return response()->json($attendance);
     }
 }
-

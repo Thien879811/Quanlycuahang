@@ -16,7 +16,6 @@ use App\Http\Controllers\GoodsReceiptController;
 use App\Http\Controllers\CheckInventoryController;
 use App\Http\Controllers\DashBoardController;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -29,6 +28,18 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */ 
+Route::get('/orders/order-products',[OrdersController::class,'getOrders']);
+Route::post('/orders/order-products/{order_id}',[OrdersController::class,'updateOrderProducts']);
+
+Route::post('/employee/cham-cong',[ChamCongController::class,'create']);
+Route::put('/employee/cham-cong/{id}',[ChamCongController::class,'update']);
+Route::post('employee/check-in',[ChamCongController::class,'create']);
+Route::put('employee/check-out/{id}',[ChamCongController::class,'update']);
+Route::get('employee/cham-cong/{staff_id}/{day}',[ChamCongController::class,'getByStaffIdAndDay']);
+Route::get('employee/cham-cong',[ChamCongController::class,'index']);
+Route::put('employee/{id}',[ChamCongController::class,'update']);
+Route::get('/employee/attendance',[ChamCongController::class,'getAttendance']);
+
 Route::controller(PromotionController::class)->group(function () {
     Route::get('/promotion', 'getPromotion');
     Route::post('/promotion', 'create');
@@ -91,14 +102,7 @@ Route::get('employee/{user_id}',[SatffController::class,'getInfoEmployee']);
 Route::post('/employee/salary',[SatffController::class,'createSalary']);
 Route::get('/employee/salary',[SatffController::class,'getAllSalary']);
 
-Route::post('/employee/cham-cong',[ChamCongController::class,'create']);
-Route::get('/employee/cham-cong',[ChamCongController::class,'index']);
-Route::put('/employee/cham-cong/{id}',[ChamCongController::class,'update']);
-Route::post('employee/check-in',[ChamCongController::class,'create']);
-Route::put('employee/check-out/{id}',[ChamCongController::class,'update']);
-Route::get('employee/cham-cong/{staff_id}/{day}',[ChamCongController::class,'getByStaffIdAndDay']);
-Route::get('employee/cham-cong',[ChamCongController::class,'index']);
-Route::put('employee/{id}',[ChamCongController::class,'update']);
+
 
 Route::post('login',[AuthController::class,'login']);
 Route::post('register',[AuthController::class,'register']);
@@ -113,6 +117,9 @@ Route::post('/product/destroy/create',[ProductController::class,'createDestroyPr
 Route::delete('/product/{id}',[ProductController::class,'delete']);
 Route::get('/product/destroy',[ProductController::class,'getDestroyProduct']);
 Route::put('/product/destroy/{id}',[ProductController::class,'updateDestroyProductStatus']);
+Route::put('/product/update-quantity/{id}',[ProductController::class,'updateQuantity']);
+
+
 
 
 

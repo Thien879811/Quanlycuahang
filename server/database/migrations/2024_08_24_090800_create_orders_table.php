@@ -28,12 +28,12 @@ return new class extends Migration
             $table->integer('status');
             
             // Khóa ngoại tới bảng pays (phương thức thanh toán)
-            $table->foreignId('pays_id')->constrained('pays');
+            $table->unsignedBigInteger('pays_id')->nullable();
+            $table->foreign('pays_id')->references('id')->on('pays')->nullOnDelete();
 
             // Mã voucher
             $table->string('voucher_code')->nullable();
             
-
             // Số tiền giảm giá
             $table->decimal('discount', 10)->default(0);
             

@@ -58,7 +58,7 @@ class LichLamViecController extends Controller
     public function getAll()
     {
         $lichLamViec = LichLamViec::all();
-        return response()->json(['data' => $lichLamViec, 'message' => 'Lấy danh sách lịch làm việc thành công']);
+        return response()->json($lichLamViec);
     }
 
     public function delete($id)

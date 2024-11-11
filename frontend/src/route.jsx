@@ -77,7 +77,7 @@ const router = createBrowserRouter ([
                 element:<WareHome />
             },
             {
-                path: '/vnpay',
+                path: '/vnpay/:id/:amount',
                 element: <Vnpay />
             },
             {

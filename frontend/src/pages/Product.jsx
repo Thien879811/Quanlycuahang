@@ -10,18 +10,21 @@ import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import CataloryService from '../services/catalory.service';
 import { handleResponse } from '../functions';
+import orderUtils from '../utils/orderUtils';
 
 const Product = () => {
     const navigate = useNavigate();
     const {products} = useProducts();
+    const {orders, loading: loadingOrders, error: errorOrders, getOrders, updateOrderProducts, updateProductQuantity} = orderUtils();
     const [orderProducts, setOrderProducts] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [categories, setCategories] = useState([]);
 
     const fetchOrderData = () => {
-        const storedOrderProduct = JSON.parse(localStorage.getItem('order_product')) || [];
-        setOrderProducts(storedOrderProduct);
+        if (orders && orders.details) {
+            setOrderProducts(orders.details);
+        }
     };
 
     const Style = styled(Sheet)(({ theme }) => ({
@@ -36,8 +39,11 @@ const Product = () => {
 
     const deleteOrder = (id) => {
         const updatedOrders = orderProducts.filter(product => product.product_id !== id);
-        localStorage.setItem('order_product', JSON.stringify(updatedOrders));
-        setOrderProducts(updatedOrders);
+        const data = {
+            ...orders,
+            details: updatedOrders
+        };
+        updateOrderProducts(orders.id, data);
     };
 
     useEffect(() => {
@@ -52,27 +58,30 @@ const Product = () => {
             }
         };
         fetchCategories();
-    }, []);
+    }, [orders]);
 
     const handleProductClick = (product) => {
-        const updatedOrderProducts = [...orderProducts];
+        const updatedOrderProducts = [...orders.details];
         const existingProductIndex = updatedOrderProducts.findIndex(p => p.product_id === product.id);
         
         if (existingProductIndex !== -1) {
-            updatedOrderProducts[existingProductIndex].quantity += 1;
+            updatedOrderProducts[existingProductIndex].soluong += 1;
         } else {
             updatedOrderProducts.push({
                 product_id: product.id,
                 product_name: product.product_name,
                 image: product.image,
-                quantity: 1,
-                price: product.selling_price,
-                discount: 0
+                soluong: 1,
+                dongia: product.selling_price,
+                discount: 0,
+                product: product
             });
         }
-        
-        localStorage.setItem('order_product', JSON.stringify(updatedOrderProducts));
-        setOrderProducts(updatedOrderProducts);
+        const data = {
+            ...orders,
+            details: updatedOrderProducts
+        };
+        updateOrderProducts(orders.id, data);
     };
 
     const filteredProducts = products.filter(product => {
@@ -189,13 +198,13 @@ const Product = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {orderProducts.map((product) => (  
+                                {orderProducts && orderProducts.map((product) => (  
                                     <TableRow 
                                         key={product.product_id}
                                         sx={{ '&:hover': { backgroundColor: 'action.hover' } }}
                                     >
-                                        <TableCell>{product.product_name}</TableCell>
-                                        <TableCell>{product.quantity}</TableCell>
+                                        <TableCell>{product.product.product_name}</TableCell>
+                                        <TableCell>{product.soluong}</TableCell>
                                         <TableCell>
                                             <Button 
                                                 onClick={() => deleteOrder(product.product_id)} 

@@ -12,7 +12,10 @@ const OrderDisplay = ({ orderProducts, handleIncreaseQuantity, handleDecreaseQua
           <TableRow>
             <TableCell sx={{ backgroundColor: '#1976d2', color: 'white', fontWeight: 'bold' }}>Tên sản phẩm</TableCell>
             <TableCell sx={{ backgroundColor: '#1976d2', color: 'white', fontWeight: 'bold' }}>Đơn giá</TableCell>
-            <TableCell sx={{ backgroundColor: '#1976d2', color: 'white', fontWeight: 'bold' }}>Số lượng</TableCell>
+            <TableCell sx={{ backgroundColor: '#1976d2', color: 'white', fontWeight: 'bold',
+              justifyContent: 'center',
+              textAlign: 'center'
+              }}>Số lượng</TableCell>
             <TableCell sx={{ backgroundColor: '#1976d2', color: 'white', fontWeight: 'bold' }}>Khuyến mãi</TableCell>
             <TableCell sx={{ backgroundColor: '#1976d2', color: 'white', fontWeight: 'bold' }}>Thành tiền</TableCell>
             <TableCell sx={{ backgroundColor: '#1976d2', color: 'white', fontWeight: 'bold' }}>Ghi chú</TableCell>
@@ -22,7 +25,7 @@ const OrderDisplay = ({ orderProducts, handleIncreaseQuantity, handleDecreaseQua
         <TableBody>
           {orderProducts.length > 0 ? (
             orderProducts.map((item, index) => {
-              const total = item.price ? ((item.price * item.quantity) - (item.discount || 0)) : 0;
+              const total = item.product.selling_price ? ((item.product.selling_price * item.soluong) - (item.discount || 0)) : 0;
               return (
                 <TableRow 
                   key={index}
@@ -35,8 +38,8 @@ const OrderDisplay = ({ orderProducts, handleIncreaseQuantity, handleDecreaseQua
                     }
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 500 }}>{item.product_name}</TableCell>
-                  <TableCell sx={{ color: '#2196f3' }}>{item.price ? Math.floor(item.price/100)*100 : 0}₫</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }}>{item.product.product_name}</TableCell>
+                  <TableCell sx={{ color: '#2196f3' }}>{item.product.selling_price ? Math.floor(item.product.selling_price/100)*100 : 0}₫</TableCell>
                   <TableCell>
                     <Box sx={{ 
                       display: 'flex', 
@@ -52,22 +55,28 @@ const OrderDisplay = ({ orderProducts, handleIncreaseQuantity, handleDecreaseQua
                       <IconButton 
                         onClick={() => handleDecreaseQuantity(item.product_id)} 
                         size="small"
-                        sx={{ color: '#f44336' }}
+                        sx={{ 
+                          color: '#f44336',
+                          minWidth: '32px'
+                        }}
                       >
                         <RemoveIcon />
                       </IconButton>
                       <Typography sx={{ 
                         mx: 2, 
                         fontWeight: 'bold',
-                        width: '20px',
+                        minWidth: '30px',
                         textAlign: 'center'
                       }}>
-                        {item.quantity}
+                        {item.soluong}
                       </Typography>
                       <IconButton 
                         onClick={() => handleIncreaseQuantity(item.product_id)} 
                         size="small"
-                        sx={{ color: '#4caf50' }}
+                        sx={{ 
+                          color: '#4caf50',
+                          minWidth: '32px'
+                        }}
                       >
                         <AddIcon />
                       </IconButton>

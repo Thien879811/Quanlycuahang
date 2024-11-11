@@ -17,6 +17,25 @@ class OrdersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+    public function getOrders(Request $request)
+    {
+        $order = Orders::with('details.product')->where('status', '=', 0)->first();
+        if(!$order) {
+            $order = Orders::create([
+                "customer_id" => null,
+                "staff_id" => null,
+                "status" => 0,
+                "pays_id" => null,
+            ]);
+        }
+        $order->load('details.product');
+        return response()->json($order);
+    }
+
+
+
+    
     public function getAll()
     {
         $orders = Orders::with('details.product')->get();
@@ -99,6 +118,8 @@ class OrdersController extends Controller
             ]);
         }
         $order->customer_id = $validated['khachhang'] !== '0' ? $validated['khachhang'] : null;
+        $order->voucher_code = $validated['voucher_code'] ?? null;
+        $order->discount = $validated['discount'] ?? 0;
         $order->save();
 
         if ($validated['products']) {
@@ -141,35 +162,99 @@ class OrdersController extends Controller
         return response()->json($validated);
     }
 
-    public function getOne()
-    {
-        return response()->json([
-            'message' => 'thanhcong'
-        ]);
-    }
-
     public function updateOrder(Request $request, $order_id)
     {
         $validated = $request->validate([
             'status' => 'required',
-            'pays_id' => 'required',
-           
+            'pays_id' => 'nullable',
+            'products' => 'nullable',
         ]);
         
-        $order = Orders::find($order_id);
-        $order->status = $validated['status'];
-        $order->pays_id = $validated['pays_id'];
-        $order->save();
+        $order = Orders::findOrFail($order_id);
+        $oldStatus = $order->status;
+        $newStatus = $validated['status'];
+        
+        // Handle status 3 (cancelled) first
+        if ($newStatus == '3') {
+            // Only allow cancellation if order was not already cancelled
+            if ($oldStatus == '3') {
+                return response()->json([
+                    'error' => 'Order is already cancelled'
+                ], 400);
+            }
 
-        if ($order->status == '1' || $order->status == '2' || $validated['status'] == '1' || $validated['status'] == '2') {
+            $order->status = $newStatus;
+            if ($validated['pays_id']) {
+                $order->pays_id = $validated['pays_id'];
+            }
+            $order->save();
+            
+            // Return inventory quantities
             $details = DetailOrder::where('order_id', $order->id)->get();
             foreach ($details as $item) {
-                $product = Product::find($item->product_id);
-                $product->quantity = $product->quantity - $item->soluong;
+                $product = Product::findOrFail($item->product_id);
+                $product->quantity += $item->soluong;
                 $product->save();
+            }
+            return response()->json($details);
+        }
+
+        // Handle status 1 or 2 (confirmed/processing)
+        if (($newStatus == '1' || $newStatus == '2') && $oldStatus != '1' && $oldStatus != '2') {
+            // Check and update inventory
+            $details = DetailOrder::where('order_id', $order->id)->get();
+            foreach ($details as $item) {
+                $product = Product::findOrFail($item->product_id);
+                if ($product->quantity < $item->soluong) {
+                    return response()->json([
+                        'error' => "Not enough quantity for product: {$product->product_name}"
+                    ], 400);
+                }
+                $product->quantity -= $item->soluong;
+                $product->save();
+            }
+            
+            $order->status = $newStatus;
+            if ($validated['pays_id']) {
+                $order->pays_id = $validated['pays_id'];
+            }
+            $order->save();
+            return response()->json($details);
+        }
+
+        // Handle other status changes
+        $order->status = $newStatus;
+        if ($validated['pays_id']) {
+            $order->pays_id = $validated['pays_id'];
+        }
+        $order->save();
+
+        // Update order details if products are provided
+        if ($validated['products']) {
+            foreach ($validated['products'] as $product) {
+                $product_id = $product['product_id'];
+                
+                $detail = DetailOrder::where('order_id', $order->id)
+                                    ->where('product_id', $product_id)
+                                    ->first();
+            
+                if ($detail) {
+                    $detail->soluong = $product['quantity'];
+                    $detail->discount = $product['discount'];
+                    $detail->save();
+                } else {
+                    DetailOrder::create([
+                        'order_id' => $order->id,
+                        'product_id' => $product_id,
+                        'soluong' => $product['quantity'],
+                        'discount' => $product['discount'],
+                        'dongia' => $product['price'],
+                    ]);
+                }
             }
         }
 
+        $details = DetailOrder::where('order_id', $order->id)->get();
         return response()->json($details);
     }
 
@@ -243,4 +328,77 @@ class OrdersController extends Controller
     {
         return response()->json(Orders::find($order_id));
     }
+
+
+
+    public function updateOrderProducts($order_id, Request $request)
+    {
+        $validated = $request->all();
+        
+        $order = Orders::find($order_id);
+
+        if (!$order) {
+            $order = Orders::create([
+                "customer_id" => $validated['customer_id'] !== '0' ? $validated['customer_id'] : null,
+                "staff_id" => $validated['staff_id'],
+                "status" => $validated['status'],
+                "pays_id" => $validated['pays_id'],
+                "voucher_code" => $validated['voucher_code'] ?? null,
+                "discount" => $validated['discount'] ?? 0
+            ]);
+        }
+
+        $order->customer_id = $validated['customer_id'] !== '0' ? $validated['customer_id'] : null;
+        $order->staff_id = $validated['staff_id'] ?? null;
+        $order->status = $validated['status'] ?? 0;
+        $order->pays_id = $validated['pays_id'] ?? null;
+        $order->voucher_code = $validated['voucher_code'] ?? null;
+        $order->discount = $validated['discount'] ?? 0;
+        $order->save();
+
+        if ($validated['details']) {
+            // Get existing details
+            $existingDetails = DetailOrder::where('order_id', $order->id)->get();
+            
+            foreach ($validated['details'] as $detail) {
+                $product_id = $detail['product_id'];
+                
+                $existingDetail = DetailOrder::where('order_id', $order->id)
+                                    ->where('product_id', $product_id)
+                                    ->first();
+            
+                if ($existingDetail) {
+                    if ($detail['soluong'] <= 0) {
+                        // If quantity is 0 or negative, delete the detail
+                        $existingDetail->delete();
+                    } else {
+                        $existingDetail->soluong = $detail['soluong'];
+                        $existingDetail->discount = $detail['discount'];
+                        $existingDetail->save();
+                    }
+                } else {
+                    if ($detail['soluong'] > 0) {
+                        DetailOrder::create([
+                            'order_id' => $order->id,
+                            'product_id' => $product_id,
+                            'soluong' => $detail['soluong'],
+                            'discount' => $detail['discount'],
+                            'dongia' => $detail['dongia'],
+                        ]);
+                    }
+                }
+            }
+
+            // Remove details that are no longer in the request
+            $newProductIds = collect($validated['details'])->pluck('product_id')->toArray();
+            DetailOrder::where('order_id', $order->id)
+                      ->whereNotIn('product_id', $newProductIds)
+                      ->delete();
+        } else {
+            DetailOrder::where('order_id', $order->id)->delete();
+        }
+
+        return response()->json($order, 201);
+    }
+
 }

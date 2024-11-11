@@ -1,24 +1,29 @@
 import EmployeeService from "../../../services/employee.service"
 
 export const handleResponse = (response) => {
-    // Loại bỏ tất cả các ký tự không phải JSON từ đầu và cuối chuỗi
-    const cleanJsonString = response.replace(/^[^[{]*([\[{])/,'$1').replace(/([\]}])[^}\]]*$/,'$1'); // Để debug
-    return cleanJsonString;
+    if (typeof response !== 'string') {
+        console.error('Invalid response type:', typeof response);
+        return null;
+    }
+    const cleanJsonString = response.replace(/^[^[{]*([\[{])/,'$1').replace(/([\]}])[^}\]]*$/,'$1');
+    try {
+        const parsed = JSON.parse(cleanJsonString);
+        // Ensure we always return an array
+        return Array.isArray(parsed) ? parsed : [parsed];
+    } catch (error) {
+        console.error('Error parsing JSON:', error);
+        return null;
+    }
 }
 
 export const fetchEmployees = async () => {
     try {
         const response = await EmployeeService.getAll();
-        const cleanData = handleResponse(response);
-        let data;
-        try {
-            data = JSON.parse(cleanData);
-        } catch (parseError) {
-            console.error('Error parsing JSON:', cleanData);
-            throw new Error('Invalid JSON response');
+        const data = handleResponse(response);
+        if (!data) {
+            throw new Error('Invalid response data');
         }
 
-        // Chuyển đổi dữ liệu nhận được thành định dạng mong muốn
         const employees = data.map(employee => ({
             id: employee.id,
             name: employee.names,
@@ -40,54 +45,67 @@ export const fetchEmployees = async () => {
     }
 };
 
-export const fetchSchedules = () => {
-  // TODO: Replace with actual API call
-    return Promise.resolve([
-        { id: 1, employeeId: 1, date: '2023-04-20', startTime: '09:00', endTime: '17:00' },
-        { id: 2, employeeId: 2, date: '2023-04-21', startTime: '10:00', endTime: '18:00' },
-        // ... more schedules
-    ]);
+export const fetchSchedules = async () => {
+    try {
+        const response = await EmployeeService.getWorkingScheduleAll();
+        const data = handleResponse(response);
+        return data;
+    } catch (error) {
+        console.error('Error fetching schedules:', error);
+        throw error;
+    }
 };
 
 export const fetchSalaries = async () => {
+    try {
+        const response = await EmployeeService.getAllSalary();
+        const data = handleResponse(response);
+        if (!data) {
+            throw new Error('Invalid response data');
+        }
 
-    const response = await EmployeeService.getAllSalary();
-    const cleanData = handleResponse(response);
+        const salaries = data.map(salary => ({
+            id: salary.id,
+            employee_id: salary.staff_id,
+            mouth: salary.mouth,
+            bassic_wage: salary.bassic_wage,
+            total: salary.total,
+            work_day: salary.work_day,
+            salary_overtime: salary.salary_overtime,
+            overtime: salary.overtime,
+        }));
 
-    const data = JSON.parse(cleanData);
-
-    console.log(cleanData);
-
-    const salaries = data.map(salary => ({
-        id: salary.id,
-        employee_id: salary.staff_id,
-        mouth: salary.mouth,
-        bassic_wage: salary.bassic_wage,
-        total: salary.total,
-        work_day: salary.work_day,
-        salary_overtime: salary.salary_overtime,
-        overtime: salary.overtime,
-    }));
-
-    return salaries;
-  // TODO: Replace with actual API call   
+        return salaries;
+    } catch (error) {
+        console.error('Error fetching salaries:', error);
+        throw error;
+    }
 };
-
 
 export const fetchAttendances = async () => {
-    const response = await EmployeeService.getAllAttendance();
-    console.log(response);
-    const cleanData = handleResponse(response);
-    const data = JSON.parse(cleanData);
-    const attendances = data.map(attendance => ({
-        id: attendance.id,
-        employee_id: attendance.staff_id,
-        date: attendance.date,
-        time_start: attendance.time_start,
-        time_end: attendance.time_end,
-        status: attendance.status,
-        reason: attendance.reason
-    }));
-    return attendances;
-};
+    try {
+        const response = await EmployeeService.getAttendance();
+    
+        const data = handleResponse(response);
+        if (!data || !Array.isArray(data)) {
+            console.error('Invalid attendance data:', data);
+            return [];
+        }
+        console.log(data);
 
+        const attendances = data.map(attendance => ({
+            id: attendance.id,
+            employee_id: attendance.staff_id,
+            date: attendance.date,
+            time_start: attendance.time_start,
+            time_end: attendance.time_end,
+            status: attendance.status,
+            reason: attendance.reason
+        }));
+        
+        return attendances;
+    } catch (error) {
+        console.error('Error fetching attendances:', error);
+        throw error;
+    }
+};

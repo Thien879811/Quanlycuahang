@@ -5,31 +5,43 @@ import { Grid, Paper, TextField, Typography, Box, Button, Dialog, DialogTitle,
 	Autocomplete
 	} from '@mui/material';
 import useOrderProduct from '../utils/orderproduct';
-import useOrder from '../utils/orderUtils';
+import orderUtils from '../utils/orderUtils';
 import useCustomer from '../utils/customerUtils';
 import OrderDisplay from '../components/OrderDisplay';
 import useProduct from '../utils/productUtils';
 import Scanner from '../components/BarcodeScanner';
-import usePromotion from '../utils/promorionUtils';
+import usePromotion from '../utils/promorionUtils'; // Fixed typo in import
 import orderService from '../services/order.service';
 import { handleResponse } from '../functions';
+import PromoGrid from './HomeComponents/PromoGrid';
+import CustomerDialog from './HomeComponents/CustomerDialog';
+import NewCustomerDialog from './HomeComponents/NewCustomerDialog';
+import InfoCustomerDialog from './HomeComponents/InfoCustomerDialog';
+import VoucherDialog from './HomeComponents/VoucherDialog';
 
 const Home = () => {
 	const navigate = useNavigate();
 	
 	const {
-		orderProducts,
+		updateProductDiscount,
+	} = useOrderProduct();
+	const {
+		orders,
+		loading: loadingOrders,
+		error: errorOrders,
+		getOrders, 
+		updateOrderProducts,
+		updateProductQuantity,
+		addProduct,
+		updateVoucherDiscount,
+		updateCustomer,
 		getTotalAmount,
 		getTotalQuantity,
-		updateProductQuantity,
-		removeProduct,
-		addProduct,
-		updateProductDiscount,
 		getTotalDiscount,
+		removeProduct
+	} 
+		= orderUtils();
 
-	} = useOrderProduct();
-
-	const {createAndSendOrder, loading, error, updateVoucherDiscount,discount } = useOrder();
 	const [containerHeight, setContainerHeight] = useState('100vh');
 	const [openCustomerDialog, setOpenCustomerDialog] = useState(false);
 	const [openCustomerInfoDialog, setOpenCustomerInfoDialog] = useState(false);
@@ -76,6 +88,7 @@ const Home = () => {
 			setOrder(orderData);
 		};
 		fetchOrder();
+		getOrders();
 	}, []);
 
 	// Memoize filtered products based on search query
@@ -88,10 +101,10 @@ const Home = () => {
 	}, [products, searchQuery]);
 	
 	const searchPromotion = () => {
-		if(orderProducts.length > 0){
+		if(orders.details){
 			const foundPromotions = [];
 			const currentDate = new Date();
-			for(const product of orderProducts){
+			for(const product of orders.details){
 
 				const matchingPromotions = promotions.filter(promo => 
 					promo.product_id === product.product_id &&
@@ -120,7 +133,7 @@ const Home = () => {
 	//display promotion
 	useEffect(() => {
 		searchPromotion();
-	}, [orderProducts, promotions]);
+	}, [orders.details, promotions]);
 
 	useEffect(() => {
 		if(openNewCustomer){
@@ -146,20 +159,18 @@ const Home = () => {
 	}, []);
 
 	const handlePayment = async (type) => {
-		if(orderProducts.length === 0){
+		if(orders.details.length === 0){
 			alert('Vui lòng thêm sản phẩm vào hóa đơn');
 			return;
 		}
 		if(type === 1){
-			await createAndSendOrder();
 			return navigate('/pay');
 		}
 		if(type === 2){
-			await createAndSendOrder();
-			return navigate('/vnpay');
+			const finalAmount = getTotalAmount - getTotalDiscount - (getTotalAmount * (orders.discount || 0) / 100);
+			return navigate(`/vnpay/${orders.id}/${finalAmount}`);
 		}
 		if(type === 3){
-			await createAndSendOrder();
 			setOpenVoucherDialog(true);
 		}
 	};
@@ -211,19 +222,20 @@ const Home = () => {
 
 	const handleCreateNewCustomer = () => {
 		createCustomer({ name: newCustomerName, phone: customerPhone, diem: 0 });
+		updateCustomer(customer.id);
 		handleCloseNewCustomerDialog();
 	};
 
 	const handleIncreaseQuantity = (productId) => {
-		updateProductQuantity(productId, 1);
+		updateProductQuantity(orders.id, productId, 1);
 	};
 
 	const handleDecreaseQuantity = (productId) => {
-		updateProductQuantity(productId, -1);
+		updateProductQuantity(orders.id,productId, -1);
 	};
 
 	const handleRemoveProduct = (productCode) => {
-		removeProduct(productCode);
+		removeProduct(orders.id, productCode);
 	};
 
 	const handleBarcodeChange = (event, value) => {
@@ -244,7 +256,7 @@ const Home = () => {
 	const handleBarcodeScanned = (scannedBarcode) => {
 		const foundProduct = products.find(product => product.barcode === scannedBarcode);
 		if (foundProduct) {
-			addProduct(foundProduct.id, foundProduct.product_name, foundProduct.image, foundProduct.selling_price || 0, 1);
+			addProduct(orders.id, foundProduct.id, 1, foundProduct.selling_price);
 			console.log(`Added product: ${foundProduct.product_name}`);
 			setBarcode('');
 			setSearchQuery('');
@@ -317,64 +329,16 @@ const Home = () => {
 					</Box>
 					<OrderDisplay
 						getTotalDiscount={getTotalDiscount}
-						orderProducts={orderProducts}
+						orderProducts={orders.details || []}
 						handleIncreaseQuantity={handleIncreaseQuantity}
 						handleDecreaseQuantity={handleDecreaseQuantity}
 						handleRemoveProduct={handleRemoveProduct}
 					/>
 				</Paper>
-				<Paper elevation={3} sx={{ mt: 3, p: 3, backgroundColor: '#f8f9fa', borderRadius: '12px' }}>
-					<Typography variant="h6" color="primary" gutterBottom sx={{ fontWeight: 600 }}>
-						{activePromotion.length > 0 ? 'KHUYẾN MÃI ĐANG ÁP DỤNG' : 'KHÔNG CÓ KHUYẾN MÃI'}
-					</Typography>
-					{activePromotion.length > 0 && (
-						<List sx={{ maxHeight: '200px', overflow: 'auto' }}>
-							{activePromotion.map((promo, index) => (
-								<ListItem key={index} sx={{ 
-									backgroundColor: '#ffffff', 
-									mb: 1.5, 
-									borderRadius: '8px',
-									boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-									transition: 'all 0.3s ease',
-									'&:hover': {
-										transform: 'translateY(-2px)',
-										boxShadow: '0 4px 8px rgba(0,0,0,0.15)'
-									}
-								}}>
-									<ListItemIcon>
-										<img src={promo.product.image} alt={promo.product.product_name} 
-											style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '6px' }} 
-										/>
-									</ListItemIcon>
-									<ListItemText 
-										primary={promo.product.product_name} 
-										secondary={`Giảm giá ${promo.discount_percentage}%` + (promo.quantity ? `, khi mua ${promo.quantity} sản phẩm` : '')}
-										primaryTypographyProps={{ fontWeight: 'bold', color: '#2196f3' }}
-										sx={{ ml: 2 }}
-									/>
-									{promo.present && (
-										<>
-											<Typography variant="h5" color="primary" sx={{mx: 2}}>+</Typography>
-											<ListItemIcon>
-												<img src={promo.present.product_image} alt={promo.present.product_name} 
-													style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '6px' }} 
-												/>
-											</ListItemIcon>
-											<ListItemText
-												primary={promo.present.product_name}
-												primaryTypographyProps={{ fontWeight: 'bold', color: '#4CAF50' }}
-												secondary={`Giảm giá ${promo.discount_percentage}%`}
-												sx={{ ml: 2 }}
-											/>
-										</>
-									)}
-								</ListItem>
-							))}
-						</List>
-					)}
-				</Paper>
+				{/* Promotion */}
+				<PromoGrid activePromotion={activePromotion} />
 			</Grid>
-
+			{/* Payment */}
 			<Grid item xs={4} sx={{ height: '100%', overflow: 'auto' }}>
 				<Paper elevation={3} sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', borderRadius: '12px', backgroundColor: '#ffffff' }}>
 					<Grid container spacing={2} sx={{ mb: 3 }}>
@@ -407,9 +371,9 @@ const Home = () => {
 										}
 									}}
 									onClick={() => {
-										if (item.name === 'Tiền Mặt') handlePayment(1);
-										if (item.name === 'Ví Điện Tử') handlePayment(2);
-										if (item.name === 'E-Voucher') handlePayment(3);
+										if (item.name == 'Tiền Mặt') handlePayment(1);
+										if (item.name == 'Ví Điện Tử') handlePayment(2);
+										if (item.name == 'E-Voucher') handlePayment(3);
 									}}
 								>
 									{item.name}
@@ -426,7 +390,7 @@ const Home = () => {
 						</Grid>
 						{[
 							{ name: 'Tìm Hóa Đơn', color: '#9c27b0', icon: '🔍' },
-							{ name: 'Thêm Sản Phẩm', color: '#f44336', icon: '➕' },
+							{ name: 'Tìm Sản Phẩm', color: '#f44336', icon: '🔍' },
 							{ name: 'Khách Hàng', color: '#3f51b5', icon: '👥' }
 						].map((item) => (
 							<Grid item xs={6} key={item.name}>
@@ -448,7 +412,7 @@ const Home = () => {
 										}
 									}}
 									onClick={() => {
-										if (item.name === 'Thêm Sản Phẩm') navigate('/product');
+										if (item.name === 'Tìm Sản Phẩm') navigate('/product');
 										else if (item.name === 'Khách Hàng') handleOpenCustomerDialog();
 										else if (item.name === 'Tìm Hóa Đơn') navigate('/orders');
 									}}
@@ -467,256 +431,57 @@ const Home = () => {
 						boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
 					}}>
 						<Typography variant="h6" sx={{ mb: 2, color: '#555', fontWeight: 500 }}>
-							Số lượng: {getTotalQuantity()}
+							Số lượng: {getTotalQuantity}
 						</Typography>
 						<Typography variant="h6" sx={{ mb: 2, color: '#2196f3', fontWeight: 600 }}>
-							Thành tiền: {formatNumber(getTotalAmount()).toLocaleString('vi-VN')} VNĐ
+							Thành tiền: {formatNumber(getTotalAmount).toLocaleString('vi-VN')} VNĐ
 						</Typography>
 						<Typography variant="h6" sx={{ mb: 2, color: '#f44336', fontWeight: 600 }}>
-							Chiết khấu: {formatNumber(getTotalDiscount() + (order?.discount ? order.discount/100 * getTotalAmount() : 0)).toLocaleString('vi-VN')} VNĐ
+							Chiết khấu: {formatNumber(getTotalDiscount + (orders?.discount ? orders.discount/100 * getTotalAmount : 0)).toLocaleString('vi-VN')} VNĐ
 						</Typography>
 						{customer && (
 							<Typography variant="h6" sx={{ mb: 2, color: '#4CAF50', fontWeight: 600 }}>
-								Điểm tích lũy: {customer.diem} + {formatNumber(getTotalAmount())}
+								Điểm tích lũy: {customer.diem} + {formatNumber(getTotalAmount)}
 							</Typography>
 						)}
 						<Box sx={{ borderTop: '2px solid #e0e0e0', mt: 2, pt: 2 }}>
 							<Typography variant="h5" sx={{ color: '#f44336', fontWeight: 700, textAlign: 'center' }}>
-								TỔNG CỘNG: {formatNumber(getTotalAmount() - getTotalDiscount() - (order?.discount ? order.discount/100 * getTotalAmount() : 0)).toLocaleString('vi-VN')} VNĐ
+								TỔNG CỘNG: {formatNumber(getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * getTotalAmount : 0)).toLocaleString('vi-VN')} VNĐ
 							</Typography>
 						</Box>
 					</Box>
 				</Paper>
 			</Grid>
 
-			<Dialog 
-				open={openCustomerDialog} 
-				onClose={handleCloseCustomerDialog}
-				PaperProps={{
-					sx: {
-						borderRadius: '12px',
-						padding: '16px',
-						backgroundColor: '#ffffff'
-					}
-				}}
-			>
-				<DialogTitle sx={{ fontWeight: 600, color: '#1976d2' }}>Tìm Khách Hàng</DialogTitle>
-				<DialogContent>
-					<TextField
-						autoFocus
-						margin="dense"
-						id="phone"
-						label="Số điện thoại"
-						type="tel"
-						fullWidth
-						variant="outlined"
-						value={customerPhone}
-						onChange={(e) => setCustomerPhone(e.target.value)}
-						sx={{ 
-							mt: 2,
-							'& .MuiOutlinedInput-root': {
-								borderRadius: '8px',
-								backgroundColor: '#f5f5f5'
-							}
-						}}
-					/>
-				</DialogContent>
-				<DialogActions>
-					<Button 
-						onClick={handleCloseCustomerDialog} 
-						sx={{ 
-							borderRadius: '8px',
-							color: '#666'
-						}}
-					>
-						Hủy
-					</Button>
-					<Button 
-						onClick={handleSearchCustomer} 
-						variant="contained"
-						sx={{ 
-							borderRadius: '8px',
-							backgroundColor: '#4CAF50',
-							'&:hover': {
-								backgroundColor: '#45a049'
-							}
-						}}
-					>
-						Tìm kiếm
-					</Button>
-				</DialogActions>
-			</Dialog>
+			<CustomerDialog
+				openCustomerDialog={openCustomerDialog}
+				handleCloseCustomerDialog={handleCloseCustomerDialog}
+				customerPhone={customerPhone}
+				setCustomerPhone={setCustomerPhone}
+				handleSearchCustomer={handleSearchCustomer}
+			/>
 
-			<Dialog 
-				open={openCustomerInfoDialog} 
-				onClose={handleCloseCustomerInfoDialog}
-				PaperProps={{
-					sx: {
-						borderRadius: '12px',
-						padding: '16px',
-						backgroundColor: '#ffffff'
-					}
-				}}
-			>
-				<DialogTitle sx={{ fontWeight: 600, color: '#1976d2' }}>Thông tin Khách Hàng</DialogTitle>
-				<DialogContent>
-					{customer && (
-						<Box sx={{ p: 2 }}>
-							<Typography variant="h6" sx={{ mb: 2, color: '#333' }}>Tên: {customer.name}</Typography>
-							<Typography variant="h6" sx={{ mb: 2, color: '#333' }}>Số điện thoại: {customer.phone}</Typography>
-							<Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 600 }}>Điểm tích lũy: {customer.diem}</Typography>
-						</Box>
-					)}
-				</DialogContent>
-				<DialogActions>
-					<Button 
-						onClick={handleCloseCustomerInfoDialog} 
-						variant="contained"
-						sx={{ 
-							borderRadius: '8px',
-							backgroundColor: '#4CAF50',
-							'&:hover': {
-								backgroundColor: '#45a049'
-							}
-						}}
-					>
-						Đóng
-					</Button>
-				</DialogActions>
-			</Dialog>
+			<NewCustomerDialog
+				openNewCustomerDialog={openNewCustomerDialog}
+				handleCloseNewCustomerDialog={handleCloseNewCustomerDialog}
+				newCustomerName={newCustomerName}
+				setNewCustomerName={setNewCustomerName}
+				handleCreateNewCustomer={handleCreateNewCustomer}
+				customerPhone={customerPhone}
+			/>
 
-			<Dialog 
-				open={openNewCustomerDialog} 
-				onClose={handleCloseNewCustomerDialog}
-				PaperProps={{
-					sx: {
-						borderRadius: '12px',
-						padding: '16px',
-						backgroundColor: '#ffffff'
-					}
-				}}
-			>
-				<DialogTitle sx={{ fontWeight: 600, color: '#1976d2' }}>Tạo Khách Hàng Mới</DialogTitle>
-				<DialogContent>
-					<TextField
-						autoFocus
-						margin="dense"
-						id="name"
-						label="Tên khách hàng"
-						type="text"
-						fullWidth
-						variant="outlined"
-						value={newCustomerName}
-						onChange={(e) => setNewCustomerName(e.target.value)}
-						sx={{ 
-							mt: 2,
-							'& .MuiOutlinedInput-root': {
-								borderRadius: '8px',
-								backgroundColor: '#f5f5f5'
-							}
-						}}
-					/>
-					<TextField
-						margin="dense"
-						id="phone"
-						label="Số điện thoại"
-						type="tel"
-						fullWidth
-						variant="outlined"
-						value={customerPhone}
-						disabled
-						sx={{ 
-							mt: 2,
-							'& .MuiOutlinedInput-root': {
-								borderRadius: '8px',
-								backgroundColor: '#f5f5f5'
-							}
-						}}
-					/>
-				</DialogContent>
-				<DialogActions>
-					<Button 
-						onClick={handleCloseNewCustomerDialog} 
-						sx={{ 
-							borderRadius: '8px',
-							color: '#666'
-						}}
-					>
-						Hủy
-					</Button>
-					<Button 
-						onClick={handleCreateNewCustomer} 
-						variant="contained"
-						sx={{ 
-							borderRadius: '8px',
-							backgroundColor: '#4CAF50',
-							'&:hover': {
-								backgroundColor: '#45a049'
-							}
-						}}
-					>
-						Tạo mới
-					</Button>
-				</DialogActions>
-			</Dialog>
+			<InfoCustomerDialog
+				openInfoCustomerDialog={openCustomerInfoDialog}
+				handleCloseInfoCustomerDialog={handleCloseCustomerInfoDialog}
+				customer={customer}
+			/>
 
-			<Dialog 
-				open={openVoucherDialog} 
-				onClose={handleCloseVoucherDialog}
-				PaperProps={{
-					sx: {
-						borderRadius: '12px',
-						padding: '16px',
-						backgroundColor: '#ffffff'
-					}
-				}}
-			>
-				<DialogTitle sx={{ fontWeight: 600, color: '#1976d2' }}>Nhập E-Voucher</DialogTitle>
-				<DialogContent>
-					<TextField
-						autoFocus
-						margin="dense"
-						id="voucher"
-						label="Mã E-Voucher"
-						type="text"
-						fullWidth
-						variant="outlined"
-						value={voucherCodeInput}
-						onChange={(e) => setVoucherCodeInput(e.target.value)}
-						sx={{ 
-							mt: 2,
-							'& .MuiOutlinedInput-root': {
-								borderRadius: '8px',
-								backgroundColor: '#f5f5f5'
-							}
-						}}
-					/>
-				</DialogContent>
-				<DialogActions>
-					<Button 
-						onClick={handleCloseVoucherDialog} 
-						sx={{ 
-							borderRadius: '8px',
-							color: '#666'
-						}}
-					>
-						Hủy
-					</Button>
-					<Button 
-						onClick={handleVoucherSubmit} 
-						variant="contained"
-						sx={{ 
-							borderRadius: '8px',
-							backgroundColor: '#4CAF50',
-							'&:hover': {
-								backgroundColor: '#45a049'
-							}
-						}}
-					>
-						Xác nhận
-					</Button>
-				</DialogActions>
-			</Dialog>
+			<VoucherDialog
+				openVoucherDialog={openVoucherDialog}
+				handleCloseVoucherDialog={handleCloseVoucherDialog}
+				voucherCodeInput={voucherCodeInput}
+				setVoucherCodeInput={setVoucherCodeInput}
+			/>
 
 			<Dialog 
 				open={isScannerModalOpen} 
