@@ -27,8 +27,28 @@ function PromotionList() {
                 dataIndex: 'catalory', 
                 key: 'catalory',
                 render: (text) => {
-                    let color = text == 'Voucher' ? 'blue' : 'green';
-                    let icon = text == 'Voucher' ? <TagOutlined /> : <PercentageOutlined />;
+                    let color = text === 'Voucher' ? 'blue' : 'green';
+                    let icon = text === 'Voucher' ? <TagOutlined /> : <PercentageOutlined />;
+                    if (text === '1') {
+                        color = 'purple';
+                        icon = <GiftOutlined />;
+                        text = 'Giảm giá sản phẩm';
+                    }
+                    if (text === '2') {
+                        color = 'blue';
+                        icon = <TagOutlined />;
+                        text = 'Voucher';
+                    }
+                    if (text === '3') {
+                        color = 'orange';
+                        icon = <ShoppingCartOutlined />;
+                        text = 'Giảm giá sản phẩm mua kèm';
+                    }
+                    if (text === '4') {
+                        color = 'red';
+                        icon = <ShoppingCartOutlined />;
+                        text = 'Khuyến mãi mua nhiều';
+                    }
                     return (
                         <Tag color={color} icon={icon}>
                             {text}
@@ -156,7 +176,7 @@ function PromotionList() {
         }
 
         if (type) {
-            filtered = filtered.filter(promotion => promotion.catalory == type);
+            filtered = filtered.filter(promotion => promotion.catalory === type);
         }
 
         if (month) {
@@ -174,7 +194,7 @@ function PromotionList() {
             const values = await form.validateFields();
             const updatedValues = {};
             Object.keys(values).forEach(key => {
-                if (values[key] != undefined && values[key] != null && values[key] != '') {
+                if (values[key] !== undefined && values[key] !== null && values[key] !== '') {
                     updatedValues[key] = values[key];
                 }
             });
@@ -206,7 +226,20 @@ function PromotionList() {
     }, []);
 
     const getPromotionsByCategory = (category) => {
-        return filteredPromotions.filter(promotion => promotion.catalory == category);
+        return filteredPromotions.filter(promotion => {
+            switch (promotion.catalory) {
+                case '1':
+                    return category === 'Giảm giá sản phẩm';
+                case '2':
+                    return category === 'Voucher';
+                case '3':
+                    return category === 'Giảm giá sản phẩm mua kèm';
+                case '4':
+                    return category === 'Khuyến mãi mua nhiều';
+                default:
+                    return false;
+            }
+        });
     };
 
     return (
@@ -247,8 +280,8 @@ function PromotionList() {
                 </TabPane>
                 <TabPane tab="Voucher" key="2">
                     <Table 
-                        columns={getColumns(getPromotionsByCategory(2))} 
-                        dataSource={getPromotionsByCategory(2)}
+                        columns={getColumns(getPromotionsByCategory('Voucher'))} 
+                        dataSource={getPromotionsByCategory('Voucher')}
                         rowKey="id"
                         pagination={{ 
                             pageSize: 10,

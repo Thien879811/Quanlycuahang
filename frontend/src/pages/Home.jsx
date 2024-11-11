@@ -21,10 +21,6 @@ import VoucherDialog from './HomeComponents/VoucherDialog';
 
 const Home = () => {
 	const navigate = useNavigate();
-	
-	const {
-		updateProductDiscount,
-	} = useOrderProduct();
 	const {
 		orders,
 		loading: loadingOrders,
@@ -38,7 +34,9 @@ const Home = () => {
 		getTotalAmount,
 		getTotalQuantity,
 		getTotalDiscount,
-		removeProduct
+		removeProduct,
+		updateDiscount,
+		updateProductDiscount
 	} 
 		= orderUtils();
 
@@ -101,7 +99,7 @@ const Home = () => {
 	}, [products, searchQuery]);
 	
 	const searchPromotion = () => {
-		if(orders.details){
+		if(orders.details.length > 0){
 			const foundPromotions = [];
 			const currentDate = new Date();
 			for(const product of orders.details){
@@ -437,7 +435,7 @@ const Home = () => {
 							Thành tiền: {formatNumber(getTotalAmount).toLocaleString('vi-VN')} VNĐ
 						</Typography>
 						<Typography variant="h6" sx={{ mb: 2, color: '#f44336', fontWeight: 600 }}>
-							Chiết khấu: {formatNumber(getTotalDiscount + (orders?.discount ? orders.discount/100 * getTotalAmount : 0)).toLocaleString('vi-VN')} VNĐ
+							Chiết khấu: {formatNumber(getTotalDiscount + (orders?.discount ? orders.discount/100 * (getTotalAmount - getTotalDiscount): 0)).toLocaleString('vi-VN')} VNĐ
 						</Typography>
 						{customer && (
 							<Typography variant="h6" sx={{ mb: 2, color: '#4CAF50', fontWeight: 600 }}>
@@ -446,7 +444,7 @@ const Home = () => {
 						)}
 						<Box sx={{ borderTop: '2px solid #e0e0e0', mt: 2, pt: 2 }}>
 							<Typography variant="h5" sx={{ color: '#f44336', fontWeight: 700, textAlign: 'center' }}>
-								TỔNG CỘNG: {formatNumber(getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * getTotalAmount : 0)).toLocaleString('vi-VN')} VNĐ
+								TỔNG CỘNG: {formatNumber(getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * (getTotalAmount -getTotalDiscount) : 0)).toLocaleString('vi-VN')} VNĐ
 							</Typography>
 						</Box>
 					</Box>
@@ -481,6 +479,7 @@ const Home = () => {
 				handleCloseVoucherDialog={handleCloseVoucherDialog}
 				voucherCodeInput={voucherCodeInput}
 				setVoucherCodeInput={setVoucherCodeInput}
+				handleVoucherSubmit={handleVoucherSubmit}
 			/>
 
 			<Dialog 

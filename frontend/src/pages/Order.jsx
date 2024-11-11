@@ -55,10 +55,8 @@ const Order = () => {
     };
 
     const handleOpenDialog = async (order) => {
-        const response = await orderService.getDetail(order.id);
-        const data = handleResponse(response);
         setSelectedOrder({ 
-            ...data, 
+            ...order, 
             totalAmount: order.total,
             finalTotal: order.finalTotal
         });
@@ -273,8 +271,8 @@ const Order = () => {
                         <div>
                             <Box sx={{ display: 'grid', gap: 2, marginBottom: 3 }}>
                                 <Typography><strong>Mã đơn hàng:</strong> {selectedOrder.id}</Typography>
-                                <Typography><strong>Tên khách hàng:</strong> {selectedOrder.customer_name}</Typography>
-                                <Typography><strong>Khuyến mãi:</strong> {selectedOrder.discount > 0 ? `Giảm ${selectedOrder.discount}%` : 'Không có'}</Typography>
+                                <Typography><strong>Tên khách hàng:</strong> {selectedOrder.customer ? selectedOrder.customer.customer_name : 'Khách lẻ'}</Typography>
+                                <Typography><strong>Khuyến mãi:</strong> {selectedOrder.discount  > 0 ? `Giảm ${selectedOrder.discount}%` : 'Không có'}</Typography>
                                 <Typography><strong>Tổng tiền:</strong> {Math.floor(selectedOrder.finalTotal).toLocaleString()} VND</Typography>
                                 <Typography><strong>Ngày:</strong> {new Date(selectedOrder.created_at).toLocaleString()}</Typography>
                                 <Typography><strong>Trạng thái:</strong> 
@@ -302,16 +300,16 @@ const Order = () => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {selectedOrder.products && selectedOrder.products.map((product, index) => (
+                                        {selectedOrder.details && selectedOrder.details.map((product, index) => (
                                             <TableRow key={index}>
-                                                <TableCell>{product.name}</TableCell>
-                                                <TableCell>{product.quantity}</TableCell>
-                                                <TableCell>{Math.floor(product.price).toLocaleString()} VND</TableCell>
+                                                <TableCell>{product.product.product_name}</TableCell>
+                                                <TableCell>{product.soluong}</TableCell>
+                                                <TableCell>{Math.floor(product.dongia).toLocaleString()} VND</TableCell>
                                                 <TableCell>{product.discount ? Math.floor(product.discount).toLocaleString() : 0} VND</TableCell>
                                                 <TableCell>
                                                     {Math.floor(product.discount ? 
-                                                        product.quantity * product.price - product.discount : 
-                                                        product.quantity * product.price).toLocaleString()} VND
+                                                        product.soluong * product.dongia - product.discount : 
+                                                        product.soluong * product.dongia).toLocaleString()} VND
                                                 </TableCell>
                                             </TableRow>
                                         ))}

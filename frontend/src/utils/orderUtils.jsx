@@ -13,7 +13,7 @@ const orderUtils = () => {
     const getTotalAmount = useMemo(() => {
         if (!orders?.details) return 0;
         return orders.details.reduce((total, detail) => {
-            return total + (detail.soluong * detail.dongia);
+            return total + (detail.soluong * detail.dongia) - (detail.discount || 0);
         }, 0);
     }, [orders?.details]);
 
@@ -27,9 +27,67 @@ const orderUtils = () => {
     const getTotalDiscount = useMemo(() => {
         if (!orders?.details) return 0;
         return orders.details.reduce((total, detail) => {
-            return total + detail.discount;
+            return total + (detail.discount || 0);
         }, 0);
     }, [orders?.details]);
+
+    const updateDiscount = useCallback((productCode, discount) => {
+        setOrders(prevOrders => {
+            const updatedDetails = prevOrders.details.map(product => {
+                if (product.product_id == productCode) {
+                    return { ...product, discount: product.dongia * discount / 100 * product.soluong};
+                }
+                return product;
+            });
+            return {...prevOrders, details: updatedDetails};
+        });
+    }, []);
+
+    const updateProductDiscount = useCallback((productCode, promotions) => {
+        setOrders(prevOrders => {
+            const updatedDetails = prevOrders.details.map(product => {
+                if (product.product_id === productCode) {
+                    const promotion = promotions.find(promo => 
+                        promo.product_id === productCode &&
+                        new Date(promo.start_date) <= new Date() &&
+                        new Date(promo.end_date) >= new Date()
+                    );
+
+                    if (!promotion) {
+                        return { ...product, discount: 0 };
+                    }
+
+                    if (promotion.quantity > 0) {
+                        const timesQualified = Math.floor(product.soluong / promotion.quantity);
+                        if (timesQualified > 0) {
+                            const discountedQuantity = timesQualified * promotion.quantity;
+                            return {
+                                ...product,
+                                discount: (product.dongia * promotion.discount_percentage / 100) * discountedQuantity
+                            };
+                        } else {
+                            return { ...product, discount: 0 };
+                        }
+                    }
+
+                    if (promotion.present) {
+                        updateDiscount(promotion.present.product_id, promotion.discount_percentage);
+                        return {
+                             ...product,
+                            discount: 0
+                        };
+                    }
+
+                    return {
+                        ...product,
+                        discount: (product.dongia * promotion.discount_percentage / 100) * product.soluong
+                    };
+                }
+                return product;
+            });
+            return {...prevOrders, details: updatedDetails};
+        });
+    }, [updateDiscount]);
 
     const getOrders = useCallback(async () => {
         try {
@@ -45,20 +103,6 @@ const orderUtils = () => {
         }
     }, []);
 
-    useEffect(() => {
-        const savedOrderId = localStorage.getItem('order_id');
-        if (savedOrderId) {
-            setOrder_id(savedOrderId);
-        }
-        getOrders();
-    }, [getOrders]);
-
-    useEffect(() => {
-        if(customer?.id) {
-            updateCustomer(customer.id);
-        }
-    }, [customer]);
-
     const updateOrderProducts = useCallback(async (order_id, data) => {
         try {
             setLoading(true);
@@ -73,6 +117,39 @@ const orderUtils = () => {
             setLoading(false);
         }
     }, [getOrders]);
+
+    const updateCustomer = useCallback(async (customer_id) => {
+        try {
+            setLoading(true);
+            if (!orders) throw new Error('Order not found');
+         
+            const data = {
+                ...orders,
+                customer_id
+            };
+
+            return await updateOrderProducts(orders.id, data);
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [orders, updateOrderProducts]);
+
+    useEffect(() => {
+        const savedOrderId = localStorage.getItem('order_id');
+        if (savedOrderId) {
+            setOrder_id(savedOrderId);
+        }
+        getOrders();
+    }, [getOrders]);
+
+    useEffect(() => {
+        if(customer?.id) {
+            updateCustomer(customer.id);
+        }
+    }, [customer, updateCustomer]);
 
     const updateProductQuantity = useCallback(async (order_id, product_id, quantity) => {
         try {
@@ -93,7 +170,7 @@ const orderUtils = () => {
                             product_id: detail.product_id,
                             soluong: detail.soluong,
                             dongia: detail.dongia,
-                            discount: detail.discount
+                            discount: detail.discount || 0
                         }));
                 } else {
                     // Update quantity if greater than 0
@@ -102,7 +179,7 @@ const orderUtils = () => {
                         product_id: detail.product_id,
                         soluong: detail.product_id === product_id ? newQuantity : detail.soluong,
                         dongia: detail.dongia,
-                        discount: detail.discount
+                        discount: detail.discount || 0
                     }));
                 }
             } else {
@@ -114,7 +191,7 @@ const orderUtils = () => {
                             product_id: detail.product_id,
                             soluong: detail.soluong,
                             dongia: detail.dongia,
-                            discount: detail.discount
+                            discount: detail.discount || 0
                         })),
                         {
                             order_id,
@@ -130,7 +207,7 @@ const orderUtils = () => {
                         product_id: detail.product_id,
                         soluong: detail.soluong,
                         dongia: detail.dongia,
-                        discount: detail.discount
+                        discount: detail.discount || 0
                     }));
                 }
             }
@@ -154,9 +231,7 @@ const orderUtils = () => {
         }
     }, [orders, updateOrderProducts]);
 
-   
-
-   const removeProduct = useCallback(async (order_id, product_id) => {
+    const removeProduct = useCallback(async (order_id, product_id) => {
         try {
             setLoading(true);
             if (!orders) throw new Error('Order not found');
@@ -168,7 +243,7 @@ const orderUtils = () => {
                     product_id: detail.product_id,
                     soluong: detail.soluong,
                     dongia: detail.dongia,
-                    discount: detail.discount
+                    discount: detail.discount || 0
                 }));
 
             const data = {
@@ -202,7 +277,7 @@ const orderUtils = () => {
                     product_id: detail.product_id,
                     soluong: detail.product_id === product_id ? detail.soluong + quantity : detail.soluong,
                     dongia: detail.product_id === product_id ? price : detail.dongia,
-                    discount: detail.discount,
+                    discount: detail.discount || 0,
                 }))
                 : [
                     ...orders.details.map(detail => ({
@@ -210,7 +285,7 @@ const orderUtils = () => {
                         product_id: detail.product_id,
                         soluong: detail.soluong,
                         dongia: detail.dongia,
-                        discount: detail.discount
+                        discount: detail.discount || 0
                     })),
                     {
                         order_id,
@@ -260,25 +335,6 @@ const orderUtils = () => {
         }
     }, [orders, updateOrderProducts]);
 
-    const updateCustomer = useCallback(async (customer_id) => {
-        try {
-            setLoading(true);
-            if (!orders) throw new Error('Order not found');
-         
-            const data = {
-                ...orders,
-                customer_id
-            };
-
-            return await updateOrderProducts(orders.id, data);
-        } catch (err) {
-            setError(err.message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, [orders, updateOrderProducts]);
-
     return {
         order_id,
         orders,
@@ -293,7 +349,9 @@ const orderUtils = () => {
         updateCustomer,
         getTotalAmount,
         getTotalQuantity,
-        getTotalDiscount
+        getTotalDiscount,
+        updateDiscount,
+        updateProductDiscount
     };
 }
 

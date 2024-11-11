@@ -1,71 +1,110 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import PromotionService from "../services/promotion.service";
 import { handleResponse } from "../functions";
 
 const usePromotion = () => {
     const [promotions, setPromotions] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
     
-    const fetchPromotion = async () => {
+    const fetchPromotion = useCallback(async () => {
         try {
+            setLoading(true);
             const res = await PromotionService.getPromotion();
             const data = handleResponse(res);
             setPromotions(data);
         } catch (error) {
-            console.log(error);
+            setError(error.message);
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
-    }
+    }, []);
 
     useEffect(() => {
         fetchPromotion();
-    }, []);
+    }, [fetchPromotion]);
 
-    const createPromotion = async (promotion) => {
+    const activePromotions = useMemo(() => {
+        const now = new Date();
+        return promotions.filter(promo => 
+            new Date(promo.start_date) <= now && 
+            new Date(promo.end_date) >= now
+        );
+    }, [promotions]);
+
+    const createPromotion = useCallback(async (promotion) => {
         try {
+            setLoading(true);
             const res = await PromotionService.create(promotion);
             const dataResponse = handleResponse(res);
-            if(dataResponse.error){
+            if(dataResponse.error) {
+                setError(dataResponse.error);
                 return dataResponse.error;
             }
-            await fetchPromotion(); // Refresh promotions after creating
+            setPromotions(prev => [...prev, dataResponse]);
+            return dataResponse;
         } catch (error) {
-            console.log(error);
+            setError(error.message);
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
-    }
+    }, []);
 
-    const deletePromotion = async (id) => {
+    const deletePromotion = useCallback(async (id) => {
         try {
+            setLoading(true);
             const res = await PromotionService.delete(id);
             const data = handleResponse(res);
-            await fetchPromotion(); // Refresh promotions after deleting
+            setPromotions(prev => prev.filter(promo => promo.id !== id));
             return data;
         } catch (error) {
-            console.log(error);
+            setError(error.message);
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
-    }
+    }, []);
 
-    const updatePromotion = async (id, promotion) => {
+    const updatePromotion = useCallback(async (id, promotion) => {
         try {
+            setLoading(true);
             const res = await PromotionService.update(id, promotion);
             const data = handleResponse(res);
-            await fetchPromotion(); // Refresh promotions after updating
+            setPromotions(prev => 
+                prev.map(promo => promo.id === id ? {...promo, ...data} : promo)
+            );
             return data;
         } catch (error) {
-            console.log(error);
+            setError(error.message);
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
-    }
+    }, []);
 
-    const updateQuantity = async (id) => {
+    const updateQuantity = useCallback(async (id) => {
         try {
+            setLoading(true);
             const res = await PromotionService.updateQuantity(id);
             const data = handleResponse(res);
+            setPromotions(prev => 
+                prev.map(promo => promo.id === id ? {...promo, quantity: data.quantity} : promo)
+            );
             return data;
         } catch (error) {
-            console.log(error);
+            setError(error.message);
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
-    }
+    }, []);
 
     return {
-        promotions,
+        promotions: activePromotions,
+        loading,
+        error,
         createPromotion,
         deletePromotion,
         updatePromotion,

@@ -17,7 +17,7 @@ function CreateBulkPurchasePromotion() {
         setLoading(true);
         try {
             const data = {
-                catalory: 'Khuyến mãi mua nhiều',
+                catalory: '4',
                 name: values.name,
                 code: null,
                 discount_percentage: values.discountPercentage || null,

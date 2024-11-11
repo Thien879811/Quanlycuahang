@@ -17,7 +17,7 @@ function CreateCrossProductPromotion() {
       setLoading(true);
       try {
         const data = {
-          catalory: 'Giảm giá sản phẩm mua kèm',
+          catalory: '3',
           name: values.name,
           code: null,
           discount_percentage: values.discountPercentage || null,

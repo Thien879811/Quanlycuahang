@@ -12,7 +12,7 @@ function CreateDiscountPromotion() {
     const onFinish = async (values) => {
       try {
         const data = {
-          catalory: 'Voucher',
+          catalory: '2',
           name: values.name,
           code: values.code || null,
           discount_percentage: values.discount_percentage || null,

@@ -13,7 +13,7 @@ function CreatePromotion() {
 
     const onFinish = async (values) => {
       const data = {
-        catalory: 'Giảm giá sản phẩm',
+        catalory: '1',
         name: values.name,
         code:  null,
         discount_percentage: values.discount_percentage || null,

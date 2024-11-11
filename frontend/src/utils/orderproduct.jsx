@@ -6,6 +6,10 @@ const useOrderProduct = () => {
     const [orderProducts, setOrderProducts] = useState(orders.details);
     const [voucherCode, setVoucherCode] = useState('');
 
+    useEffect(() => {
+        updateOrderProducts(orders.id, orders);
+    }, [orders.details]);
+
     const updateDiscount = useCallback((productCode, discount) => {
         setOrderProducts(prevProducts => {
             const updatedProducts = prevProducts.map(product => {
