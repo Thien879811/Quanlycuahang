@@ -51,6 +51,7 @@ const PaymentReturn = () => {
         const res = await OrderService.update(txnRef, data);
         console.log(res);
         updatePointCustomer(amount);
+        localStorage.removeItem('customer');
         setIsModalVisible(false);
       } catch (error) {
         console.log(error);

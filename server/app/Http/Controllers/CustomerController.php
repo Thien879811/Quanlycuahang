@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
+    public function get($id){
+        $customer = Customer::find($id)->first();
+        return response()->json($customer);
+    }
     public function update(Request $request, $id)
     {
         $validated = $request->validate([

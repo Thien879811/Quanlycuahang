@@ -43,6 +43,14 @@ class OrderService {
     async updateOrderProducts(id, data) {
         return (await this.api.post(`/order-products/${id}`, data)).data;
     }
+    
+    async deleteOrderProducts(order_id,product_id) {
+        return (await this.api.delete(`/products/${order_id}/${product_id}`)).data;
+    }
+
+    async addDiscount(id, data) {
+        return (await this.api.post(`/add-discount/${id}`, data)).data;
+    }
 
 }
 export default new OrderService();

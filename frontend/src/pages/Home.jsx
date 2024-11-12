@@ -18,7 +18,7 @@ import CustomerDialog from './HomeComponents/CustomerDialog';
 import NewCustomerDialog from './HomeComponents/NewCustomerDialog';
 import InfoCustomerDialog from './HomeComponents/InfoCustomerDialog';
 import VoucherDialog from './HomeComponents/VoucherDialog';
-
+import { message } from 'antd';
 const Home = () => {
 	const navigate = useNavigate();
 	const {
@@ -38,7 +38,7 @@ const Home = () => {
 		updateDiscount,
 		updateProductDiscount
 	} 
-		= orderUtils();
+	= orderUtils();
 
 	const [containerHeight, setContainerHeight] = useState('100vh');
 	const [openCustomerDialog, setOpenCustomerDialog] = useState(false);
@@ -117,9 +117,7 @@ const Home = () => {
 
 			if (foundPromotions.length > 0) {
 				setActivePromotion(foundPromotions);
-				foundPromotions.forEach(promo => {
-					updateProductDiscount(promo.product_id, promotions);
-				});
+				updateProductDiscount(promotions);
 			} else {
 				setActivePromotion([]);
 			}
@@ -162,10 +160,12 @@ const Home = () => {
 			return;
 		}
 		if(type === 1){
+			updateOrderProducts(orders.id);
 			return navigate('/pay');
 		}
 		if(type === 2){
-			const finalAmount = getTotalAmount - getTotalDiscount - (getTotalAmount * (orders.discount || 0) / 100);
+			updateOrderProducts(orders.id);
+			const finalAmount = getTotalAmount - getTotalDiscount - (getTotalAmount - getTotalDiscount) * (orders.discount || 0) / 100;
 			return navigate(`/vnpay/${orders.id}/${finalAmount}`);
 		}
 		if(type === 3){
@@ -224,16 +224,25 @@ const Home = () => {
 		handleCloseNewCustomerDialog();
 	};
 
-	const handleIncreaseQuantity = (productId) => {
-		updateProductQuantity(orders.id, productId, 1);
+	const handleIncreaseQuantity = async (productId) => {
+		await updateProductQuantity(orders.id, productId, 1);
+		updateProductDiscount(promotions);
 	};
 
-	const handleDecreaseQuantity = (productId) => {
-		updateProductQuantity(orders.id,productId, -1);
+	const handleDecreaseQuantity = async (productId) => {
+		await updateProductQuantity(orders.id, productId, -1);
+		updateProductDiscount(promotions);
 	};
 
-	const handleRemoveProduct = (productCode) => {
-		removeProduct(orders.id, productCode);
+	const handleRemoveProduct = async (productCode) => {
+		try {
+			const response = await removeProduct(orders.id, productCode);
+			if(response){
+				message.success('Sản phẩm đã được xóa thành công');
+			}
+		} catch (error) {
+			message.error(error.message);
+		}
 	};
 
 	const handleBarcodeChange = (event, value) => {
@@ -305,7 +314,7 @@ const Home = () => {
 							renderInput={(params) => (
 								<TextField
 									{...params}
-									label="Quét mã vạch hoặc tên sản phẩm"
+									label="Mã vạch hoặc tên sản phẩm"
 									variant="outlined"
 									value={barcode}
 									onKeyPress={handleBarcodeKeyPress}
@@ -318,6 +327,7 @@ const Home = () => {
 								/>
 							)}
 							onChange={handleBarcodeChange}
+							onClick={handleBarcodeChange}
 							onInputChange={(event, value) => {
 								setBarcode(value);
 								setSearchQuery(value);

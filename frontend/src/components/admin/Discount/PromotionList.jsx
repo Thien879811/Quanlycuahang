@@ -9,8 +9,8 @@ const { Title } = Typography;
 const { TabPane } = Tabs;
 const { Option } = Select;
 
-function PromotionList() {
-    const { promotions, deletePromotion, updatePromotion, fetchPromotion } = usePromotion();
+function PromotionList({ promotions }) {
+    const {deletePromotion, updatePromotion, fetchPromotion } = usePromotion();
     const { products } = useProduct();
     const [searchText, setSearchText] = useState('');
     const [filteredPromotions, setFilteredPromotions] = useState([]);
@@ -223,7 +223,7 @@ function PromotionList() {
 
     useEffect(() => {
         fetchPromotion();
-    }, []);
+    }, [promotions]);
 
     const getPromotionsByCategory = (category) => {
         return filteredPromotions.filter(promotion => {

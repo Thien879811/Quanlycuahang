@@ -7,42 +7,7 @@ import useProduct from '../../../utils/productUtils';
 const { Option } = Select;
 const { Title } = Typography;
 
-function CreateCrossProductPromotion() {
-    const [form] = Form.useForm();
-    const { products } = useProduct();
-    const [loading, setLoading] = useState(false);
-    const { createPromotion,fetchPromotions } = usePromotion();
-
-    const onFinish = async (values) => {
-      setLoading(true);
-      try {
-        const data = {
-          catalory: '3',
-          name: values.name,
-          code: null,
-          discount_percentage: values.discountPercentage || null,
-          product_id: [values.purchaseProductId] || null,
-          present: values.discountedProductId || null,
-          description: values.description || null,
-          quantity: values.quantity || null,
-          start_date: values.startDate ? values.startDate.format('YYYY-MM-DD') : null,
-          end_date: values.endDate ? values.endDate.format('YYYY-MM-DD') : null,
-        };
-        const error  = await createPromotion(data);
-        if(error){
-          message.error(error);
-        }else{
-          message.success('Tạo khuyến mãi mua sản phẩm này giảm giá sản phẩm khác thành công');
-          form.resetFields();
-          fetchPromotions();
-        }
-      } catch (err) {
-        message.error('Có lỗi xảy ra khi tạo khuyến mãi');
-      } finally {
-        setLoading(false);
-      }
-    };
-  
+function CreateCrossProductPromotion({ products, onFinish }) {
     return (
       <Card 
         className="promotion-card"
@@ -58,7 +23,7 @@ function CreateCrossProductPromotion() {
             Tạo khuyến mãi mua kèm sản phẩm
           </Title>
 
-          <Form form={form} onFinish={onFinish} layout="vertical">
+          <Form onFinish={onFinish} layout="vertical">
             <Row gutter={24}>
               <Col span={24}>
                 <Form.Item 
@@ -73,6 +38,14 @@ function CreateCrossProductPromotion() {
                 >
                   <Input size="large" placeholder="Nhập tên chương trình khuyến mãi" />
                 </Form.Item>
+
+                <Form.Item
+                  name="catalory"
+                  hidden
+                  initialValue="3"
+                >
+                  <Input type="hidden" />
+                </Form.Item>
               </Col>
             </Row>
 
@@ -81,7 +54,7 @@ function CreateCrossProductPromotion() {
             <Row gutter={24}>
               <Col span={12}>
                 <Form.Item 
-                  name="purchaseProductId" 
+                  name="product_id" 
                   label={
                     <Space>
                       <ShoppingCartOutlined />
@@ -91,7 +64,7 @@ function CreateCrossProductPromotion() {
                   rules={[{ required: true, message: 'Vui lòng chọn sản phẩm mua' }]}
                 >
                   <Select size="large" placeholder="Chọn sản phẩm chính">
-                    {products.map(product => (
+                    {products && products.map(product => (
                       <Option key={product.id} value={product.id}>
                         {product.product_name}
                       </Option>
@@ -101,7 +74,7 @@ function CreateCrossProductPromotion() {
               </Col>
               <Col span={12}>
                 <Form.Item 
-                  name="discountedProductId" 
+                  name="present" 
                   label={
                     <Space>
                       <GiftOutlined />
@@ -111,7 +84,7 @@ function CreateCrossProductPromotion() {
                   rules={[{ required: true, message: 'Vui lòng chọn sản phẩm được giảm giá' }]}
                 >
                   <Select size="large" placeholder="Chọn sản phẩm được giảm giá">
-                    {products.map(product => (
+                    {products && products.map(product => (
                       <Option key={product.id} value={product.id}>
                         {product.product_name}
                       </Option>
@@ -124,7 +97,7 @@ function CreateCrossProductPromotion() {
             <Row gutter={24}>
               <Col span={12}>
                 <Form.Item 
-                  name="discountPercentage" 
+                  name="discount_percentage" 
                   label={
                     <Space>
                       <PercentageOutlined />
@@ -139,7 +112,7 @@ function CreateCrossProductPromotion() {
                     max={100}
                     style={{ width: '100%' }}
                     formatter={value => `${value}%`}
-                    parser={value => value.replace('%', '')}
+                    parser={value => value?.replace('%', '')}
                   />
                 </Form.Item>
               </Col>
@@ -161,7 +134,7 @@ function CreateCrossProductPromotion() {
             <Row gutter={24}>
               <Col span={12}>
                 <Form.Item 
-                  name="startDate" 
+                  name="start_date" 
                   label={
                     <Space>
                       <CalendarOutlined />
@@ -175,7 +148,7 @@ function CreateCrossProductPromotion() {
               </Col>
               <Col span={12}>
                 <Form.Item 
-                  name="endDate" 
+                  name="end_date" 
                   label={
                     <Space>
                       <CalendarOutlined />
@@ -193,7 +166,6 @@ function CreateCrossProductPromotion() {
               <Button 
                 type="primary" 
                 htmlType="submit" 
-                loading={loading} 
                 block 
                 size="large"
                 style={{ height: '48px', fontSize: '16px' }}
@@ -205,6 +177,6 @@ function CreateCrossProductPromotion() {
         </Space>
       </Card>
     );
-  }
+}
 
 export default CreateCrossProductPromotion;

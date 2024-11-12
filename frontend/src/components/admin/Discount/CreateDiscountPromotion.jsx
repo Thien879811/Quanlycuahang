@@ -1,75 +1,62 @@
 import React from 'react';
-import { Form, Input, DatePicker, InputNumber, Button, message, Row, Col, Card, Typography, Space, Divider } from 'antd';
-import { GiftOutlined, TagOutlined, PercentageOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Form, Input, DatePicker, InputNumber, Button, message, Select, Row, Col, Card, Typography, Space, Divider } from 'antd';
+import { GiftOutlined, CalendarOutlined, PercentageOutlined, ShoppingOutlined } from '@ant-design/icons';
+import useProduct from '../../../utils/productUtils';
 import usePromotion from '../../../utils/promorionUtils';
 
 const { Title } = Typography;
 
-function CreateDiscountPromotion() {
+function CreateDiscountPromotion({ products, onFinish }) {
     const [form] = Form.useForm();
-    const { createPromotion,fetchPromotions } = usePromotion();
-
-    const onFinish = async (values) => {
-      try {
-        const data = {
-          catalory: '2',
-          name: values.name,
-          code: values.code || null,
-          discount_percentage: values.discount_percentage || null,
-          product_id: values.product_id || null,
-          present: values.present || null,
-          description: values.description || null,
-          quantity: values.quantity || null,
-          start_date: values.start_date ? values.start_date.format('YYYY-MM-DD') : null,
-          end_date: values.end_date ? values.end_date.format('YYYY-MM-DD') : null,
-        };
-        const error = await createPromotion(data);
-        if(error){
-          message.error(error);
-        }else{
-          message.success('Tạo khuyến mãi giảm giá thành công');
-          form.resetFields();
-          fetchPromotions();
-        }
-      } catch (err) {
-        message.error('Có lỗi xảy ra khi tạo khuyến mãi giảm giá');
-      }
-    };
 
     const generateRandomCode = () => {
-      const randomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-      form.setFieldsValue({ code: randomCode });
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        const length = 8;
+        
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        
+        form.setFieldsValue({ code: result });
     };
-  
+
     return (
       <Card 
         className="promotion-card"
         style={{ 
           boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-          borderRadius: '8px',
-          padding: '24px'
+          borderRadius: '8px'
         }}
       >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <Title level={3} style={{ margin: 0, color: '#1890ff' }}>
+          <Title level={3} style={{ margin: 0 }}>
             <GiftOutlined style={{ marginRight: 8 }} />
-            Tạo Voucher giảm giá
+            Tạo chương trình khuyến mãi
           </Title>
-
-          <Form form={form} onFinish={onFinish} layout="vertical">
+          
+          <Form  
+            form={form}
+            onFinish={onFinish} 
+            layout="vertical"
+            style={{ marginTop: 24 }}
+          >
             <Row gutter={24}>
               <Col span={24}>
                 <Form.Item 
                   name="name" 
-                  label={
-                    <Space>
-                      <TagOutlined />
-                      <span>Tên Voucher</span>
-                    </Space>
-                  }
-                  rules={[{ required: true, message: 'Vui lòng nhập tên Voucher' }]}
+                  label="Tên chương trình" 
+                  rules={[{ required: true, message: 'Vui lòng nhập tên chương trình' }]}
                 >
-                  <Input size="large" placeholder="Nhập tên Voucher" />
+                  <Input size="large" placeholder="Nhập tên chương trình khuyến mãi" />
+                </Form.Item>
+
+                <Form.Item
+                  name="catalory"
+                  hidden
+                  initialValue="2"
+                >
+                  <Input type="hidden" />
                 </Form.Item>
               </Col>
             </Row>
@@ -80,17 +67,12 @@ function CreateDiscountPromotion() {
               <Col span={12}>
                 <Form.Item 
                   name="code" 
-                  label={
-                    <Space>
-                      <TagOutlined />
-                      <span>Mã Voucher</span>
-                    </Space>
-                  }
+                  label="Mã Voucher"
                   rules={[{ required: true, message: 'Vui lòng nhập mã Voucher' }]}
                 >
                   <Input size="large" placeholder="Nhập mã Voucher" />
                 </Form.Item>
-                <Button type="dashed" onClick={generateRandomCode} icon={<TagOutlined />}>
+                <Button type="dashed" onClick={generateRandomCode} icon={<GiftOutlined />}>
                   Tạo mã ngẫu nhiên
                 </Button>
               </Col>
@@ -122,12 +104,7 @@ function CreateDiscountPromotion() {
               <Col span={24}>
                 <Form.Item 
                   name="quantity" 
-                  label={
-                    <Space>
-                      <TagOutlined />
-                      <span>Số lượng Voucher</span>
-                    </Space>
-                  }
+                  label="Số lượng Voucher"
                   rules={[{ required: true, message: 'Vui lòng nhập số lượng' }]}
                 >
                   <InputNumber min={0} size="large" style={{ width: '100%' }} placeholder="Nhập số lượng Voucher" />
@@ -137,15 +114,13 @@ function CreateDiscountPromotion() {
 
             <Form.Item 
               name="description" 
-              label={
-                <Space>
-                  <FileTextOutlined />
-                  <span>Mô tả</span>
-                </Space>
-              }
-              rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
+              label="Mô tả"
             >
-              <Input.TextArea rows={4} placeholder="Nhập mô tả chi tiết về Voucher" />
+              <Input.TextArea 
+                rows={4}
+                placeholder="Nhập mô tả chi tiết về chương trình khuyến mãi"
+                style={{ fontSize: '14px' }}
+              />
             </Form.Item>
 
             <Row gutter={24}>
@@ -160,7 +135,11 @@ function CreateDiscountPromotion() {
                   }
                   rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu' }]}
                 >
-                  <DatePicker size="large" style={{ width: '100%' }} />
+                  <DatePicker 
+                    size="large"
+                    style={{ width: '100%' }}
+                    placeholder="Chọn ngày bắt đầu"
+                  />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -174,20 +153,34 @@ function CreateDiscountPromotion() {
                   }
                   rules={[{ required: true, message: 'Vui lòng chọn ngày kết thúc' }]}
                 >
-                  <DatePicker size="large" style={{ width: '100%' }} />
+                  <DatePicker 
+                    size="large"
+                    style={{ width: '100%' }}
+                    placeholder="Chọn ngày kết thúc"
+                  />
                 </Form.Item>
               </Col>
             </Row>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" size="large" block icon={<GiftOutlined />}>
-                Tạo Voucher
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                size="large"
+                block
+                style={{
+                  height: '48px',
+                  fontSize: '16px',
+                  marginTop: '16px'
+                }}
+              >
+                Tạo chương trình khuyến mãi
               </Button>
             </Form.Item>
           </Form>
         </Space>
       </Card>
     );
-  }
+}
 
 export default CreateDiscountPromotion;

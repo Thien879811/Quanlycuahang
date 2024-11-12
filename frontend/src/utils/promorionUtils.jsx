@@ -37,13 +37,7 @@ const usePromotion = () => {
         try {
             setLoading(true);
             const res = await PromotionService.create(promotion);
-            const dataResponse = handleResponse(res);
-            if(dataResponse.error) {
-                setError(dataResponse.error);
-                return dataResponse.error;
-            }
-            setPromotions(prev => [...prev, dataResponse]);
-            return dataResponse;
+            console.log(res);
         } catch (error) {
             setError(error.message);
             console.error(error);

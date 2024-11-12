@@ -7,43 +7,8 @@ import useProduct from '../../../utils/productUtils';
 const { Option } = Select;
 const { Title } = Typography;
 
-function CreateBulkPurchasePromotion() {
-    const [form] = Form.useForm();
-    const { products } = useProduct();    
-    const { createPromotion,fetchPromotions } = usePromotion();
+function CreateBulkPurchasePromotion({ products, onFinish }) {
     const [loading, setLoading] = useState(false);
-
-    const onFinish = async (values) => {
-        setLoading(true);
-        try {
-            const data = {
-                catalory: '4',
-                name: values.name,
-                code: null,
-                discount_percentage: values.discountPercentage || null,
-                product_id: [values.productId] || null,
-                description: values.description || null,
-                quantity: values.quantity || null,
-                start_date: values.startDate ? values.startDate.format('YYYY-MM-DD') : null,
-                end_date: values.endDate ? values.endDate.format('YYYY-MM-DD') : null,
-            };
-
-            const error = await createPromotion(data);
-            
-            if(error){
-                message.error(error);
-            }else{
-                message.success('Khuyến mãi đã được tạo thành công');
-                form.resetFields();
-                fetchPromotions();
-            }
-        } catch (err) {
-            message.error('Không thể tạo khuyến mãi');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return (
         <Card 
             className="promotion-card"
@@ -59,7 +24,7 @@ function CreateBulkPurchasePromotion() {
                     Tạo khuyến mãi mua nhiều
                 </Title>
 
-                <Form form={form} onFinish={onFinish} layout="vertical">
+                <Form  onFinish={onFinish} layout="vertical">
                     <Row gutter={24}>
                         <Col span={24}>
                             <Form.Item 
@@ -77,12 +42,20 @@ function CreateBulkPurchasePromotion() {
                         </Col>
                     </Row>
 
+                    <Form.Item
+                        name="catalory"
+                        hidden
+                        initialValue="4"
+                    >
+                        <Input type="hidden" />
+                    </Form.Item>
+
                     <Divider />
 
                     <Row gutter={24}>
                         <Col span={12}>
                             <Form.Item 
-                                name="discountPercentage" 
+                                name="discount_percentage" 
                                 label={
                                     <Space>
                                         <PercentageOutlined />
@@ -98,13 +71,13 @@ function CreateBulkPurchasePromotion() {
                                     style={{ width: '100%' }}
                                     placeholder="Nhập phần trăm giảm giá"
                                     formatter={value => `${value}%`}
-                                    parser={value => value.replace('%', '')}
+                                    parser={value => value ? value.toString().replace('%', '') : ''}
                                 />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
                             <Form.Item 
-                                name="productId" 
+                                name="product_id" 
                                 label={
                                     <Space>
                                         <ShoppingCartOutlined />
@@ -153,7 +126,7 @@ function CreateBulkPurchasePromotion() {
                         </Col>
                         <Col span={8}>
                             <Form.Item 
-                                name="startDate" 
+                                name="start_date" 
                                 label={
                                     <Space>
                                         <CalendarOutlined />
@@ -166,7 +139,7 @@ function CreateBulkPurchasePromotion() {
                         </Col>
                         <Col span={8}>
                             <Form.Item 
-                                name="endDate" 
+                                name="end_date" 
                                 label={
                                     <Space>
                                         <CalendarOutlined />

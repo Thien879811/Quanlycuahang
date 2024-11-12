@@ -16,62 +16,77 @@ class PromotionController extends Controller
 
     public function create(Request $request)
     {
-        $promotion = $request->all();
+        $promotionData = $request->all();
 
-        if ($promotion['product_id']) {     
-            foreach ($promotion['product_id'] as $key => $value) {
-                $existingPromotion = Promotion::where('product_id', $value)
-                    ->where(function ($query) use ($promotion) {
-                        $query->where(function ($q) use ($promotion) {
-                            $q->where('start_date', '<=', $promotion['start_date'])
-                              ->where('end_date', '>=', $promotion['start_date']);
-                        })->orWhere(function ($q) use ($promotion) {
-                            $q->where('start_date', '<=', $promotion['end_date'])
-                              ->where('end_date', '>=', $promotion['end_date']);
+        if (!empty($promotionData['product_id'])) {
+            $createdPromotions = [];
+            
+            foreach ($promotionData['product_id'] as $productId) {
+                $existingPromotion = Promotion::where('product_id', $productId)
+                    ->where(function ($query) use ($promotionData) {
+                        $query->where(function ($q) use ($promotionData) {
+                            $q->where('start_date', '<=', $promotionData['start_date'])
+                              ->where('end_date', '>=', $promotionData['start_date']);
+                        })->orWhere(function ($q) use ($promotionData) {
+                            $q->where('start_date', '<=', $promotionData['end_date'])
+                              ->where('end_date', '>=', $promotionData['end_date']);
                         });
                     })
                     ->first();
 
                 if ($existingPromotion) {
-                    return response()->json(['error' => 'Sản phẩm đã có chương trình khuyến mãi trong thời gian này']);
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Sản phẩm đã có chương trình khuyến mãi trong thời gian này',
+                    ], 200);
                 }
 
                 $promotion = Promotion::create([
-                    'catalory' => $promotion['catalory'],
-                    'name' => $promotion['name'],
-                    'code' => $promotion['code'] ?? null,
-                    'discount_percentage' => $promotion['discount_percentage'],
-                    'product_id' => $value,
-                    'present' => $promotion['present'] ?? null,
-                    'description' => $promotion['description'] ?? null,
-                    'quantity' => $promotion['quantity'] ?? null,
-                    'start_date' => $promotion['start_date'] ?? null,
-                    'end_date' => $promotion['end_date'] ?? null,
+                    'catalory' => $promotionData['catalory'],
+                    'name' => $promotionData['name'],
+                    'code' => $promotionData['code'] ?? null,
+                    'discount_percentage' => $promotionData['discount_percentage'],
+                    'product_id' => $productId,
+                    'present' => $promotionData['present'] ?? null,
+                    'description' => $promotionData['description'] ?? null,
+                    'quantity' => $promotionData['quantity'] ?? null,
+                    'start_date' => $promotionData['start_date'] ?? null,
+                    'end_date' => $promotionData['end_date'] ?? null,
                 ]);
+
+                $createdPromotions[] = $promotion;
             }
-            return response()->json($promotion);
+
+            return response()->json([
+                'success' => true,
+                'promotions' => $createdPromotions
+            ]);
         } else {
             $promotion = Promotion::create([
-                'catalory' => $promotion['catalory'],
-                'name' => $promotion['name'],
-                'code' => $promotion['code'] ?? null,
-                'discount_percentage' => $promotion['discount_percentage'],
-                'present' => $promotion['present'] ?? null,
+                'catalory' => $promotionData['catalory'],
+                'name' => $promotionData['name'],
+                'code' => $promotionData['code'] ?? null,
+                'discount_percentage' => $promotionData['discount_percentage'],
+                'present' => $promotionData['present'] ?? null,
                 'product_id' => null,
-                'description' => $promotion['description'] ?? null,
-                'quantity' => $promotion['quantity'] ?? null,
-                'start_date' => $promotion['start_date'] ?? null,
-                'end_date' => $promotion['end_date'] ?? null,
+                'description' => $promotionData['description'] ?? null,
+                'quantity' => $promotionData['quantity'] ?? null,
+                'start_date' => $promotionData['start_date'] ?? null,
+                'end_date' => $promotionData['end_date'] ?? null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'promotion' => $promotion
             ]);
         }
-        return response()->json($promotion);
     }
 
     public function delete($id)
     {
         $promotion = Promotion::find($id);
         $promotion->delete();
-        return response()->json($promotion);
+        return response()->json(['success' => true, $promotion]);
     }
 
     public function update(Request $request, $id)

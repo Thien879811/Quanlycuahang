@@ -22,7 +22,8 @@ return new class extends Migration
             $table->foreignId('customer_id')->nullable()->constrained('customers')->nullOnDelete();
             
             // Khóa ngoại tới bảng staffs (nhân viên), có thể null
-            $table->foreignId('staff_id')->nullable()->constrained('staffs')->nullOnDelete();
+            $table->unsignedBigInteger('staff_id')->nullable();
+            $table->foreign('staff_id')->references('id')->on('staffs')->nullOnDelete();
             
             // Trạng thái đơn hàng (VD: 0-Đang xử lý, 1-Hoàn thành, 2-Đã hủy)
             $table->integer('status');

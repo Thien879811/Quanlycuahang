@@ -6,39 +6,7 @@ import usePromotion from '../../../utils/promorionUtils';
 
 const { Title } = Typography;
 
-function CreatePromotion() {
-    const [form] = Form.useForm();
-    const { products } = useProduct();
-    const { createPromotion,fetchPromotions } = usePromotion();
-
-    const onFinish = async (values) => {
-      const data = {
-        catalory: '1',
-        name: values.name,
-        code:  null,
-        discount_percentage: values.discount_percentage || null,
-        product_id: values.product_id || null,
-        present: values.present || null,
-        description: values.description || null,
-        quantity: values.quantity || null,
-        start_date: values.start_date ? values.start_date.format('YYYY-MM-DD') : null,
-        end_date: values.end_date ? values.end_date.format('YYYY-MM-DD') : null,
-      }
-
-      try {
-        const error = await createPromotion(data);
-        if(error){
-          message.error(error);
-        }else{
-          message.success('Tạo chương trình khuyến mãi thành công');
-          form.resetFields();
-          fetchPromotions();
-        }
-      } catch (err) {
-        message.error('Có lỗi xảy ra khi tạo chương trình khuyến mãi');
-      }
-    };
-  
+function CreatePromotion({ products, onFinish }) {
     return (
       <Card 
         className="promotion-card"
@@ -53,8 +21,7 @@ function CreatePromotion() {
             Tạo chương trình khuyến mãi
           </Title>
           
-          <Form 
-            form={form} 
+          <Form  
             onFinish={onFinish} 
             layout="vertical"
             style={{ marginTop: 24 }}
@@ -67,6 +34,14 @@ function CreatePromotion() {
                   rules={[{ required: true, message: 'Vui lòng nhập tên chương trình' }]}
                 >
                   <Input size="large" placeholder="Nhập tên chương trình khuyến mãi" />
+                </Form.Item>
+
+                <Form.Item
+                  name="catalory"
+                  hidden
+                  initialValue="1"
+                >
+                  <Input type="hidden" />
                 </Form.Item>
               </Col>
             </Row>

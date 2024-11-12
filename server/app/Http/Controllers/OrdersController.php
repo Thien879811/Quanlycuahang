@@ -9,6 +9,7 @@ use App\Models\DetailOrder;
 use App\Models\Product;
 use App\Models\Promotion;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class OrdersController extends Controller
 {
@@ -310,9 +311,11 @@ class OrdersController extends Controller
         ]);
 
         $order = Orders::find($order_id);
-        $order->voucher_code = $validated['voucher_code'];
-        $order->discount = $validated['discount'];
+        $order->voucher_code = $validated['voucher_code'] ?? null;
+        $order->discount = $validated['discount'] ?? 0;
         $order->save();
+
+        Promotion::where('voucher_code', $validated['voucher_code'])->update(['quantity' => DB::raw('quantity - 1')]);
 
         return response()->json($order);
     }
@@ -349,7 +352,7 @@ class OrdersController extends Controller
         }
 
         $order->customer_id = $validated['customer_id'] !== '0' ? $validated['customer_id'] : null;
-        $order->staff_id = $validated['staff_id'] ?? null;
+        $order->staff_id = $validated['staff_id'] ?? 1;
         $order->status = $validated['status'] ?? 0;
         $order->pays_id = $validated['pays_id'] ?? null;
         $order->voucher_code = $validated['voucher_code'] ?? null;
@@ -375,6 +378,21 @@ class OrdersController extends Controller
                         $existingDetail->soluong = $detail['soluong'];
                         $existingDetail->discount = $detail['discount'];
                         $existingDetail->save();
+
+                        // Update product quantity if order status is 1, 2 or 3
+                        if ($order->status == 1 || $order->status == 2) {
+                            $product = Product::find($product_id);
+                            if ($product) {
+                                $product->quantity -= $detail['soluong'];
+                                $product->save();
+                            }
+                        } else if ($order->status == 3) {
+                            $product = Product::find($product_id);
+                            if ($product) {
+                                $product->quantity += $detail['soluong'];
+                                $product->save();
+                            }
+                        }
                     }
                 } else {
                     if ($detail['soluong'] > 0) {
@@ -385,6 +403,21 @@ class OrdersController extends Controller
                             'discount' => $detail['discount'],
                             'dongia' => $detail['dongia'],
                         ]);
+
+                        // Update product quantity if order status is 1, 2 or 3
+                        if ($order->status == 1 || $order->status == 2) {
+                            $product = Product::find($product_id);
+                            if ($product) {
+                                $product->quantity -= $detail['soluong'];
+                                $product->save();
+                            }
+                        } else if ($order->status == 3) {
+                            $product = Product::find($product_id);
+                            if ($product) {
+                                $product->quantity += $detail['soluong'];
+                                $product->save();
+                            }
+                        }
                     }
                 }
             }
@@ -401,4 +434,24 @@ class OrdersController extends Controller
         return response()->json($order, 201);
     }
 
+    public function deleteOrderProducts($order_id, $product_id)
+    {
+        DetailOrder::where('order_id', $order_id)->where('product_id', $product_id)->delete();
+        return response()->json(['message' => 'Sản phẩm đã được xóa thành công']);
+    }
+
+    public function addDiscount($order_id, Request $request)
+    {
+        $validated = $request->all();
+        $order = Orders::find($order_id);
+        foreach ($validated['details'] as $detail) {
+            $product_id = $detail['product_id'];
+            $detail = DetailOrder::where('order_id', $order->id)->where('product_id', $product_id)->first();
+            $detail->discount = $validated['discount'];
+            $detail->save();
+        }
+        return response()->json($order);
+    }
 }
+
+

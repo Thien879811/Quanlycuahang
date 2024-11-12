@@ -30,6 +30,7 @@ const OrderAdmin = () => {
     }, [orderStatus, timeRange, customDate]);
 
     const fetchOrders = async () => {
+        
         try {
             let type = timeRange;
             if (timeRange === 'custom' && customDate) {

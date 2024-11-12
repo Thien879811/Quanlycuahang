@@ -149,7 +149,7 @@ const ProductDisposal = () => {
                                     <TableCell>{request.product?.product_name || 'N/A'}</TableCell>
                                     <TableCell>{request.quantity}</TableCell>
                                     <TableCell sx={{ maxWidth: 200, whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                                        {request.reason}
+                                        {request.note}
                                     </TableCell>
                                     <TableCell>{dayjs(request.created_at).format('DD/MM/YYYY')}</TableCell>
                                     <TableCell>{getStatusChip(request.status)}</TableCell>

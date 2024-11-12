@@ -171,6 +171,7 @@ Route::controller(CustomerController::class)->group(function () {
     Route::get('/customer/{phone}', 'getOne');
     Route::post('/customer', 'create');
     Route::put('/customer/{id}', 'update');
+    Route::get('/customer/{id}', 'get');
 
 });
 
@@ -186,6 +187,8 @@ Route::post('/orders/{type}', [OrdersController::class, 'getOrder']);
 Route::put('/orders/voucher/{order_id}', [OrdersController::class, 'updateVoucher']);
 Route::get('/orders/{order_id}', [OrdersController::class, 'get']);
 Route::put('/orders/cancel/{order_id}', [OrdersController::class, 'cancelOrder']);
+Route::delete('/orders/products/{order_id}/{product_id}', [OrdersController::class, 'deleteOrderProducts']);
+Route::post('/orders/add-discount/{order_id}', [OrdersController::class, 'addDiscount']);
 
 
 

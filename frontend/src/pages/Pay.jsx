@@ -4,6 +4,7 @@ import { Grid, Paper, Typography, TextField, Button, Box } from '@mui/material';
 import orderUtils from '../utils/orderUtils';
 import useCustomer from '../utils/customerUtils';
 
+
 const Pay = () => {
     const navigate = useNavigate();
     const [amountPaid, setAmountPaid] = useState('');
@@ -17,9 +18,13 @@ const Pay = () => {
     const [change, setChange] = useState(0);
     const {updatePointCustomer} = useCustomer();
 
+    console.log(getTotalAmount, getTotalDiscount, orders?.discount);
+
+    const finalAmount = getTotalAmount - ( getTotalDiscount + orders?.discount ? orders.discount/100 * (getTotalAmount - getTotalDiscount) : 0);
+
     useEffect(() => {
         if (amountPaid) {
-            const totalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * getTotalAmount : 0);
+            const totalAmount = getTotalAmount - ( getTotalDiscount + orders?.discount ? orders.discount/100 * (getTotalAmount - getTotalDiscount) : 0);
             setChange(parseFloat(amountPaid) - totalAmount);
         }
     }, [amountPaid, getTotalAmount, getTotalDiscount, orders]);
@@ -33,6 +38,8 @@ const Pay = () => {
         };
         updateOrderProducts(orders.id, data);
         updatePointCustomer(getTotalAmount);
+        clearOrder();
+        localStorage.removeItem('customer');
         navigate('/');
     };
 
@@ -50,7 +57,9 @@ const Pay = () => {
         });
     };
 
-    const finalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * getTotalAmount : 0);
+    const formatNumber = (number) => {
+        return Math.floor(number/100) * 100;
+    };
 
     return (
         <Grid container spacing={2} justifyContent="center" sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5', py: 4 }}>
@@ -61,7 +70,7 @@ const Pay = () => {
                     </Typography>
                     <Box sx={{ mb: 4, p: 3, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
                         <Typography variant="h5" sx={{ color: '#2196f3', fontWeight: 'bold' }}>
-                            Tổng cộng: {finalAmount.toLocaleString('vi-VN')} VNĐ
+                            Tổng cộng: {formatNumber(finalAmount).toLocaleString('vi-VN')} VNĐ
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>

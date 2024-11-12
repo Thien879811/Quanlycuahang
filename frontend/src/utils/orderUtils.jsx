@@ -3,17 +3,17 @@ import orderService from '../services/order.service';
 import { handleResponse } from '../functions/index';
 import useCustomer from './customerUtils';
 
+
 const orderUtils = () => {
     const [order_id, setOrder_id] = useState(null);
     const [orders, setOrders] = useState({details: []});
     const [loading, setLoading] = useState(false); 
     const [error, setError] = useState(null);
-    const {customer} = useCustomer();
 
     const getTotalAmount = useMemo(() => {
         if (!orders?.details) return 0;
         return orders.details.reduce((total, detail) => {
-            return total + (detail.soluong * detail.dongia) - (detail.discount || 0);
+            return total + detail.soluong * detail.dongia;
         }, 0);
     }, [orders?.details]);
 
@@ -31,6 +31,39 @@ const orderUtils = () => {
         }, 0);
     }, [orders?.details]);
 
+    const getOrders = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await orderService.get();
+            const data = handleResponse(response);
+            setOrders(data);
+            localStorage.setItem('order_id', data.id);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const updateOrderProducts = useCallback(async (order_id, data) => {
+        try {
+            setLoading(true);
+            const response = await orderService.updateOrderProducts(order_id, data);
+            const responseData = handleResponse(response);
+            await getOrders();
+            return responseData;
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [getOrders]);
+
+    const addDiscount = useCallback(async (order_id, data) => {
+        return await orderService.addDiscount(order_id, data);
+    }, [orders]);
+
     const updateDiscount = useCallback((productCode, discount) => {
         setOrders(prevOrders => {
             const updatedDetails = prevOrders.details.map(product => {
@@ -41,14 +74,13 @@ const orderUtils = () => {
             });
             return {...prevOrders, details: updatedDetails};
         });
-    }, []);
+    }, [addDiscount]);
 
-    const updateProductDiscount = useCallback((productCode, promotions) => {
+    const updateProductDiscount = useCallback((promotions) => {
         setOrders(prevOrders => {
             const updatedDetails = prevOrders.details.map(product => {
-                if (product.product_id === productCode) {
                     const promotion = promotions.find(promo => 
-                        promo.product_id === productCode &&
+                        promo.product_id === product.product_id &&
                         new Date(promo.start_date) <= new Date() &&
                         new Date(promo.end_date) >= new Date()
                     );
@@ -82,41 +114,11 @@ const orderUtils = () => {
                         ...product,
                         discount: (product.dongia * promotion.discount_percentage / 100) * product.soluong
                     };
-                }
-                return product;
+             
             });
             return {...prevOrders, details: updatedDetails};
         });
-    }, [updateDiscount]);
-
-    const getOrders = useCallback(async () => {
-        try {
-            setLoading(true);
-            const response = await orderService.get();
-            const data = handleResponse(response);
-            setOrders(data);
-            localStorage.setItem('order_id', data.id);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const updateOrderProducts = useCallback(async (order_id, data) => {
-        try {
-            setLoading(true);
-            const response = await orderService.updateOrderProducts(order_id, data);
-            const responseData = handleResponse(response);
-            await getOrders();
-            return responseData;
-        } catch (err) {
-            setError(err.message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, [getOrders]);
+    }, [updateDiscount, addDiscount]);
 
     const updateCustomer = useCallback(async (customer_id) => {
         try {
@@ -125,7 +127,7 @@ const orderUtils = () => {
          
             const data = {
                 ...orders,
-                customer_id
+                customer_id: customer_id
             };
 
             return await updateOrderProducts(orders.id, data);
@@ -145,11 +147,6 @@ const orderUtils = () => {
         getOrders();
     }, [getOrders]);
 
-    useEffect(() => {
-        if(customer?.id) {
-            updateCustomer(customer.id);
-        }
-    }, [customer, updateCustomer]);
 
     const updateProductQuantity = useCallback(async (order_id, product_id, quantity) => {
         try {
@@ -234,36 +231,17 @@ const orderUtils = () => {
     const removeProduct = useCallback(async (order_id, product_id) => {
         try {
             setLoading(true);
-            if (!orders) throw new Error('Order not found');
-
-            const updatedProducts = orders.details
-                .filter(detail => detail.product_id !== product_id)
-                .map(detail => ({
-                    order_id: detail.order_id,
-                    product_id: detail.product_id,
-                    soluong: detail.soluong,
-                    dongia: detail.dongia,
-                    discount: detail.discount || 0
-                }));
-
-            const data = {
-                details: updatedProducts,
-                customer_id: orders.customer_id || null,
-                staff_id: orders.staff_id || 1,
-                status: orders.status || 0,
-                pays_id: orders.pays_id || 1,
-                voucher_code: orders.voucher_code || null,
-                discount: orders.discount || 0
-            };
-
-            return await updateOrderProducts(order_id, data);
+            const response = await orderService.deleteOrderProducts(order_id, product_id);
+            const responseData = handleResponse(response);
+            getOrders();
+            return responseData.message;
         } catch (err) {
             setError(err.message);
             throw err;
         } finally {
             setLoading(false);
         }
-    }, [orders, updateOrderProducts]);
+    }, [orders]);
 
     const addProduct = useCallback(async (order_id, product_id, quantity, price) => {
         try {
@@ -321,19 +299,19 @@ const orderUtils = () => {
             if (!orders) throw new Error('Order not found');
 
             const data = {
-                ...orders,
-                voucher_code,
+                voucher_code: voucher_code,
                 discount: discount_percentage
             };
 
-            return await updateOrderProducts(orders.id, data);
+            return await orderService.updateVoucher(orders.id, data);
+
         } catch (err) {
             setError(err.message);
             throw err;
         } finally {
             setLoading(false);
         }
-    }, [orders, updateOrderProducts]);
+    }, [orders]);
 
     return {
         order_id,
