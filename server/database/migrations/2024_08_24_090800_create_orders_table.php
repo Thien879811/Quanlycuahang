@@ -37,6 +37,11 @@ return new class extends Migration
             
             // Số tiền giảm giá
             $table->decimal('discount', 10)->default(0);
+
+            // Trạng thái trước đó
+            $table->integer('previous_status')->nullable();
+
+            $table->string('note')->nullable();
             
             // Thời gian tạo và cập nhật
             $table->timestamps();

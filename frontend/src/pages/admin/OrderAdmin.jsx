@@ -30,7 +30,6 @@ const OrderAdmin = () => {
     }, [orderStatus, timeRange, customDate]);
 
     const fetchOrders = async () => {
-        
         try {
             let type = timeRange;
             if (timeRange === 'custom' && customDate) {
@@ -56,11 +55,18 @@ const OrderAdmin = () => {
             const sortedOrders = ordersWithTotal.sort((a, b) => 
                 new Date(b.created_at) - new Date(a.created_at)
             );
+
+            // Filter out cancelled orders (status 3) unless specifically viewing cancelled orders
+            let filteredOrders;
             if (orderStatus === 'all') {
-                setOrders(sortedOrders);
+                filteredOrders = sortedOrders.filter(order => order.status !== 3);
+            } else if (orderStatus === 3) {
+                filteredOrders = sortedOrders.filter(order => order.status === 3);
             } else {
-                setOrders(sortedOrders.filter(order => order.status === orderStatus));
+                filteredOrders = sortedOrders.filter(order => order.status === orderStatus && order.status !== 3);
             }
+            
+            setOrders(filteredOrders);
         } catch (error) {
             console.error('Lỗi khi lấy danh sách đơn hàng:', error);
         }
@@ -91,7 +97,7 @@ const OrderAdmin = () => {
 
     const handleCancelOrder = async (orderId) => {
         try {
-            const response = await orderService.update(orderId, { status: 3, pays_id: 1 });
+            const response = await orderService.cancel(orderId);
             if (response) {
                 const updatedOrders = orders.map(order => 
                     order.id === orderId ? { ...order, status: 3, pays_id: order.pays_id } : order
@@ -108,7 +114,7 @@ const OrderAdmin = () => {
             const orderToUpdate = orders.find(o => o.id === orderId);
             if (!orderToUpdate) return;
 
-            const response = await orderService.update(orderId, { status: 3, pays_id: orderToUpdate.pays_id });
+            const response = await orderService.cancel(orderId);
             if (response) {
                 const updatedOrders = orders.map(order => 
                     order.id === orderId ? { ...order, status: 3 } : order
@@ -125,7 +131,7 @@ const OrderAdmin = () => {
             const orderToUpdate = orders.find(o => o.id === orderId);
             if (!orderToUpdate) return;
 
-            const response = await orderService.update(orderId, { status: 1, pays_id: orderToUpdate.pays_id });
+            const response = await orderService.cancelRequest(orderId);
             if (response) {
                 const updatedOrders = orders.map(order => 
                     order.id === orderId ? { ...order, status: 1 } : order

@@ -34,9 +34,6 @@ class OrdersController extends Controller
         return response()->json($order);
     }
 
-
-
-    
     public function getAll()
     {
         $orders = Orders::with('details.product')->get();
@@ -106,42 +103,47 @@ class OrdersController extends Controller
         $validated = $request->all();
 
         $order = Orders::where("status", "0")->first();
-
-
         if (!$order) {
             $order = Orders::create([
-                "customer_id" => $validated['khachhang'] !== '0' ? $validated['khachhang'] : null,
-                "staff_id" => $validated['nhanvien'],
+                "customer_id" => isset($validated['customer_id']) && $validated['customer_id'] !== '0' ? $validated['customer_id'] : null,
+                "staff_id" => $validated['staff_id'] ?? null,
                 "status" => "0",
-                "pays_id" => $validated['pays_id'],
+                "pays_id" => $validated['pays_id'] ?? null,
                 "voucher_code" => $validated['voucher_code'] ?? null,
                 "discount" => $validated['discount'] ?? 0
             ]);
         }
-        $order->customer_id = $validated['khachhang'] !== '0' ? $validated['khachhang'] : null;
+        $order->customer_id = isset($validated['customer_id']) && $validated['customer_id'] !== '0' ? $validated['customer_id'] : null;
         $order->voucher_code = $validated['voucher_code'] ?? null;
         $order->discount = $validated['discount'] ?? 0;
+        $order->staff_id = $validated['staff_id'] ?? null;
+        $order->pays_id = $validated['pays_id'] ?? null;
         $order->save();
 
-        if ($validated['products']) {
-            foreach ($validated['products'] as $product) {
-                $product_id = $product['product_id'];
+        if (isset($validated['details']) && is_array($validated['details'])) {
+            foreach ($validated['details'] as $detailData) {
+                if (!isset($detailData['product_id'])) {
+                    continue;
+                }
                 
-                $detail = DetailOrder::where('order_id', $order->id)
+                $product_id = $detailData['product_id'];
+                
+                $existingDetail = DetailOrder::where('order_id', $order->id)
                                     ->where('product_id', $product_id)
                                     ->first();
             
-                if ($detail) {
-                    $detail->soluong = $product['quantity'];
-                    $detail->discount = $product['discount'];
-                    $detail->save();
+                if ($existingDetail) {
+                    $existingDetail->soluong = $detailData['soluong'] ?? 0;
+                    $existingDetail->discount = $detailData['discount'] ?? 0;
+                    $existingDetail->dongia = $detailData['dongia'] ?? 0;
+                    $existingDetail->save();
                 } else {
                     DetailOrder::create([
                         'order_id' => $order->id,
                         'product_id' => $product_id,
-                        'soluong' => $product['quantity'],
-                        'discount' => $product['discount'],
-                        'dongia' => $product['price'],
+                        'soluong' => $detailData['soluong'] ?? 0,
+                        'discount' => $detailData['discount'] ?? 0,
+                        'dongia' => $detailData['dongia'] ?? 0,
                     ]);
                 }
             }
@@ -150,6 +152,89 @@ class OrdersController extends Controller
         }
 
         return response()->json($order, 201);
+    }
+
+    public function update(Request $request, $order_id)
+    {
+        $validated = $request->all();
+        $order = Orders::find($order_id);
+        
+        if (!$order) {
+            return response()->json(['error' => 'Order not found'], 404);
+        }
+
+        $order->customer_id = $validated['customer_id'] ?? null;
+        $order->staff_id = $validated['staff_id'] ?? 1;
+        $order->pays_id = $validated['pays_id'] ?? null;
+        $order->voucher_code = $validated['voucher_code'] ?? null;
+        $order->discount = $validated['discount'] ?? 0;
+        $order->status = $validated['status'] ?? 0;
+        $order->save();
+
+        // Get existing order details
+        $existingDetails = DetailOrder::where('order_id', $order->id)->get();
+        
+        // Track processed product IDs
+        $processedProductIds = [];
+
+        if (isset($validated['details'])) {
+            foreach ($validated['details'] as $detail) {
+                $product_id = $detail['product_id'];
+                $processedProductIds[] = $product_id;
+                
+                $orderDetail = DetailOrder::where('order_id', $order->id)
+                                        ->where('product_id', $product_id)
+                                        ->first();
+
+                if ($detail['soluong'] <= 0) {
+                    // Delete if quantity is 0 or less
+                    if ($orderDetail) {
+                        $orderDetail->delete();
+                    }
+                    continue;
+                }
+
+                if (!$orderDetail) {
+                    // Create new detail if not found
+                    DetailOrder::create([
+                        'order_id' => $order->id,
+                        'product_id' => $product_id,
+                        'soluong' => $detail['soluong'],
+                        'discount' => $detail['discount'] ?? 0,
+                        'dongia' => $detail['dongia']
+                    ]);
+                } else {
+                    $orderDetail->soluong = $detail['soluong']; 
+                    $orderDetail->discount = $detail['discount'] ?? 0;
+                    $orderDetail->dongia = $detail['dongia'];
+                    $orderDetail->save();
+                }
+
+                // Subtract product quantity if status is 1 or 2
+                if ($order->status == '1' || $order->status == '2') {
+                    $product = Product::find($product_id);
+                    if (!$product) {
+                        return response()->json(['error' => 'Product not found'], 404);
+                    }
+                    $product->quantity -= $detail['soluong'];
+                    $product->save();
+                }
+            }
+
+            // Delete details that weren't in the request
+            foreach ($existingDetails as $existingDetail) {
+                if (!in_array($existingDetail->product_id, $processedProductIds)) {
+                    $existingDetail->delete();
+                }
+            }
+        } else {
+            // If no details provided, delete all existing details
+            foreach ($existingDetails as $existingDetail) {
+                $existingDetail->delete();
+            }
+        }
+
+        return response()->json($order, 200);
     }
 
     public function store(Request $request)
@@ -263,7 +348,7 @@ class OrdersController extends Controller
     public function getOrder($type, Request $request)
     {
         try {
-            $query = Orders::with(['details.product', 'pays'])
+            $query = Orders::with(['details.product', 'pays', 'customer'])
                           ->orderBy('created_at', 'desc');
 
             switch($type) {
@@ -320,19 +405,10 @@ class OrdersController extends Controller
         return response()->json($order);
     }
 
-    public function cancelOrder($order_id)
-    {
-        $order = Orders::find($order_id);
-        $order->status = -1;
-        $order->save();
-    }
-
     public function get($order_id)
     {
         return response()->json(Orders::find($order_id));
     }
-
-
 
     public function updateOrderProducts($order_id, Request $request)
     {
@@ -452,6 +528,49 @@ class OrdersController extends Controller
         }
         return response()->json($order);
     }
+
+
+    //Hủy đơn hàng
+    // Phương thức xử lý yêu cầu hủy đơn hàng
+    public function cancelOrder($order_id, Request $request)
+    {
+        $validated = $request->all();
+        // Tìm đơn hàng theo ID
+        $order = Orders::find($order_id);
+        if (!$order) {
+            // Trả về lỗi 404 nếu không tìm thấy đơn hàng
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+        $order->previous_status = $order->status;
+        $order->status = -1;
+        $order->note = $validated['note'];
+        $order->save();
+        return response()->json($order);
+    }
+
+    public function cancelRequest($order_id)
+    {
+        $order = Orders::find($order_id);
+        $order->status = $order->previous_status ?? 1;
+        $order->save();
+        return response()->json($order);
+    }
+
+    public function acceptCancel($order_id)
+    {
+        $order = Orders::find($order_id);
+        $order->status = 3;
+        $order->save();
+        $orderDetails = DetailOrder::where('order_id', $order_id)->get();
+        foreach ($orderDetails as $detail) {
+            $product = Product::find($detail->product_id);
+            if ($product) {
+                $product->quantity += $detail->soluong;
+                $product->save();
+            }
+        }
+    }
+
 }
 
 

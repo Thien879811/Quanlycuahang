@@ -12,11 +12,23 @@ class OrderService {
     async deleteAll() {
         return (await this.api.delete("/")).data;
     }
-
-
     async update(id, data) {
         return (await this.api.put(`/${id}`, data)).data;
     }
+    //hủy đơn hàng
+    async cancel(id, note) {
+        return (await this.api.post(`/cancel/${id}`, {note: note})).data;
+    }
+    //chấp nhận hủy đơn hàng
+    async acceptCancel(id) {
+        return (await this.api.put(`/accept-cancel/${id}`)).data;
+    }
+    //yêu cầu hủy đơn hàng
+    async cancelRequest(id) {
+        return (await this.api.put(`/cancel-request/${id}`)).data;
+    }
+
+    
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
     }

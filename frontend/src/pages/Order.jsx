@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TablePagination, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TablePagination, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import orderService from '../services/order.service';
 import { handleResponse } from "../functions/index";
@@ -14,6 +14,8 @@ const Order = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(20);
     const [filterStatus, setFilterStatus] = useState('all');
+    const [cancelNote, setCancelNote] = useState('');
+    const [openCancelNoteDialog, setOpenCancelNoteDialog] = useState(false);
     const navigate = useNavigate();
     const { updateOrder } = useOrder();
 
@@ -70,26 +72,40 @@ const Order = () => {
     const handleOpenCancelDialog = (order) => {
         setOrderToCancel(order);
         setOpenCancelDialog(true);
+        setCancelNote('');
     };
 
     const handleCloseCancelDialog = () => {
         setOpenCancelDialog(false);
         setOrderToCancel(null);
+        setCancelNote('');
     };
 
     const handleCancelOrder = async () => {
-        if (orderToCancel) {
-            await updateOrder(orderToCancel.id, -1, 1);
-            handleCloseCancelDialog();
-            fetchOrders();
+        if (orderToCancel && cancelNote.trim()) {
+            try {
+                await orderService.cancel(orderToCancel.id, cancelNote);
+                handleCloseCancelDialog();
+                handleCloseCancelNoteDialog();
+                fetchOrders();
+            } catch (error) {
+                console.error('Error canceling order:', error);
+            }
+        } else {
+            setOpenCancelNoteDialog(true);
+            setOpenCancelDialog(false);
         }
     };
 
     const handleCancelRequest = async () => {
         if (orderToCancel) {
-            await updateOrder(orderToCancel.id, 1, 1);
-            handleCloseCancelDialog();
-            fetchOrders();
+            try {
+                await orderService.cancelRequest(orderToCancel.id);
+                handleCloseCancelDialog();
+                fetchOrders();
+            } catch (error) {
+                console.error('Error canceling order:', error);
+            }
         }
     };
 
@@ -100,6 +116,15 @@ const Order = () => {
     const handleFilterChange = (event) => {
         setFilterStatus(event.target.value);
         setPage(0);
+    };
+
+    const handleOpenCancelNoteDialog = () => {
+        setOpenCancelNoteDialog(true);
+    };
+
+    const handleCloseCancelNoteDialog = () => {
+        setOpenCancelNoteDialog(false);
+        setCancelNote('');
     };
 
     const getStatusColor = (status) => {
@@ -123,16 +148,14 @@ const Order = () => {
     };
 
     const filteredOrders = orders.filter(order => {
-        switch(filterStatus) {
-            case 'paid':
-                return order.status === 1 || order.status === 2;
-            case 'cancelled':
-                return order.status === 3;
-            case 'pending':
-                return order.status === -1;
-            default:
-                return true;
+        if (filterStatus === 'cancelled') {
+            return order.status === 3;
         }
+        return order.status !== 3 && (
+            filterStatus === 'all' ||
+            (filterStatus === 'paid' && (order.status === 1 || order.status === 2)) ||
+            (filterStatus === 'pending' && order.status === -1)
+        );
     });
 
     return (
@@ -151,7 +174,7 @@ const Order = () => {
                         >
                             <MenuItem value="all">Tất cả</MenuItem>
                             <MenuItem value="paid">Đã thanh toán</MenuItem>
-                            <MenuItem value="cancelled">Đã hủy</MenuItem>
+                            <MenuItem value="cancelled">Đơn đã hủy</MenuItem>
                             <MenuItem value="pending">Đang yêu cầu hủy</MenuItem>
                         </Select>
                     </FormControl>
@@ -271,7 +294,7 @@ const Order = () => {
                         <div>
                             <Box sx={{ display: 'grid', gap: 2, marginBottom: 3 }}>
                                 <Typography><strong>Mã đơn hàng:</strong> {selectedOrder.id}</Typography>
-                                <Typography><strong>Tên khách hàng:</strong> {selectedOrder.customer ? selectedOrder.customer.customer_name : 'Khách lẻ'}</Typography>
+                                <Typography><strong>Tên khách hàng:</strong> {selectedOrder.customer ? selectedOrder.customer.name : 'Khách lẻ'}</Typography>
                                 <Typography><strong>Khuyến mãi:</strong> {selectedOrder.discount  > 0 ? `Giảm ${selectedOrder.discount}%` : 'Không có'}</Typography>
                                 <Typography><strong>Tổng tiền:</strong> {Math.floor(selectedOrder.finalTotal).toLocaleString()} VND</Typography>
                                 <Typography><strong>Ngày:</strong> {new Date(selectedOrder.created_at).toLocaleString()}</Typography>
@@ -391,6 +414,37 @@ const Order = () => {
                             Có, yêu cầu hủy đơn hàng
                         </Button>
                     )}
+                </DialogActions>
+            </Dialog>
+            <Dialog
+                open={openCancelNoteDialog}
+                onClose={handleCloseCancelNoteDialog}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: { borderRadius: '12px' }
+                }}
+            >
+                <DialogTitle>Nhập lý do hủy đơn hàng</DialogTitle>
+                <DialogContent>
+                    <TextField 
+                        label="Lý do hủy" 
+                        value={cancelNote} 
+                        onChange={(e) => setCancelNote(e.target.value)} 
+                        fullWidth 
+                        sx={{ mt: 2 }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseCancelNoteDialog}>Đóng</Button>
+                    <Button 
+                        onClick={handleCancelOrder}
+                        variant="contained" 
+                        color="error"
+                        disabled={!cancelNote.trim()}
+                    >
+                        Hủy đơn hàng
+                    </Button>
                 </DialogActions>
             </Dialog>
         </div>

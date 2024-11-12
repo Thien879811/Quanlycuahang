@@ -12,15 +12,13 @@ const Pay = () => {
         orders,
         getTotalAmount,
         getTotalDiscount,
-        updateOrderProducts,
-        clearOrder,
+        updateOrder,
+        clearOrder,   
     } = orderUtils();
     const [change, setChange] = useState(0);
     const {updatePointCustomer} = useCustomer();
 
-    console.log(getTotalAmount, getTotalDiscount, orders?.discount);
-
-    const finalAmount = getTotalAmount - ( getTotalDiscount + orders?.discount ? orders.discount/100 * (getTotalAmount - getTotalDiscount) : 0);
+    const finalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * (getTotalAmount - getTotalDiscount) : 0);
 
     useEffect(() => {
         if (amountPaid) {
@@ -30,16 +28,18 @@ const Pay = () => {
     }, [amountPaid, getTotalAmount, getTotalDiscount, orders]);
 
     const handlePayment = () => {
-        if (!orders?.id) return;
+        
+        const order_id = localStorage.getItem('order_id');
         const data = {
             ...orders,
             status: '1',
             pays_id: '1'
         };
-        updateOrderProducts(orders.id, data);
+        updateOrder(order_id, data);
         updatePointCustomer(getTotalAmount);
-        clearOrder();
+        localStorage.removeItem('order_id');
         localStorage.removeItem('customer');
+        localStorage.removeItem('order');
         navigate('/');
     };
 

@@ -23,6 +23,7 @@ const useCustomer = () => {
                 setCustomer(data);
                 setOpenCustomerInfo(true);
                 localStorage.setItem('customer', JSON.stringify(data));
+                return data;
             } else {
                 setOpenNewCustomer(true);
                 console.log('No customer data found');

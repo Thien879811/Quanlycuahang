@@ -28,8 +28,7 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */ 
-Route::get('/orders/order-products',[OrdersController::class,'getOrders']);
-Route::post('/orders/order-products/{order_id}',[OrdersController::class,'updateOrderProducts']);
+
 
 Route::post('/employee/cham-cong',[ChamCongController::class,'create']);
 Route::put('/employee/cham-cong/{id}',[ChamCongController::class,'update']);
@@ -180,15 +179,22 @@ Route::controller(OrdersController::class)->group(function () {
     // Route::post('/order', 'create');
 });
 Route::post('/orders', [OrdersController::class, 'create']);
-Route::put('/orders/{order_id}', [OrdersController::class, 'updateOrder']);
+Route::put('/orders/{order_id}', [OrdersController::class, 'update']);
+Route::get('/orders/order-products',[OrdersController::class,'getOrders']);
+Route::post('/orders/order-products/{order_id}',[OrdersController::class,'updateOrderProducts']);
+Route::put('/orders/cancel/{order_id}',[OrdersController::class,'cancelOrder']);
 Route::get('/orders/detail/{order_id}', [OrdersController::class, 'getDetail']);
 Route::get('/orders', [OrdersController::class, 'getAll']);
 Route::post('/orders/{type}', [OrdersController::class, 'getOrder']);
 Route::put('/orders/voucher/{order_id}', [OrdersController::class, 'updateVoucher']);
 Route::get('/orders/{order_id}', [OrdersController::class, 'get']);
-Route::put('/orders/cancel/{order_id}', [OrdersController::class, 'cancelOrder']);
+
 Route::delete('/orders/products/{order_id}/{product_id}', [OrdersController::class, 'deleteOrderProducts']);
 Route::post('/orders/add-discount/{order_id}', [OrdersController::class, 'addDiscount']);
+
+Route::post('/orders/cancel/{order_id}', [OrdersController::class, 'cancelOrder']);
+Route::put('/orders/accept-cancel/{order_id}', [OrdersController::class, 'acceptCancel']);
+Route::put('/orders/cancel-request/{order_id}', [OrdersController::class, 'cancelRequest']);
 
 
 

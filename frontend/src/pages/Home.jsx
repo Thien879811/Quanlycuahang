@@ -18,25 +18,24 @@ import CustomerDialog from './HomeComponents/CustomerDialog';
 import NewCustomerDialog from './HomeComponents/NewCustomerDialog';
 import InfoCustomerDialog from './HomeComponents/InfoCustomerDialog';
 import VoucherDialog from './HomeComponents/VoucherDialog';
+
 import { message } from 'antd';
 const Home = () => {
 	const navigate = useNavigate();
 	const {
 		orders,
-		loading: loadingOrders,
-		error: errorOrders,
-		getOrders, 
-		updateOrderProducts,
-		updateProductQuantity,
-		addProduct,
-		updateVoucherDiscount,
-		updateCustomer,
-		getTotalAmount,
-		getTotalQuantity,
-		getTotalDiscount,
-		removeProduct,
-		updateDiscount,
-		updateProductDiscount
+        getTotalAmount,
+        getTotalQuantity,
+        getTotalDiscount,
+        addProduct,
+        removeProduct,
+        updateQuantity,
+        updateDiscount,
+        updateProductDiscount,
+        updateVoucher,
+        updateCustomer,
+        createOrder,
+        updateOrder
 	} 
 	= orderUtils();
 
@@ -57,8 +56,9 @@ const Home = () => {
 	
 
 	//promotion
-	const {promotions, updateQuantity} = usePromotion();
+	const {promotions} = usePromotion();
 	const [activePromotion, setActivePromotion] = useState([]);
+
 	
 
 	const {customer,
@@ -86,7 +86,6 @@ const Home = () => {
 			setOrder(orderData);
 		};
 		fetchOrder();
-		getOrders();
 	}, []);
 
 	// Memoize filtered products based on search query
@@ -99,15 +98,16 @@ const Home = () => {
 	}, [products, searchQuery]);
 	
 	const searchPromotion = () => {
+		if(!orders.details) return;
 		if(orders.details.length > 0){
 			const foundPromotions = [];
 			const currentDate = new Date();
 			for(const product of orders.details){
-
 				const matchingPromotions = promotions.filter(promo => 
 					promo.product_id === product.product_id &&
 					new Date(promo.start_date) <= currentDate &&
-					new Date(promo.end_date) >= currentDate
+					new Date(promo.end_date) >= currentDate &&
+					!promo.code // Only add promotions without a code
 				);
 
 				if(matchingPromotions.length > 0){
@@ -155,18 +155,30 @@ const Home = () => {
 	}, []);
 
 	const handlePayment = async (type) => {
+		const order_id = localStorage.getItem('order_id');
+
 		if(orders.details.length === 0){
 			alert('Vui lòng thêm sản phẩm vào hóa đơn');
 			return;
 		}
+		
 		if(type === 1){
-			updateOrderProducts(orders.id);
-			return navigate('/pay');
+			if(order_id){
+				updateOrder(order_id);
+			}
+			const order = await createOrder();
+			if(order){
+				return navigate('/pay');
+			}
 		}
 		if(type === 2){
-			updateOrderProducts(orders.id);
+			if(order_id){
+				updateOrder(order_id,data);
+			}else{
+				createOrder();
+			}
 			const finalAmount = getTotalAmount - getTotalDiscount - (getTotalAmount - getTotalDiscount) * (orders.discount || 0) / 100;
-			return navigate(`/vnpay/${orders.id}/${finalAmount}`);
+			return navigate(`/vnpay/${order_id}/${finalAmount}`);
 		}
 		if(type === 3){
 			setOpenVoucherDialog(true);
@@ -205,7 +217,7 @@ const Home = () => {
 		);
 
 		if (voucher) {
-			await updateVoucherDiscount(voucher.code, voucher.discount_percentage);
+			updateVoucher(voucher.code, voucher.discount_percentage);
 			handleCloseVoucherDialog();
 		} else {
 			alert('Mã voucher không hợp lệ hoặc đã hết hạn');
@@ -213,8 +225,11 @@ const Home = () => {
 		}
 	};
 
-	const handleSearchCustomer = () => {
-		searchCustomerByPhone(customerPhone);
+	const handleSearchCustomer = async () => {
+		const customer = await searchCustomerByPhone(customerPhone);
+		if(customer){
+			updateCustomer(customer.id);
+		}
 		handleCloseCustomerDialog();
 	};
 
@@ -225,18 +240,18 @@ const Home = () => {
 	};
 
 	const handleIncreaseQuantity = async (productId) => {
-		await updateProductQuantity(orders.id, productId, 1);
-		updateProductDiscount(promotions);
+		updateQuantity(productId, 1);
+		
 	};
 
 	const handleDecreaseQuantity = async (productId) => {
-		await updateProductQuantity(orders.id, productId, -1);
-		updateProductDiscount(promotions);
+		updateQuantity(productId, -1);
+		
 	};
 
 	const handleRemoveProduct = async (productCode) => {
 		try {
-			const response = await removeProduct(orders.id, productCode);
+			removeProduct(productCode);
 			if(response){
 				message.success('Sản phẩm đã được xóa thành công');
 			}
@@ -263,7 +278,7 @@ const Home = () => {
 	const handleBarcodeScanned = (scannedBarcode) => {
 		const foundProduct = products.find(product => product.barcode === scannedBarcode);
 		if (foundProduct) {
-			addProduct(orders.id, foundProduct.id, 1, foundProduct.selling_price);
+			addProduct(foundProduct);
 			console.log(`Added product: ${foundProduct.product_name}`);
 			setBarcode('');
 			setSearchQuery('');
@@ -277,7 +292,6 @@ const Home = () => {
 			);
 			if (foundPromotion) {
 				setActivePromotion([...activePromotion, foundPromotion]);
-				updateProductDiscount(foundProduct.id, promotions);
 			}
 		} else {
 			console.log('Product not found');
@@ -344,7 +358,7 @@ const Home = () => {
 					/>
 				</Paper>
 				{/* Promotion */}
-				<PromoGrid activePromotion={activePromotion} />
+				<PromoGrid activePromotion={activePromotion.length > 0 ? activePromotion : []} />
 			</Grid>
 			{/* Payment */}
 			<Grid item xs={4} sx={{ height: '100%', overflow: 'auto' }}>
