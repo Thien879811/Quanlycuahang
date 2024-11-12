@@ -15,7 +15,7 @@ import orderUtils from '../utils/orderUtils';
 const Product = () => {
     const navigate = useNavigate();
     const {products} = useProducts();
-    const {orders, loading: loadingOrders, error: errorOrders, getOrders, updateOrderProducts, updateProductQuantity} = orderUtils();
+    const {orders, addProduct, removeProduct} = orderUtils();
     const [orderProducts, setOrderProducts] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -38,12 +38,13 @@ const Product = () => {
     }));
 
     const deleteOrder = (id) => {
-        const updatedOrders = orderProducts.filter(product => product.product_id !== id);
-        const data = {
-            ...orders,
-            details: updatedOrders
-        };
-        updateOrderProducts(orders.id, data);
+        removeProduct(id);
+        // const updatedOrders = orderProducts.filter(product => product.product_id !== id);
+        // const data = {
+        //     ...orders,
+        //     details: updatedOrders
+        // };
+        // updateOrderProducts(orders.id, data);
     };
 
     useEffect(() => {
@@ -61,27 +62,28 @@ const Product = () => {
     }, [orders]);
 
     const handleProductClick = (product) => {
-        const updatedOrderProducts = [...orders.details];
-        const existingProductIndex = updatedOrderProducts.findIndex(p => p.product_id === product.id);
+        addProduct(product);
+        // const updatedOrderProducts = [...orders.details];
+        // const existingProductIndex = updatedOrderProducts.findIndex(p => p.product_id === product.id);
         
-        if (existingProductIndex !== -1) {
-            updatedOrderProducts[existingProductIndex].soluong += 1;
-        } else {
-            updatedOrderProducts.push({
-                product_id: product.id,
-                product_name: product.product_name,
-                image: product.image,
-                soluong: 1,
-                dongia: product.selling_price,
-                discount: 0,
-                product: product
-            });
-        }
-        const data = {
-            ...orders,
-            details: updatedOrderProducts
-        };
-        updateOrderProducts(orders.id, data);
+        // if (existingProductIndex !== -1) {
+        //     updatedOrderProducts[existingProductIndex].soluong += 1;
+        // } else {
+        //     updatedOrderProducts.push({
+        //         product_id: product.id,
+        //         product_name: product.product_name,
+        //         image: product.image,
+        //         soluong: 1,
+        //         dongia: product.selling_price,
+        //         discount: 0,
+        //         product: product
+        //     });
+        // }
+        // const data = {
+        //     ...orders,
+        //     details: updatedOrderProducts
+        // };
+        // updateOrderProducts(orders.id, data);
     };
 
     const filteredProducts = products.filter(product => {

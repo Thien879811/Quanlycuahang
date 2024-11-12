@@ -41,7 +41,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import { styled } from '@mui/material/styles';
-
+import ReturnDialog from './receipt/returnDialog';
 dayjs.locale('vi');
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -98,22 +98,24 @@ const ReceiptCheck = () => {
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [returnQuantities, setReturnQuantities] = useState({});
     const [returnReason, setReturnReason] = useState('');
+    const [editedReceipt, setEditedReceipt] = useState(null);
 
     const fetchAllReceipts = useCallback(async () => {
         try {
             const response = await ReceiptService.getReceipt(timeRange, customDate);
-            const data = handleResponse(response);
-            
+            const data = handleResponse(response); 
+            console.log(data);
             if (data.success) {
                 const processedReceipts = data.goods_receipts.map(receipt => ({
                     ...receipt,
-                    status: receipt.status === '1' ? 'Đã kiểm tra' : receipt.status,
-                    details: receipt.details.map(detail => ({
+                    status: receipt.status === '1' ? 'Đã kiểm tra' : 'Chưa kiểm tra',
+                    details: receipt.details.filter(detail => detail.status !== '4').map(detail => ({
                         ...detail,
                         status: {
                             '1': 'Đủ hàng hóa',
                             '2': 'Hư hỏng', 
-                            '0': 'Thiếu',
+                            '0': 'Chưa kiểm tra',
+                            '3': 'Thiếu',
                             '4': 'Đã trả hàng'
                         }[detail.status] || detail.status
                     }))
@@ -255,11 +257,18 @@ const ReceiptCheck = () => {
 
     const handleDelete = async (receiptId) => {
         try {
+            if (!receiptId) {
+                setError('Không thể xác định phiếu nhập hàng để xóa');
+                return;
+            }
+            
             const response = await ReceiptService.delete(receiptId);
-            if (response.success) {
-                setReceipts(receipts.filter(r => r.id !== receiptId));
-                setFilteredReceipts(filteredReceipts.filter(r => r.id !== receiptId));
+            const data = handleResponse(response);
+            
+            if (data.success) {
                 setOpenDeleteDialog(false);
+                await fetchAllReceipts(); // Refresh the list after successful deletion
+                setError('');
             } else {
                 setError('Không thể xóa phiếu nhập hàng');
             }
@@ -269,13 +278,22 @@ const ReceiptCheck = () => {
         }
     };
 
-    const handleEdit = async (receipt) => {
+    const handleOpenEditDialog = (receipt) => {
+        setSelectedReceipt(receipt);
+        setEditedReceipt({...receipt});
+        setOpenEditDialog(true);
+    };
+
+    const handleEdit = async () => {
         try {
-            const response = await ReceiptService.update(receipt.id, receipt);
-            if (response.success) {
-                setReceipts(receipts.map(r => r.id === receipt.id ? receipt : r));
-                setFilteredReceipts(filteredReceipts.map(r => r.id === receipt.id ? receipt : r));
+            const response = await ReceiptService.updateReceipt(editedReceipt.id, editedReceipt);
+            const data = handleResponse(response);
+            if (data.success) {
+                setReceipts(receipts.map(r => r.id === editedReceipt.id ? editedReceipt : r));
+                setFilteredReceipts(filteredReceipts.map(r => r.id === editedReceipt.id ? editedReceipt : r));
                 setOpenEditDialog(false);
+                setError('');
+                await fetchAllReceipts();
             } else {
                 setError('Không thể cập nhật phiếu nhập hàng');
             }
@@ -297,23 +315,6 @@ const ReceiptCheck = () => {
         setOpenReturnDialog(true);
     };
 
-    const handleProductSelect = (detail) => {
-        setSelectedProducts(prev => {
-            if (prev.includes(detail.id)) {
-                return prev.filter(id => id !== detail.id);
-            } else {
-                return [...prev, detail.id];
-            }
-        });
-    };
-
-    const handleReturnQuantityChange = (detailId, quantity) => {
-        setReturnQuantities(prev => ({
-            ...prev,
-            [detailId]: quantity
-        }));
-    };
-
     const handleSubmitReturn = async () => {
         try {
             const returnData = {
@@ -328,7 +329,6 @@ const ReceiptCheck = () => {
             };
 
             const response = await ReceiptService.returnReceipt(returnData);
-            console.log(response);
 
             setOpenReturnDialog(false);
             setError('');
@@ -447,7 +447,7 @@ const ReceiptCheck = () => {
                                                 <Grid item>
                                                     <IconButton 
                                                         color="primary" 
-                                                        onClick={() => setOpenEditDialog(true)}
+                                                        onClick={() => handleOpenEditDialog(receipt)}
                                                     >
                                                         <EditIcon />
                                                     </IconButton>
@@ -455,7 +455,10 @@ const ReceiptCheck = () => {
                                                 <Grid item>
                                                     <IconButton 
                                                         color="error" 
-                                                        onClick={() => setOpenDeleteDialog(true)}
+                                                        onClick={() => {
+                                                            setSelectedReceipt(receipt);
+                                                            setOpenDeleteDialog(true);
+                                                        }}
                                                     >
                                                         <DeleteIcon />
                                                     </IconButton>
@@ -554,7 +557,7 @@ const ReceiptCheck = () => {
                                             >
                                                 <MenuItem value="1">Đủ hàng hóa</MenuItem>
                                                 <MenuItem value="2">Hư hỏng</MenuItem>
-                                                <MenuItem value="0">Thiếu</MenuItem>
+                                                <MenuItem value="3">Thiếu</MenuItem>
                                             </Select>
                                         </TableCell>
                                         <TableCell>
@@ -595,97 +598,118 @@ const ReceiptCheck = () => {
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
-                <DialogTitle>Xác nhận xóa</DialogTitle>
+            <Dialog 
+                open={openDeleteDialog} 
+                onClose={() => setOpenDeleteDialog(false)}
+                PaperProps={{
+                    sx: {
+                        borderRadius: '12px',
+                        padding: '16px'
+                    }
+                }}
+            >
+                <DialogTitle>
+                    <Typography variant="h6" fontWeight="bold">
+                        Xác nhận xóa phiếu nhập
+                    </Typography>
+                </DialogTitle>
                 <DialogContent>
-                    <Typography>Bạn có chắc chắn muốn xóa phiếu nhập hàng này?</Typography>
+                    <Typography>
+                        Bạn có chắc chắn muốn xóa phiếu nhập #{selectedReceipt?.id}?
+                    </Typography>
+                    <Typography color="error" sx={{ mt: 2 }}>
+                        Lưu ý: Hành động này không thể hoàn tác!
+                    </Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenDeleteDialog(false)}>Hủy</Button>
-                    <Button onClick={() => handleDelete(selectedReceipt?.id)} color="error" variant="contained">
-                        Xóa
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            <Dialog open={openReturnDialog} onClose={() => setOpenReturnDialog(false)} maxWidth="md" fullWidth>
-                <DialogTitle>Trả hàng - Phiếu nhập #{selectedReceipt?.id}</DialogTitle>
-                <DialogContent>
-                    <Box sx={{ pt: 2 }}>
-                        <Typography variant="subtitle1" gutterBottom>
-                            Chọn sản phẩm cần trả:
-                        </Typography>
-                        <TableContainer component={Paper}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell padding="checkbox">
-                                            <Checkbox
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setSelectedProducts(selectedReceipt.details.map(d => d.id));
-                                                    } else {
-                                                        setSelectedProducts([]);
-                                                    }
-                                                }}
-                                                checked={selectedProducts.length === selectedReceipt?.details?.length}
-                                            />
-                                        </TableCell>
-                                        <TableCell>Sản phẩm</TableCell>
-                                        <TableCell align="right">Số lượng đã nhập</TableCell>
-                                        <TableCell align="right">Số lượng trả</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {selectedReceipt?.details?.map((detail) => (
-                                        <TableRow key={detail.id}>
-                                            <TableCell padding="checkbox">
-                                                <Checkbox
-                                                    checked={selectedProducts.includes(detail.id)}
-                                                    onChange={() => handleProductSelect(detail)}
-                                                />
-                                            </TableCell>
-                                            <TableCell>{detail.product?.product_name}</TableCell>
-                                            <TableCell align="right">{detail.quantity}</TableCell>
-                                            <TableCell align="right">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={returnQuantities[detail.id] || ''}
-                                                    onChange={(e) => handleReturnQuantityChange(detail.id, e.target.value)}
-                                                    inputProps={{ min: 1, max: detail.quantity }}
-                                                    disabled={!selectedProducts.includes(detail.id)}
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-
-                        <TextField
-                            fullWidth
-                            label="Lý do trả hàng"
-                            multiline
-                            rows={4}
-                            value={returnReason}
-                            onChange={(e) => setReturnReason(e.target.value)}
-                            sx={{ mt: 2 }}
-                        />
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenReturnDialog(false)}>Hủy</Button>
                     <Button 
-                        onClick={handleSubmitReturn} 
-                        variant="contained" 
-                        color="primary"
-                        disabled={selectedProducts.length === 0 || !returnReason}
+                        onClick={() => setOpenDeleteDialog(false)}
+                        variant="outlined"
                     >
-                        Xác nhận trả hàng
+                        Hủy
+                    </Button>
+                    <Button 
+                        onClick={() => handleDelete(selectedReceipt?.id)}
+                        variant="contained"
+                        color="error"
+                    >
+                        Xác nhận xóa
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <Dialog
+                open={openEditDialog}
+                onClose={() => setOpenEditDialog(false)}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: '12px',
+                        padding: '16px'
+                    }
+                }}
+            >
+                <DialogTitle>
+                    <Typography variant="h6" fontWeight="bold">
+                        Chỉnh sửa phiếu nhập #{editedReceipt?.id}
+                    </Typography>
+                </DialogTitle>
+                <DialogContent>
+                    <Grid container spacing={3} sx={{ mt: 1 }}>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Ngày nhập"
+                                type="date"
+                                value={editedReceipt?.import_date?.split('T')[0] || ''}
+                                onChange={(e) => setEditedReceipt({...editedReceipt, import_date: e.target.value})}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Ghi chú"
+                                multiline
+                                rows={4}
+                                value={editedReceipt?.note || ''}
+                                onChange={(e) => setEditedReceipt({...editedReceipt, note: e.target.value})}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Button 
+                        onClick={() => setOpenEditDialog(false)}
+                        variant="outlined"
+                    >
+                        Hủy
+                    </Button>
+                    <Button 
+                        onClick={handleEdit}
+                        variant="contained"
+                        color="primary"
+                    >
+                        Lưu thay đổi
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <ReturnDialog
+                openReturnDialog={openReturnDialog}
+                setOpenReturnDialog={setOpenReturnDialog}
+                selectedReceipt={selectedReceipt}
+                selectedProducts={selectedProducts}
+                handleSubmitReturn={handleSubmitReturn}
+                setSelectedProducts={setSelectedProducts}
+                setReturnQuantities={setReturnQuantities}
+                setReturnReason={setReturnReason}
+                returnReason={returnReason}
+                returnQuantities={returnQuantities}
+            />
         </Box>
     );
 };

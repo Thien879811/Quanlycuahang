@@ -114,7 +114,7 @@ const OrderAdmin = () => {
             const orderToUpdate = orders.find(o => o.id === orderId);
             if (!orderToUpdate) return;
 
-            const response = await orderService.cancel(orderId);
+            const response = await orderService.acceptCancel(orderId);
             if (response) {
                 const updatedOrders = orders.map(order => 
                     order.id === orderId ? { ...order, status: 3 } : order
@@ -323,6 +323,11 @@ const OrderAdmin = () => {
                                     }}>
                                         {getStatusText(order.status)}
                                     </Box>
+                                    {order.status === -1 && order.note && (
+                                        <Typography variant="caption" sx={{ color: '#d32f2f', display: 'block', marginTop: 1 }}>
+                                            Lý do hủy: {order.note}
+                                        </Typography>
+                                    )}
                                 </TableCell>
                                 <TableCell>
                                     <Box sx={{ display: 'flex', gap: 1 }}>
@@ -428,6 +433,9 @@ const OrderAdmin = () => {
                                         {getStatusText(selectedOrder.status)}
                                     </span>
                                 </Typography>
+                                {selectedOrder.status === -1 && selectedOrder.note && (
+                                    <Typography><strong>Lý do hủy:</strong> {selectedOrder.note}</Typography>
+                                )}
                             </Box>
                             <Typography variant="h6" sx={{ marginBottom: 2 }}><strong>Chi tiết sản phẩm:</strong></Typography>
                             <TableContainer component={Paper} sx={{ boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>

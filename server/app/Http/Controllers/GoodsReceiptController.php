@@ -66,7 +66,7 @@ class GoodsReceiptController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required',
-            'details' => 'required',
+            'details' => 'nullable',
             'check_date' => 'required',
         ]);
 
@@ -76,37 +76,28 @@ class GoodsReceiptController extends Controller
             'check_date' => Carbon::parse($validated['check_date'])->format('Y-m-d H:i:s'),
         ]);
         $goodsReceipt->save();
-        foreach ($validated['details'] as $detail) {
-            $goodsReceiptDetail = GoodsReceiptDetail::find($detail['id']);
-            $goodsReceiptDetail->status = $detail['status'];
-            $goodsReceiptDetail->note = $detail['note'];
-            $goodsReceiptDetail->production_date = $detail['production_date'];
-            $goodsReceiptDetail->quantity_receipt = $detail['quantity_receipt'];
-            $goodsReceiptDetail->expiration_date = $detail['expiration_date'];
-            $goodsReceiptDetail->save();
+        if($validated['details']) {
+            foreach ($validated['details'] as $detail) {
+                $goodsReceiptDetail = GoodsReceiptDetail::find($detail['id']);
+                $goodsReceiptDetail->status = $detail['status'];
+                $goodsReceiptDetail->note = $detail['note'];
+                $goodsReceiptDetail->production_date = $detail['production_date'];
+                $goodsReceiptDetail->quantity_receipt = $detail['quantity_receipt'];
+                $goodsReceiptDetail->expiration_date = $detail['expiration_date'];
+                if ($goodsReceiptDetail->price != $detail['price']) {
+                    $goodsReceiptDetail->price = $detail['price'];
+                }
+                $goodsReceiptDetail->save();
 
-            $product = Product::find($goodsReceiptDetail->product_id);
-            
-            if ($goodsReceiptDetail->status === '1') {
-                $product->quantity += $goodsReceiptDetail->quantity;
-                $product->save();
+                $product = Product::find($goodsReceiptDetail->product_id);
                 
-                HangSuDung::create([
-                    'product_id' => $product->id,
-                    'quantity' => $goodsReceiptDetail->quantity,
-                    'hang_su_dung' => $detail['expiration_date'],
-                    'status' => '1',
-                ]);
-            } elseif ($goodsReceiptDetail->status === '0') {
-                $product->quantity += $goodsReceiptDetail->quantity_receipt;
-                $product->save();
-                
-                HangSuDung::create([
-                    'product_id' => $product->id,
-                    'quantity' => $goodsReceiptDetail->quantity_receipt,
-                    'hang_su_dung' => $detail['expiration_date'],
-                    'status' => '1',
-                ]);
+                if ($goodsReceiptDetail->status === '1' && !$goodsReceiptDetail->is_added) {
+                    $product->quantity += $goodsReceiptDetail->quantity;
+                    $product->purchase_price = $goodsReceiptDetail->price;
+                    $product->save();
+                    $goodsReceiptDetail->is_added = true;
+                    $goodsReceiptDetail->save();
+                }
             }
         }
 
@@ -136,7 +127,7 @@ class GoodsReceiptController extends Controller
                 $detail->note = $validated['reason'];
                 $detail->save();
 
-                if ($detail->status === '2' || $detail->status === '1') {
+                if ($detail->is_added) {
                     $productModel = Product::find($detail->product_id);
                     if ($productModel) {
                         $productModel->quantity -= $product['return_quantity'];
@@ -195,5 +186,109 @@ class GoodsReceiptController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    public function getReceiptReturn($type, Request $request)
+    {
+        try {
+            $query = GoodsReceipt::with(['details.product', 'supplier'])
+                          ->whereHas('details', function($q) {
+                              $q->where('status', 4); // Lấy theo trạng thái của detail
+                          })
+                          ->orderBy('created_at', 'desc');
+
+            switch($type) {
+                case 'today':
+                    $query->whereDate('updated_at', Carbon::today());
+                    break;
+                case 'yesterday': 
+                    $query->whereDate('updated_at', Carbon::yesterday());
+                    break;
+                case 'week':
+                    $query->whereBetween('updated_at', [
+                        Carbon::now()->startOfWeek(),
+                        Carbon::now()->endOfWeek()
+                    ]);
+                    break;
+                case 'month':
+                    $query->whereYear('updated_at', Carbon::now()->year)
+                          ->whereMonth('updated_at', Carbon::now()->month);
+                    break;
+                case 'custom':
+                    $date = $request->get('date');
+                    if (!$date) {
+                        return response()->json(['error' => 'Date is required for custom type'], 400);
+                    }
+                    $query->whereDate('updated_at', Carbon::parse($date));
+                    break;
+                default:
+                    return response()->json(['error' => 'Invalid time range'], 400);
+            }
+
+            $receipts = $query->get();
+            return response()->json([
+                'success' => true,
+                'goods_receipts' => $receipts
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteReceipt($id)
+    {
+        $goodsReceipt = GoodsReceipt::find($id);
+        $details = GoodsReceiptDetail::where('goods_receipt_id', $id)->get();
+        
+        foreach ($details as $detail) {
+            if ($goodsReceipt->status == 1) { // Nếu phiếu nhập đã kiểm tra
+                $product = Product::find($detail->product_id);
+                $product->quantity -= $detail->quantity_receipt;
+                $product->save();
+            }
+            $detail->delete();
+        }
+        
+        $goodsReceipt->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Xóa phiếu nhập hàng thành công',
+        ]); 
+    }
+
+    public function update($id, Request $request){
+        $validated = $request->validate([
+            'status' => 'required',
+            'details' => 'nullable',
+            'check_date' => 'required',
+            'supplier_id' => 'required',
+            'import_date' => 'required',
+        ]);
+
+        $goodsReceipt = GoodsReceipt::find($id);
+        foreach ($validated['details'] as $detail) {
+            $goodsReceiptDetail = GoodsReceiptDetail::find($detail['id']);
+            $goodsReceiptDetail->status = $detail['status'];
+            $goodsReceiptDetail->note = $detail['note'];
+            $goodsReceiptDetail->production_date = $detail['production_date'];
+            $goodsReceiptDetail->quantity_receipt = $detail['quantity_receipt'];
+            if ($goodsReceiptDetail->price != $detail['price']) {
+                $goodsReceiptDetail->price = $detail['price'];
+            }
+            $goodsReceiptDetail->save();
+        }
+        $goodsReceipt->supplier_id = $validated['supplier_id'];
+        $goodsReceipt->import_date = $validated['import_date'];
+        $goodsReceipt->status = $validated['status'];
+        $goodsReceipt->check_date = $validated['check_date'];
+        $goodsReceipt->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật phiếu nhập hàng thành công',
+            'goods_receipt' => $goodsReceipt,
+        ]);
     }
 }

@@ -24,10 +24,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import InventoryIcon from '@mui/icons-material/Inventory';
+import HistoryIcon from '@mui/icons-material/History';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import Factory from '../../../services/factory.service';
 import Product from '../../../services/product.service';
 import Receipt from '../../../services/receipt.service';
-
+import { Link } from 'react-router-dom';
 import { handleResponse } from '../../../functions';
 
 const ImportAdmin = () => {
@@ -35,7 +37,6 @@ const ImportAdmin = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [importDate, setImportDate] = useState('');
 
@@ -43,15 +44,6 @@ const ImportAdmin = () => {
     fetchSuppliers();
     fetchProducts();
   }, []);
-
-  useEffect(() => {
-    if (selectedSupplier) {
-      const filtered = products.filter(product => product.factory_id === selectedSupplier.id);
-      setFilteredProducts(filtered);
-    } else {
-      setFilteredProducts([]);
-    }
-  }, [selectedSupplier, products]);
 
   const fetchSuppliers = async () => {
     try {
@@ -119,6 +111,37 @@ const ImportAdmin = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+        <Button
+          component={Link}
+          to="/admin/import-history"
+          variant="outlined"
+          startIcon={<HistoryIcon />}
+          sx={{ 
+            borderRadius: 2,
+            px: 3,
+            '&:hover': { transform: 'translateY(-2px)' },
+            transition: 'transform 0.2s'
+          }}
+        >
+          Lịch sử trả hàng
+        </Button>
+        <Button
+          component={Link} 
+          to="/admin/inventory-check"
+          variant="outlined"
+          startIcon={<AssignmentIcon />}
+          sx={{ 
+            borderRadius: 2,
+            px: 3,
+            '&:hover': { transform: 'translateY(-2px)' },
+            transition: 'transform 0.2s'
+          }}
+        >
+          Kiểm tra phiếu nhập
+        </Button>
+      </Box>
+      
       <Card elevation={3} sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <Box sx={{ 
           bgcolor: theme.palette.primary.main, 
@@ -195,7 +218,7 @@ const ImportAdmin = () => {
                     <TableRow key={index} sx={{ '&:nth-of-type(odd)': { bgcolor: '#f9f9f9' } }}>
                       <TableCell>
                         <Autocomplete
-                          options={filteredProducts}
+                          options={products.filter(product => !selectedProducts.some(selected => selected.product?.id === product.id))}
                           getOptionLabel={(option) => option.product_name}
                           renderInput={(params) => 
                             <TextField 

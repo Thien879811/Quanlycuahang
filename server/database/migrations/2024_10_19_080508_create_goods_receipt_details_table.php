@@ -33,6 +33,7 @@ return new class extends Migration
             $table->integer('return_quantity')->nullable()->default(0);
             $table->date('production_date')->nullable();
             $table->date('expiration_date')->nullable();
+            $table->boolean('is_added')->default(false);
             $table->timestamps();
         });
     }

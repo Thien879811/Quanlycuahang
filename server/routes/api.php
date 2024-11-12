@@ -75,6 +75,9 @@ Route::controller(GoodsReceiptController::class)->group(function () {
     Route::put('/goods-receipt/{id}', 'updateReceipt');
     Route::post('/goods-receipt/return', 'returnReceipt');
     Route::get('/goods-receipt/{type}', 'getReceipt');
+    Route::get('/goods-receipt/{type}/return', 'getReceiptReturn');
+    Route::delete('/goods-receipt/{id}', 'deleteReceipt');
+    Route::put('/goods-receipt/update/{id}', 'update');
 });
 
 //catalog api

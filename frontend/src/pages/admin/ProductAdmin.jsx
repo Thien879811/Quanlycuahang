@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Layout, Button, Space, Typography, Card, Row, Col, Form } from 'antd';
-import { PlusOutlined, FilterOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Layout, Button, Space, Typography, Card, Row, Col, Form, message } from 'antd';
+import { PlusOutlined, DownloadOutlined, BarChartOutlined } from '@ant-design/icons';
 import OverallInventory from '../../components/admin/product/OverallInventory.jsx';
 import ProductsTable from '../../components/admin/product/ProductsTable.jsx';
 import useProducts from '../../utils/productUtils';
@@ -42,39 +42,46 @@ const ProductAdmin = () => {
 
   return (
     <Layout>
-      <Content style={{ padding: '24px' }}>
-        <Card>
-          <Row gutter={[24, 24]}>
-            <Col span={24}>
-              <Title level={2}>Tổng quan tồn kho</Title>
-            </Col>
-            <Col span={24}>
+      <Content style={{ padding: '24px', backgroundColor: '#f0f2f5' }}>
+        <Row gutter={[24, 24]}>
+          <Col span={24}>
+            <Card>
+              <Title level={2} style={{ marginBottom: 0 }}>
+                <BarChartOutlined style={{ marginRight: '12px', color: '#1890ff' }} />
+                Tổng quan tồn kho
+              </Title>
+            </Card>
+          </Col>
+          <Col span={24}>
+            <Card>
               <OverallInventory />
-            </Col>
-            <Col span={24}>
+            </Card>
+          </Col>
+          <Col span={24}>
+            <Card>
               <Space style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-                <Space>
-                  <Button type="primary" icon={<PlusOutlined />} onClick={showModal}>Thêm sản phẩm</Button>
-                  <Button icon={<FilterOutlined />}>Bộ lọc</Button>
-                </Space>
-                <Button icon={<DownloadOutlined />}>Tải xuống tất cả</Button>
+                <Button type="primary" icon={<PlusOutlined />} onClick={showModal} size="large">
+                  Thêm sản phẩm
+                </Button>
+                <Button icon={<DownloadOutlined />} size="large">
+                  Tải xuống tất cả
+                </Button>
               </Space>
               <ProductsTable />
-            </Col>
-          </Row>
-        </Card>
+            </Card>
+          </Col>
+        </Row>
       </Content>
       
       <ProductForm 
-          visible={isModalVisible}
-          form={form} 
-          catalogs={catalogs} 
-          factories={factories} 
-          onOk={handleOk} 
-          onCancel={handleCancel}
-          initialValues={null}
+        visible={isModalVisible}
+        form={form} 
+        catalogs={catalogs} 
+        factories={factories} 
+        onOk={handleOk} 
+        onCancel={handleCancel}
+        initialValues={null}
       />
-      
     </Layout>
   );
 };

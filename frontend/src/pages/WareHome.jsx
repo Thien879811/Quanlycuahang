@@ -1,19 +1,21 @@
 import React from 'react';
 import { Container, Typography, Grid, Card, CardContent, CardActions, Button } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 
 const WareHome = () => {
+  const navigate = useNavigate();
   const warehousingFunctions = [
     {
       title: 'Kiểm tra hàng hóa',
-      description: 'Kiểm tra và cập nhật trạng thái hàng hóa trong kho',
+      description: 'Kiểm tra và cập nhật trạng thái hàng hóa trước khi nhập kho',
       icon: <InventoryIcon fontSize="large" />,
       link: '/check-receipt'
     },
     {
+
       title: 'Báo cáo tồn kho',
       description: 'Xem và tạo báo cáo về tình trạng tồn kho hiện tại',
       icon: <AssessmentIcon fontSize="large" />,
@@ -27,11 +29,20 @@ const WareHome = () => {
     }
   ];
 
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   return (
     <Container maxWidth="lg">
-      <Typography variant="h4" component="h1" gutterBottom sx={{ my: 4 }}>
-        Quản lý kho hàng
-      </Typography>
+      <Grid container justifyContent="space-between" alignItems="center" sx={{ my: 4 }}>
+        <Typography variant="h4" component="h1">
+          Quản lý kho hàng
+        </Typography>
+        <Button variant="contained" color="primary" onClick={handleGoBack}>
+          Thoát
+        </Button>
+      </Grid>
       <Grid container spacing={4}>
         {warehousingFunctions.map((func, index) => (
           <Grid item xs={12} sm={6} md={4} key={index}>

@@ -49,6 +49,21 @@ const orderUtils = () => {
     const addProduct = (product) => {
         if(!orders.details) setOrders({details: []});
         setOrders(prevOrders => {
+            const existingProduct = prevOrders.details.find(detail => detail.product_id === product.id);
+            
+            if (existingProduct) {
+                const newOrders = {
+                    ...prevOrders,
+                    details: prevOrders.details.map(detail => 
+                        detail.product_id === product.id
+                        ? {...detail, soluong: detail.soluong + 1}
+                        : detail
+                    )
+                };
+                localStorage.setItem('order', JSON.stringify(newOrders));
+                return newOrders;
+            }
+
             const newOrders = {
                 ...prevOrders,
                 details: [

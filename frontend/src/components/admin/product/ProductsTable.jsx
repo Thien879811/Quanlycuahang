@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { Table, Tag, Modal, Button, Form, Image, Popconfirm } from 'antd';
-import { Typography, Box, Divider } from '@mui/material';
+import { Table, Tag, Modal, Button, Form, Image, Popconfirm, Input, Card, Space } from 'antd';
+import { Typography, Box, Divider, Grid, Paper } from '@mui/material';
 import useProducts from "../../../utils/productUtils"
 import moment from 'moment';
 import ProductForm from '../../../pages/admin/products/productForm';
 import useCatalogs from '../../../utils/catalogUtils';
 import useFactories from '../../../utils/factoryUtils';
+import { EditOutlined, DeleteOutlined, CloseOutlined } from '@ant-design/icons';
 
 const ProductsTable = () => {
+  
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [searchText, setSearchText] = useState('');
   const {products, updateProduct, deleteProduct} = useProducts();
   const {catalogs} = useCatalogs();
   const {factories} = useFactories();
@@ -61,29 +64,38 @@ const ProductsTable = () => {
     return moment(date).format('DD/MM/YYYY');
   };
 
+  const handleSearch = (value) => {
+    setSearchText(value);
+  };
+
+  const filteredProducts = products.filter(product => 
+    product.product_name.toLowerCase().includes(searchText.toLowerCase()) ||
+    product.barcode?.toLowerCase().includes(searchText.toLowerCase())
+  );
+
   const columns = [
     {
       title: 'Sản phẩm',
       dataIndex: 'product_name',
       key: 'product_name',
       render: (text, record) => (
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Space>
           <Image
             src={record.image}
             alt={text}
             width={50}
             height={50}
-            style={{ marginRight: '20px', objectFit: 'cover' }}
+            style={{ objectFit: 'cover', borderRadius: '8px' }}
           />
-          <span style={{ marginLeft: '10px' }}>{text}</span>
-        </Box>
+          <span>{text}</span>
+        </Space>
       ),
     },
     {
       title: 'Giá mua',
       dataIndex: 'purchase_price',
       key: 'purchase_price',
-      render: (price) => `₫${price}`,
+      render: (price) => `₫${price.toLocaleString()}`,
     },
     {
       title: 'Số lượng',
@@ -116,80 +128,101 @@ const ProductsTable = () => {
 
   return (
     <>
+      <Input.Search
+        placeholder="Tìm kiếm theo tên sản phẩm hoặc mã vạch"
+        onChange={e => handleSearch(e.target.value)}
+        style={{ marginBottom: 16 }}
+        size="large"
+      />
+      
       <Table 
         columns={columns} 
-        dataSource={products} 
+        dataSource={filteredProducts} 
         onRow={(record) => ({
           onClick: () => showModal(record),
         })}
+        rowKey="id"
+        pagination={{ pageSize: 10 }}
+        scroll={{ x: true }}
       />
       <Modal
-        title={selectedProduct?.product_name}
+        title={<Typography.Title level={4}>{selectedProduct?.product_name}</Typography.Title>}
         visible={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
         width={800}
         footer={[
-          <Button key="edit" type="primary" onClick={showEditModal}>
+          <Button key="edit" type="primary" icon={<EditOutlined />} onClick={showEditModal}>
             Chỉnh sửa
           </Button>,
-          <Button key="delete" type="primary" danger onClick={handleDelete}>
+          <Button key="delete" type="primary" danger icon={<DeleteOutlined />} onClick={handleDelete}>
             Xóa
           </Button>,
-          <Button key="back" onClick={handleCancel}>
+          <Button key="back" icon={<CloseOutlined />} onClick={handleCancel}>
             Đóng
           </Button>,
         ]}
       >
         {selectedProduct && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Box sx={{ width: '65%' }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>Thông tin chính</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 1 }}>
-                <Typography color="text.secondary">Tên sản phẩm</Typography>
-                <Typography>{selectedProduct.product_name}</Typography>
-                <Typography color="text.secondary">Mã vạch</Typography>
-                <Typography>{selectedProduct.barcode}</Typography>
-                <Typography color="text.secondary">Danh mục sản phẩm</Typography>
-                <Typography>{catalogs.find(cat => cat.id === selectedProduct.catalogy_id)?.catalogy_name}</Typography>
-                <Typography color="text.secondary">Ngày sản xuất</Typography>
-                <Typography>{formatDate(selectedProduct.production_date)}</Typography>
-                <Typography color="text.secondary">Ngày hết hạn</Typography>
-                <Typography>{formatDate(selectedProduct.expiration_date)}</Typography>
-              </Box>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={8}>
+              <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
+                <Typography variant="h6" gutterBottom>Thông tin chính</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Typography color="text.secondary">Tên sản phẩm</Typography>
+                    <Typography variant="body1">{selectedProduct.product_name}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography color="text.secondary">Mã vạch</Typography>
+                    <Typography variant="body1">{selectedProduct.barcode}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography color="text.secondary">Danh mục sản phẩm</Typography>
+                    <Typography variant="body1">{catalogs.find(cat => cat.id === selectedProduct.catalogy_id)?.catalogy_name}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography color="text.secondary">Ngày sản xuất</Typography>
+                    <Typography variant="body1">{formatDate(selectedProduct.production_date)}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography color="text.secondary">Ngày hết hạn</Typography>
+                    <Typography variant="body1">{formatDate(selectedProduct.expiration_date)}</Typography>
+                  </Grid>
+                </Grid>
 
-              <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 2 }} />
 
-              <Typography variant="h6" sx={{ mb: 2 }}>Thông tin nhà máy sản xuất</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 1 }}>
-                <Typography color="text.secondary">Tên nhà máy</Typography>
-                <Typography>{factories.find(fac => fac.id === selectedProduct.factory_id)?.factory_name}</Typography>
-              </Box>
+                <Typography variant="h6" gutterBottom>Thông tin nhà máy sản xuất</Typography>
+                <Typography variant="body1">{factories.find(fac => fac.id === selectedProduct.factory_id)?.factory_name}</Typography>
 
-              <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 2 }} />
 
-              <Typography variant="h6" sx={{ mb: 2 }}>Thông tin giá</Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography fontWeight="bold">Giá mua vào</Typography>
-                <Typography fontWeight="bold">Giá bán ra</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography>{selectedProduct.purchase_price}</Typography>
-                <Typography color="primary">{selectedProduct.selling_price}</Typography>
-              </Box>
-            </Box>
-            <Box sx={{ width: '30%' }}>
-              <Image
-                src={selectedProduct.image}
-                alt={selectedProduct.product_name}
-                style={{ width: '100%', marginBottom: '20px', border: '1px dashed #ccc', padding: '10px' }}
-              />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography color="text.secondary">Số lượng</Typography>
-                <Typography>{selectedProduct.quantity}</Typography>
-              </Box>
-            </Box>
-          </Box>
+                <Typography variant="h6" gutterBottom>Thông tin giá</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Typography color="text.secondary">Giá mua vào</Typography>
+                    <Typography variant="body1" fontWeight="bold">₫{selectedProduct.purchase_price.toLocaleString()}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography color="text.secondary">Giá bán ra</Typography>
+                    <Typography variant="body1" fontWeight="bold" color="primary">₫{selectedProduct.selling_price.toLocaleString()}</Typography>
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
+                <Image
+                  src={selectedProduct.image}
+                  alt={selectedProduct.product_name}
+                  style={{ width: '100%', marginBottom: '20px', borderRadius: '8px' }}
+                />
+                <Typography variant="h6" gutterBottom>Số lượng</Typography>
+                <Typography variant="h4" align="center">{selectedProduct.quantity}</Typography>
+              </Paper>
+            </Grid>
+          </Grid>
         )}
       </Modal>
       <ProductForm

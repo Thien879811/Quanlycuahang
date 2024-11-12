@@ -34,6 +34,7 @@ import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
+import DeleteIcon from '@mui/icons-material/Delete';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import { styled } from '@mui/material/styles';
@@ -88,6 +89,7 @@ const ReceiptCheck = () => {
     const [checkResults, setCheckResults] = useState({});
     const [checkTime, setCheckTime] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [showDisposed, setShowDisposed] = useState(false);
 
     useEffect(() => {
         fetchAllReceipts();
@@ -96,8 +98,14 @@ const ReceiptCheck = () => {
     useEffect(() => {
         const startIndex = page * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
-        setDisplayedReceipts(filteredReceipts.slice(startIndex, endIndex));
-    }, [page, rowsPerPage, filteredReceipts]);
+        let filtered = filteredReceipts;
+        if (!showDisposed) {
+            filtered = filteredReceipts.filter(receipt => 
+                !receipt.details.some(detail => detail.status === 'Hư hỏng')
+            );
+        }
+        setDisplayedReceipts(filtered.slice(startIndex, endIndex));
+    }, [page, rowsPerPage, filteredReceipts, showDisposed]);
 
     const handleTimeRangeChange = (event) => {
         setTimeRange(event.target.value);
@@ -111,6 +119,10 @@ const ReceiptCheck = () => {
         setPage(newPage);
     };
 
+    const toggleShowDisposed = () => {
+        setShowDisposed(!showDisposed);
+    };
+
     const fetchAllReceipts = async () => {
         try {
             const response = await ReceiptService.getReceipt(timeRange, customDate);
@@ -120,6 +132,8 @@ const ReceiptCheck = () => {
                 data.goods_receipts.forEach(receipt => {
                     if (receipt.status === '1') {
                         receipt.status = 'Đã kiểm tra';
+                    } else {
+                        receipt.status = 'Chưa kiểm tra';
                     }
                     receipt.details.forEach(detail => {
                         if (detail.status === '1') {
@@ -128,8 +142,11 @@ const ReceiptCheck = () => {
                         if (detail.status === '2') {
                             detail.status = 'Hư hỏng';
                         }
-                        if (detail.status === '0') {
+                        if (detail.status === '3') {
                             detail.status = 'Thiếu';
+                        }
+                        if (detail.status === '4') {
+                            detail.status = 'Đã hủy';
                         }
                     });
                 });
@@ -155,20 +172,26 @@ const ReceiptCheck = () => {
     };
 
     const handleOpenCheckDialog = (receipt) => {
-        setSelectedReceipt(receipt);
+        // Filter out products with status '4' (Đã hủy)
+        const filteredDetails = receipt.details.filter(detail => detail.status !== 'Đã hủy');
+        const filteredReceipt = {...receipt, details: filteredDetails};
+        
+        setSelectedReceipt(filteredReceipt);
         setCheckResults({});
         setCheckTime(dayjs().format('YYYY-MM-DD HH:mm:ss'));
-        receipt.details.forEach(detail => {
-            setCheckResults(prev => ({
-                ...prev,
-                [detail.id]: { 
-                    status: '1', 
-                    note: '',
-                    production_date: null,
-                    expiration_date: null,
-                    quantity_receipt: detail.quantity
-                }
-            }));
+        filteredDetails.forEach(detail => {
+            if (detail.status === '0' || detail.status === 'Chưa kiểm tra') {
+                setCheckResults(prev => ({
+                    ...prev,
+                    [detail.id]: { 
+                        status: '1', 
+                        note: '',
+                        production_date: null,
+                        expiration_date: null,
+                        quantity_receipt: detail.quantity
+                    }
+                }));
+            }
         });
         setOpenDialog(true);
         setCheckTime(dayjs().format('DD/MM/YYYY HH:mm:ss'));
@@ -206,11 +229,11 @@ const ReceiptCheck = () => {
                 check_date: checkTime,
                 details: selectedReceipt.details.map(detail => ({
                     ...detail,
-                    status: checkResults[detail.id].status,
-                    note: checkResults[detail.id].note,
-                    production_date: checkResults[detail.id].production_date,
-                    expiration_date: checkResults[detail.id].expiration_date,
-                    quantity_receipt: checkResults[detail.id].quantity_receipt
+                    status: checkResults[detail.id]?.status || detail.status,
+                    note: checkResults[detail.id]?.note || detail.note,
+                    production_date: checkResults[detail.id]?.production_date || detail.production_date,
+                    expiration_date: checkResults[detail.id]?.expiration_date || detail.expiration_date,
+                    quantity_receipt: checkResults[detail.id]?.quantity_receipt || detail.quantity_receipt
                 }))
             };
 
@@ -271,15 +294,28 @@ const ReceiptCheck = () => {
                                 />
                             </Grid>
                         )}
-                        <Grid item xs={12} md={timeRange === 'custom' ? 2 : 5} container justifyContent="flex-end">
-                            <StyledButton 
-                                startIcon={<ArrowBackIcon />}
-                                onClick={() => navigate(-1)}
-                                variant="contained"
-                                size="large"
-                            >
-                                Quay lại
-                            </StyledButton>
+                        <Grid item xs={12} md={timeRange === 'custom' ? 2 : 5} container justifyContent="flex-end" spacing={2}>
+                            <Grid item>
+                                <StyledButton
+                                    startIcon={<DeleteIcon />}
+                                    onClick={toggleShowDisposed}
+                                    variant="contained"
+                                    color={showDisposed ? "error" : "primary"}
+                                    size="large"
+                                >
+                                    {showDisposed ? "Ẩn sản phẩm đã hủy" : "Hiện sản phẩm đã hủy"}
+                                </StyledButton>
+                            </Grid>
+                            <Grid item>
+                                <StyledButton 
+                                    startIcon={<ArrowBackIcon />}
+                                    onClick={() => navigate(-1)}
+                                    variant="contained"
+                                    size="large"
+                                >
+                                    Quay lại
+                                </StyledButton>
+                            </Grid>
                         </Grid>
                     </Grid>
 
@@ -306,7 +342,10 @@ const ReceiptCheck = () => {
                                     <TableRow 
                                         key={receipt.id}
                                         hover
-                                        sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
+                                        sx={{ 
+                                            '&:hover': { backgroundColor: '#f5f5f5' },
+                                            backgroundColor: receipt.details.some(detail => detail.status === 'Hư hỏng') ? '#ffebee' : 'inherit'
+                                        }}
                                     >
                                         <TableCell>
                                             <Typography variant="subtitle2" fontWeight="bold">
@@ -398,55 +437,77 @@ const ReceiptCheck = () => {
                             </TableHead>
                             <TableBody>
                                 {selectedReceipt?.details?.map((detail) => (
-                                    <TableRow key={detail.id}>
-                                        <TableCell>{detail.product?.product_name || 'N/A'}</TableCell>
-                                        <TableCell align="center">{detail.quantity}</TableCell>
-                                        <TableCell>
-                                            <StyledInput
-                                                type="number"
-                                                value={checkResults[detail.id]?.quantity_receipt || ''}
-                                                onChange={(e) => handleCheckResultChange(detail.id, 'quantity_receipt', e.target.value)}
-                                                min={0}
-                                                max={detail.quantity}
-                                                style={{ textAlign: 'center' }}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Select
-                                                fullWidth
-                                                size="small"
-                                                value={checkResults[detail.id]?.status || ''}
-                                                onChange={(e) => handleCheckResultChange(detail.id, 'status', e.target.value)}
-                                                sx={{ borderRadius: '8px' }}
-                                            >
-                                                <MenuItem value="1">Đủ hàng hóa</MenuItem>
-                                                <MenuItem value="2">Hư hỏng</MenuItem>
-                                                <MenuItem value="0">Thiếu</MenuItem>
-                                            </Select>
-                                        </TableCell>
-                                        <TableCell>
-                                            <StyledInput
-                                                type="date"
-                                                value={checkResults[detail.id]?.production_date || ''}
-                                                onChange={(e) => handleCheckResultChange(detail.id, 'production_date', e.target.value)}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <StyledInput
-                                                type="date"
-                                                value={checkResults[detail.id]?.expiration_date || ''}
-                                                onChange={(e) => handleCheckResultChange(detail.id, 'expiration_date', e.target.value)}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <StyledInput
-                                                type="text"
-                                                value={checkResults[detail.id]?.note || ''}
-                                                onChange={(e) => handleCheckResultChange(detail.id, 'note', e.target.value)}
-                                                placeholder="Ghi chú"
-                                            />
-                                        </TableCell>
-                                    </TableRow>
+                                    detail.status !== 'Đã hủy' && (
+                                        <TableRow key={detail.id}>
+                                            <TableCell>{detail.product?.product_name || 'N/A'}</TableCell>
+                                            <TableCell align="center">{detail.quantity}</TableCell>
+                                            <TableCell>
+                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
+                                                    <StyledInput
+                                                        type="number"
+                                                        value={checkResults[detail.id]?.quantity_receipt || ''}
+                                                        onChange={(e) => handleCheckResultChange(detail.id, 'quantity_receipt', e.target.value)}
+                                                        min={0}
+                                                        max={detail.quantity}
+                                                        style={{ textAlign: 'center' }}
+                                                    />
+                                                )}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') ? (
+                                                    <Select
+                                                        fullWidth
+                                                        size="small"
+                                                        value={checkResults[detail.id]?.status || ''}
+                                                        onChange={(e) => handleCheckResultChange(detail.id, 'status', e.target.value)}
+                                                        sx={{ borderRadius: '8px' }}
+                                                    >
+                                                        <MenuItem value="1">Đủ hàng hóa</MenuItem>
+                                                        <MenuItem value="2">Hư hỏng</MenuItem>
+                                                        <MenuItem value="3">Thiếu</MenuItem>
+                                                    </Select>
+                                                ) : (
+                                                    <Chip
+                                                        label={detail.status}
+                                                        color={
+                                                            detail.status === 'Đủ hàng hóa' ? 'success' :
+                                                            detail.status === 'Hư hỏng' ? 'error' :
+                                                            'warning'
+                                                        }
+                                                        variant="outlined"
+                                                    />
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
+                                                    <StyledInput
+                                                        type="date"
+                                                        value={checkResults[detail.id]?.production_date || ''}
+                                                        onChange={(e) => handleCheckResultChange(detail.id, 'production_date', e.target.value)}
+                                                    />
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
+                                                    <StyledInput
+                                                        type="date"
+                                                        value={checkResults[detail.id]?.expiration_date || ''}
+                                                        onChange={(e) => handleCheckResultChange(detail.id, 'expiration_date', e.target.value)}
+                                                    />
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
+                                                    <StyledInput
+                                                        type="text"
+                                                        value={checkResults[detail.id]?.note || ''}
+                                                        onChange={(e) => handleCheckResultChange(detail.id, 'note', e.target.value)}
+                                                        placeholder="Ghi chú"
+                                                    />
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    )
                                 ))}
                             </TableBody>
                         </Table>

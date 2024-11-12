@@ -148,7 +148,7 @@ const ProductDisposal = () => {
                                     <TableCell>{request.id}</TableCell>
                                     <TableCell>{request.product?.product_name || 'N/A'}</TableCell>
                                     <TableCell>{request.quantity}</TableCell>
-                                    <TableCell sx={{ maxWidth: 200, whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                                    <TableCell sx={{ color: 'dark', maxWidth: 200, whiteSpace: 'normal', wordBreak: 'break-word' }}>
                                         {request.note}
                                     </TableCell>
                                     <TableCell>{dayjs(request.created_at).format('DD/MM/YYYY')}</TableCell>
@@ -195,7 +195,7 @@ const ProductDisposal = () => {
                                 <strong>Số lượng:</strong> {selectedRequest.quantity}
                             </Typography>
                             <Typography sx={{ mb: 2 }}>
-                                <strong>Lý do:</strong> {selectedRequest.reason}
+                                <strong>Lý do:</strong> {selectedRequest.note}
                             </Typography>
                             <TextField
                                 margin="normal"
