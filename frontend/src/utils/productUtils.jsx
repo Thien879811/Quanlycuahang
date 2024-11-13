@@ -54,7 +54,18 @@ const useProducts = () => {
   };
 
   useEffect(() => {
-    fetchProducts();
+    let timeoutId;
+
+    const loadData = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        fetchProducts();
+      }, 500);
+    };
+
+    loadData();
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   return { products, createProduct, updateProduct, deleteProduct };

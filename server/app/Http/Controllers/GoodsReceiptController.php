@@ -73,7 +73,7 @@ class GoodsReceiptController extends Controller
         $goodsReceipt = GoodsReceipt::find($id);
         $goodsReceipt->update([
             'status' => $validated['status'],
-            'check_date' => Carbon::parse($validated['check_date'])->format('Y-m-d H:i:s'),
+            'check_date' => Carbon::createFromFormat('d/m/Y H:i:s', $validated['check_date'])->format('Y-m-d H:i:s'),
         ]);
         $goodsReceipt->save();
         if($validated['details']) {
@@ -84,9 +84,12 @@ class GoodsReceiptController extends Controller
                 $goodsReceiptDetail->production_date = $detail['production_date'];
                 $goodsReceiptDetail->quantity_receipt = $detail['quantity_receipt'];
                 $goodsReceiptDetail->expiration_date = $detail['expiration_date'];
+                $goodsReceiptDetail->quantity_defective = $detail['quantity_defective'];
+
                 if ($goodsReceiptDetail->price != $detail['price']) {
                     $goodsReceiptDetail->price = $detail['price'];
                 }
+                
                 $goodsReceiptDetail->save();
 
                 $product = Product::find($goodsReceiptDetail->product_id);
@@ -96,6 +99,14 @@ class GoodsReceiptController extends Controller
                     $product->purchase_price = $goodsReceiptDetail->price;
                     $product->save();
                     $goodsReceiptDetail->is_added = true;
+                    $goodsReceiptDetail->save();
+                }
+                if( $goodsReceiptDetail->status === '2' || $goodsReceiptDetail->status === '3' && !$goodsReceiptDetail->is_added
+                ) {
+                    $product->quantity += $goodsReceiptDetail->quantity_receipt;
+                    $goodsReceiptDetail->is_added = true;
+                    $product->purchase_price = $goodsReceiptDetail->price;
+                    $product->save();
                     $goodsReceiptDetail->save();
                 }
             }
@@ -130,7 +141,11 @@ class GoodsReceiptController extends Controller
                 if ($detail->is_added) {
                     $productModel = Product::find($detail->product_id);
                     if ($productModel) {
-                        $productModel->quantity -= $product['return_quantity'];
+                        if($detail->quantity_defective > 0) {
+                            $productModel->quantity -= ($product['return_quantity'] - $detail->quantity_defective);
+                        } else {
+                            $productModel->quantity -= $product['return_quantity'];
+                        }
                         $productModel->save();
                     }
                 }

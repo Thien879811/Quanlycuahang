@@ -29,6 +29,7 @@ import InventoryReport from './pages/Employee/InventoryReport.jsx';
 import ProductDisposal from './pages/admin/products/ProductDisposal.jsx';
 import ProductDisposalEmployee from './pages/Employee/ProductDisposalEmployee.jsx';
 import InventoryReportAdmin from './pages/admin/products/InventoryReportAdmin.jsx';
+import CustomerAdmin from './pages/admin/CustomerAdmin.jsx';
 
 const router = createBrowserRouter ([
     {
@@ -147,7 +148,12 @@ const router = createBrowserRouter ([
             {
                 path: '/admin/inventory-report',
                 element: <InventoryReportAdmin />
+            },
+            {
+                path: '/admin/customers',
+                element: <CustomerAdmin />
             }
+
 
         ]
     },

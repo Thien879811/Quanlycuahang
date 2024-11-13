@@ -12,11 +12,23 @@ const ReturnDialog = ({ openReturnDialog, setOpenReturnDialog, selectedReceipt, 
 
     const handleReturnQuantityChange = (detailId, value) => {
         const quantity = parseInt(value) || '';
-        setReturnQuantities(prev => ({
-            ...prev,
-            [detailId]: quantity
-        }));
+        const detail = selectedReceipt?.details?.find(d => d.id === detailId);
+        
+        if (quantity > detail?.quantity) {
+            alert(`Số lượng trả không được lớn hơn số lượng nhập (${detail?.quantity})`);
+            return;
+        }
+        
+        if (quantity > 0) {
+            setReturnQuantities(prev => ({
+                ...prev,
+                [detailId]: quantity
+            }));
+        }
     };
+
+    // Filter out products with status '4' before rendering
+    const availableProducts = selectedReceipt?.details?.filter(detail => detail.status !== 'Đã trả hàng') || [];
 
     return (
         <Dialog open={openReturnDialog} onClose={() => setOpenReturnDialog(false)} maxWidth="md" fullWidth>
@@ -34,21 +46,23 @@ const ReturnDialog = ({ openReturnDialog, setOpenReturnDialog, selectedReceipt, 
                                         <Checkbox
                                             onChange={(e) => {
                                                 if (e.target.checked) {
-                                                    setSelectedProducts(selectedReceipt.details.map(d => d.id));
+                                                    setSelectedProducts(availableProducts.map(d => d.id));
                                                 } else {
                                                     setSelectedProducts([]);
                                                 }
                                             }}
-                                            checked={selectedProducts.length === selectedReceipt?.details?.length}
+                                            checked={selectedProducts.length === availableProducts.length && availableProducts.length > 0}
                                         />
                                     </TableCell>
                                     <TableCell>Sản phẩm</TableCell>
                                     <TableCell align="right">Số lượng đã nhập</TableCell>
+                                    <TableCell align="right">Số lượng đã lưu hệ thống</TableCell>
+                                    <TableCell align="right">Số lượng lỗi hoặc hư hỏng</TableCell>
                                     <TableCell align="right">Số lượng trả</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {selectedReceipt?.details?.map((detail) => (
+                                {availableProducts.map((detail) => (
                                     <TableRow key={detail.id}>
                                         <TableCell padding="checkbox">
                                             <Checkbox
@@ -58,13 +72,23 @@ const ReturnDialog = ({ openReturnDialog, setOpenReturnDialog, selectedReceipt, 
                                         </TableCell>
                                         <TableCell>{detail.product?.product_name}</TableCell>
                                         <TableCell align="right">{detail.quantity}</TableCell>
+                                        <TableCell align="right">{detail.quantity_receipt}</TableCell>
+                                        <TableCell align="right">{detail.quantity_defective}</TableCell>
                                         <TableCell align="right">
                                             <TextField
                                                 type="number"
                                                 size="small"
                                                 value={returnQuantities[detail.id] || ''}
-                                                onChange={(e) => handleReturnQuantityChange(detail.id, e.target.value)}
-                                                inputProps={{ min: 1, max: detail.quantity }}
+                                                onChange={(e) => {
+                                                    handleReturnQuantityChange(detail.id, e.target.value);
+                                                }}
+                                                error={returnQuantities[detail.id] > detail.quantity}
+                                                helperText={returnQuantities[detail.id] > detail.quantity ? "Số lượng trả không được lớn hơn số lượng nhập" : ""}
+                                                inputProps={{ 
+                                                    min: 1,
+                                                    max: detail.quantity,
+                                                    step: 1
+                                                }}
                                                 disabled={!selectedProducts.includes(detail.id)}
                                             />
                                         </TableCell>
@@ -91,7 +115,11 @@ const ReturnDialog = ({ openReturnDialog, setOpenReturnDialog, selectedReceipt, 
                     onClick={handleSubmitReturn} 
                     variant="contained" 
                     color="primary"
-                    disabled={selectedProducts.length === 0 || !returnReason}
+                    disabled={
+                        selectedProducts.length === 0 || 
+                        !returnReason || 
+                        selectedProducts.some(id => returnQuantities[id] > selectedReceipt?.details?.find(d => d.id === id)?.quantity)
+                    }
                 >
                     Xác nhận trả hàng
                 </Button>

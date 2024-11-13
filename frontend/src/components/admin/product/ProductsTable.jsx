@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Tag, Modal, Button, Form, Image, Popconfirm, Input, Card, Space } from 'antd';
 import { Typography, Box, Divider, Grid, Paper } from '@mui/material';
 import useProducts from "../../../utils/productUtils"
@@ -14,6 +14,8 @@ const ProductsTable = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchText, setSearchText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState(null);
   const {products, updateProduct, deleteProduct} = useProducts();
   const {catalogs} = useCatalogs();
   const {factories} = useFactories();
@@ -65,7 +67,20 @@ const ProductsTable = () => {
   };
 
   const handleSearch = (value) => {
-    setSearchText(value);
+    setLoading(true);
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    // Set new timeout
+    const timeout = setTimeout(() => {
+      setSearchText(value);
+      setLoading(false);
+    }, 500);
+
+    setSearchTimeout(timeout);
   };
 
   const filteredProducts = products.filter(product => 
@@ -144,6 +159,7 @@ const ProductsTable = () => {
         rowKey="id"
         pagination={{ pageSize: 10 }}
         scroll={{ x: true }}
+        loading={loading}
       />
       <Modal
         title={<Typography.Title level={4}>{selectedProduct?.product_name}</Typography.Title>}

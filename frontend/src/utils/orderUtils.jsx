@@ -99,13 +99,20 @@ const orderUtils = () => {
 
     const updateQuantity = (product_id, quantity) => {
         setOrders(prevOrders => {
+            const updatedDetails = prevOrders.details.map(detail => {
+                if (detail.product_id === product_id) {
+                    const newQuantity = detail.soluong + quantity;
+                    if (newQuantity <= 0) {
+                        return null; // Mark for removal
+                    }
+                    return { ...detail, soluong: newQuantity };
+                }
+                return detail;
+            }).filter(detail => detail !== null); // Remove marked items
+
             const newOrders = {
                 ...prevOrders,
-                details: prevOrders.details.map(detail => 
-                    detail.product_id === product_id 
-                    ? { ...detail, soluong: detail.soluong + quantity } 
-                    : detail
-                )
+                details: updatedDetails
             };
             localStorage.setItem('order', JSON.stringify(newOrders));
             return newOrders;

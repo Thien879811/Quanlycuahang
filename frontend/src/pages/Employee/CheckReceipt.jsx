@@ -90,6 +90,7 @@ const ReceiptCheck = () => {
     const [checkTime, setCheckTime] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [showDisposed, setShowDisposed] = useState(false);
+    const [validationErrors, setValidationErrors] = useState({});
 
     useEffect(() => {
         fetchAllReceipts();
@@ -188,40 +189,119 @@ const ReceiptCheck = () => {
                         note: '',
                         production_date: null,
                         expiration_date: null,
-                        quantity_receipt: detail.quantity
+                        quantity_receipt: detail.quantity,
+                        quantity_defective: 0
                     }
                 }));
             }
         });
         setOpenDialog(true);
         setCheckTime(dayjs().format('DD/MM/YYYY HH:mm:ss'));
+        setValidationErrors({});
     };
 
     const handleCloseCheckDialog = () => {
         setOpenDialog(false);
         setSelectedReceipt(null);
         setCheckResults({});
+        setValidationErrors({});
+    };
+
+    const validateQuantities = (detailId, field, value) => {
+        const detail = selectedReceipt.details.find(d => d.id === detailId);
+        const currentResults = checkResults[detailId] || {};
+        const quantityReceipt = field === 'quantity_receipt' ? Number(value) : Number(currentResults.quantity_receipt || 0);
+        const quantityDefective = field === 'quantity_defective' ? Number(value) : Number(currentResults.quantity_defective || 0);
+        
+        const errors = {};
+
+        if (quantityReceipt > detail.quantity) {
+            errors.quantity_receipt = 'Số lượng nhận không thể lớn hơn số lượng nhập';
+        }
+
+        if (quantityDefective > detail.quantity) {
+            errors.quantity_defective = 'Số lượng lỗi không thể lớn hơn số lượng nhập';
+        }
+
+        if (quantityReceipt + quantityDefective > detail.quantity) {
+            errors.total = 'Tổng số lượng nhận và số lượng lỗi không thể lớn hơn số lượng nhập';
+        }
+
+        return errors;
     };
 
     const handleCheckResultChange = (detailId, field, value) => {
-        setCheckResults(prev => {
-            const updatedResult = {
-                ...prev,
-                [detailId]: { ...prev[detailId], [field]: value }
-            };
+        const errors = validateQuantities(detailId, field, value);
+        
+        if (Object.keys(errors).length === 0) {
+            setCheckResults(prev => {
+                const updatedResult = {
+                    ...prev,
+                    [detailId]: { ...prev[detailId], [field]: value }
+                };
 
-            if (field === 'quantity_receipt') {
-                const detail = selectedReceipt.details.find(d => d.id === detailId);
-                if (detail && Number(value) !== detail.quantity) {
-                    updatedResult[detailId].status = '0';
+                if (field === 'quantity_receipt' || field === 'quantity_defective') {
+                    const detail = selectedReceipt.details.find(d => d.id === detailId);
+                    const quantityReceipt = field === 'quantity_receipt' ? Number(value) : Number(prev[detailId]?.quantity_receipt || 0);
+                    const quantityDefective = field === 'quantity_defective' ? Number(value) : Number(prev[detailId]?.quantity_defective || 0);
+                    
+                    if (quantityReceipt + quantityDefective !== detail.quantity) {
+                        updatedResult[detailId].status = quantityDefective > 0 ? '2' : '3';
+                    } else {
+                        updatedResult[detailId].status = '1';
+                    }
                 }
-            }
 
-            return updatedResult;
-        });
+                return updatedResult;
+            });
+            
+            setValidationErrors(prev => ({
+                ...prev,
+                [detailId]: {}
+            }));
+        } else {
+            setValidationErrors(prev => ({
+                ...prev,
+                [detailId]: errors
+            }));
+        }
     };
 
     const handleSubmitCheck = async () => {
+        // Validate all entries before submitting
+        let hasErrors = false;
+        const allErrors = {};
+
+        selectedReceipt.details.forEach(detail => {
+            if (detail.status === '0' || detail.status === 'Chưa kiểm tra') {
+                const detailErrors = validateQuantities(
+                    detail.id,
+                    null,
+                    null
+                );
+                
+                if (Object.keys(detailErrors).length > 0) {
+                    hasErrors = true;
+                    allErrors[detail.id] = detailErrors;
+                }
+
+                // Check if required fields are filled
+                const currentResults = checkResults[detail.id] || {};
+                if (!currentResults.quantity_receipt) {
+                    hasErrors = true;
+                    allErrors[detail.id] = {
+                        ...allErrors[detail.id],
+                        required: 'Vui lòng nhập số lượng nhận được'
+                    };
+                }
+            }
+        });
+
+        if (hasErrors) {
+            setValidationErrors(allErrors);
+            return;
+        }
+
         try {
             const updatedReceipt = {
                 ...selectedReceipt,
@@ -233,7 +313,8 @@ const ReceiptCheck = () => {
                     note: checkResults[detail.id]?.note || detail.note,
                     production_date: checkResults[detail.id]?.production_date || detail.production_date,
                     expiration_date: checkResults[detail.id]?.expiration_date || detail.expiration_date,
-                    quantity_receipt: checkResults[detail.id]?.quantity_receipt || detail.quantity_receipt
+                    quantity_receipt: checkResults[detail.id]?.quantity_receipt || detail.quantity_receipt,
+                    quantity_defective: checkResults[detail.id]?.quantity_defective || detail.quantity_defective
                 }))
             };
 
@@ -428,7 +509,8 @@ const ReceiptCheck = () => {
                                 <TableRow>
                                     <StyledTableCell>Sản phẩm</StyledTableCell>
                                     <StyledTableCell align="center">Số lượng nhập</StyledTableCell>
-                                    <StyledTableCell align="center">Số lượng kiểm tra</StyledTableCell>
+                                    <StyledTableCell align="center">Số lượng nhận được</StyledTableCell>
+                                    <StyledTableCell align="center">Số lượng lỗi hoặc thiếu</StyledTableCell>
                                     <StyledTableCell align="center">Trạng thái</StyledTableCell>
                                     <StyledTableCell align="center">Ngày sản xuất</StyledTableCell>
                                     <StyledTableCell align="center">Hạn sử dụng</StyledTableCell>
@@ -443,14 +525,58 @@ const ReceiptCheck = () => {
                                             <TableCell align="center">{detail.quantity}</TableCell>
                                             <TableCell>
                                                 {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
-                                                    <StyledInput
-                                                        type="number"
-                                                        value={checkResults[detail.id]?.quantity_receipt || ''}
-                                                        onChange={(e) => handleCheckResultChange(detail.id, 'quantity_receipt', e.target.value)}
-                                                        min={0}
-                                                        max={detail.quantity}
-                                                        style={{ textAlign: 'center' }}
-                                                    />
+                                                    <Box>
+                                                        <StyledInput
+                                                            type="number"
+                                                            value={checkResults[detail.id]?.quantity_receipt || ''}
+                                                            onChange={(e) => handleCheckResultChange(detail.id, 'quantity_receipt', e.target.value)}
+                                                            min={0}
+                                                            max={detail.quantity}
+                                                            required
+                                                            style={{ 
+                                                                textAlign: 'center',
+                                                                borderColor: validationErrors[detail.id]?.quantity_receipt ? 'red' : undefined 
+                                                            }}
+                                                        />
+                                                        {validationErrors[detail.id]?.quantity_receipt && (
+                                                            <Typography color="error" variant="caption" display="block">
+                                                                {validationErrors[detail.id].quantity_receipt}
+                                                            </Typography>
+                                                        )}
+                                                        {validationErrors[detail.id]?.required && (
+                                                            <Typography color="error" variant="caption" display="block">
+                                                                {validationErrors[detail.id].required}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && 
+                                                 (checkResults[detail.id]?.status === '2' || checkResults[detail.id]?.status === '3') && (
+                                                    <Box>
+                                                        <StyledInput
+                                                            type="number"
+                                                            value={checkResults[detail.id]?.quantity_defective || ''}
+                                                            onChange={(e) => handleCheckResultChange(detail.id, 'quantity_defective', e.target.value)}
+                                                            min={0}
+                                                            max={detail.quantity}
+                                                            style={{ 
+                                                                textAlign: 'center',
+                                                                borderColor: validationErrors[detail.id]?.quantity_defective ? 'red' : undefined 
+                                                            }}
+                                                        />
+                                                        {validationErrors[detail.id]?.quantity_defective && (
+                                                            <Typography color="error" variant="caption" display="block">
+                                                                {validationErrors[detail.id].quantity_defective}
+                                                            </Typography>
+                                                        )}
+                                                        {validationErrors[detail.id]?.total && (
+                                                            <Typography color="error" variant="caption" display="block">
+                                                                {validationErrors[detail.id].total}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
                                                 )}
                                             </TableCell>
                                             <TableCell align="center">

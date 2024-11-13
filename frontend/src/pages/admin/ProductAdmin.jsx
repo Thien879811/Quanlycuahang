@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Button, Space, Typography, Card, Row, Col, Form, message } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Button, Space, Typography, Card, Row, Col, Form, message, Spin } from 'antd';
 import { PlusOutlined, DownloadOutlined, BarChartOutlined } from '@ant-design/icons';
 import OverallInventory from '../../components/admin/product/OverallInventory.jsx';
 import ProductsTable from '../../components/admin/product/ProductsTable.jsx';
@@ -16,7 +16,21 @@ const ProductAdmin = () => {
   const { catalogs } = useCatalogs();
   const { factories } = useFactories();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        // Wait for data to load
+        await Promise.all([products, catalogs, factories]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -43,34 +57,36 @@ const ProductAdmin = () => {
   return (
     <Layout>
       <Content style={{ padding: '24px', backgroundColor: '#f0f2f5' }}>
-        <Row gutter={[24, 24]}>
-          <Col span={24}>
-            <Card>
-              <Title level={2} style={{ marginBottom: 0 }}>
-                <BarChartOutlined style={{ marginRight: '12px', color: '#1890ff' }} />
-                Tổng quan tồn kho
-              </Title>
-            </Card>
-          </Col>
-          <Col span={24}>
-            <Card>
-              <OverallInventory />
-            </Card>
-          </Col>
-          <Col span={24}>
-            <Card>
-              <Space style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-                <Button type="primary" icon={<PlusOutlined />} onClick={showModal} size="large">
-                  Thêm sản phẩm
-                </Button>
-                <Button icon={<DownloadOutlined />} size="large">
-                  Tải xuống tất cả
-                </Button>
-              </Space>
-              <ProductsTable />
-            </Card>
-          </Col>
-        </Row>
+        <Spin spinning={loading}>
+          <Row gutter={[24, 24]}>
+            <Col span={24}>
+              <Card>
+                <Title level={2} style={{ marginBottom: 0 }}>
+                  <BarChartOutlined style={{ marginRight: '12px', color: '#1890ff' }} />
+                  Tổng quan tồn kho
+                </Title>
+              </Card>
+            </Col>
+            <Col span={24}>
+              <Card>
+                <OverallInventory />
+              </Card>
+            </Col>
+            <Col span={24}>
+              <Card>
+                <Space style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+                  <Button type="primary" icon={<PlusOutlined />} onClick={showModal} size="large">
+                    Thêm sản phẩm
+                  </Button>
+                  <Button icon={<DownloadOutlined />} size="large">
+                    Tải xuống tất cả
+                  </Button>
+                </Space>
+                <ProductsTable />
+              </Card>
+            </Col>
+          </Row>
+        </Spin>
       </Content>
       
       <ProductForm 

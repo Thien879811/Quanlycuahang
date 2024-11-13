@@ -28,6 +28,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->decimal('price', 10);
             $table->integer('quantity_receipt')->default(0);
+            $table->integer('quantity_defective')->default(0);
             $table->string('status')->nullable(); 
             $table->string('note')->nullable();
             $table->integer('return_quantity')->nullable()->default(0);

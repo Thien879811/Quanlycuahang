@@ -235,8 +235,8 @@ const Home = () => {
 
 	const handleCreateNewCustomer = () => {
 		createCustomer({ name: newCustomerName, phone: customerPhone, diem: 0 });
-		updateCustomer(customer.id);
 		handleCloseNewCustomerDialog();
+		updateCustomer(customer.id);
 	};
 
 	const handleIncreaseQuantity = async (productId) => {

@@ -21,5 +21,8 @@ class CustomerService {
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
     }
+    async getInfoBuy(id) {
+        return (await this.api.get(`/${id}/info-buy`)).data;
+    }
 }
 export default new CustomerService();

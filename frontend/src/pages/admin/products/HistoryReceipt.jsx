@@ -87,7 +87,7 @@ const HistoryReceipt = () => {
     const [displayedReceipts, setDisplayedReceipts] = useState([]);
     const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
     const [selectedReceipt, setSelectedReceipt] = useState(null);
-    const [returnStatus, setReturnStatus] = useState('all');
+    const [returnStatus, setReturnStatus] = useState('returned');
 
     useEffect(() => {
         fetchAllReceipts();
@@ -120,14 +120,12 @@ const HistoryReceipt = () => {
 
     const filterReceipts = (status) => {
         let filtered = [...receipts];
-        
-        if (status !== 'all') {
+        if (status === 'returned') {
             filtered = receipts.filter(receipt => {
                 const hasReturnedItems = receipt.details.some(detail => detail.status === 'Đã trả hàng');
-                return status === 'returned' ? hasReturnedItems : !hasReturnedItems;
+                return hasReturnedItems;
             });
         }
-
         setFilteredReceipts(filtered);
         setPage(0);
     };
@@ -136,7 +134,6 @@ const HistoryReceipt = () => {
         try {
             const response = await ReceiptService.getReceiptReturn(timeRange, customDate);
             const data = handleResponse(response);
-            console.log(data);
             if (data.success) {
                 const processedReceipts = data.goods_receipts.map(receipt => ({
                     ...receipt,
@@ -153,7 +150,7 @@ const HistoryReceipt = () => {
                 }));
 
                 setReceipts(processedReceipts);
-                filterReceipts(returnStatus);
+                filterReceipts('returned');
                 setError('');
             } else {
                 setError('Không thể tải danh sách phiếu nhập hàng');
@@ -197,21 +194,6 @@ const HistoryReceipt = () => {
                                     <MenuItem value="week">Tuần này</MenuItem>
                                     <MenuItem value="month">Tháng này</MenuItem>
                                     <MenuItem value="custom">Tùy chọn</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} md={2}>
-                            <FormControl fullWidth variant="outlined">
-                                <InputLabel>Trạng thái trả hàng</InputLabel>
-                                <Select
-                                    value={returnStatus}
-                                    onChange={handleReturnStatusChange}
-                                    label="Trạng thái trả hàng"
-                                    sx={{ borderRadius: '8px' }}
-                                >
-                                    <MenuItem value="all">Tất cả</MenuItem>
-                                    <MenuItem value="returned">Đã trả hàng</MenuItem>
-                                    <MenuItem value="not_returned">Chưa trả hàng</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -267,7 +249,7 @@ const HistoryReceipt = () => {
                                                 #{receipt.id}
                                             </Typography>
                                         </TableCell>
-                                        <TableCell>{new Date(receipt.import_date).toLocaleDateString('vi-VN')}</TableCell>
+                                        <TableCell>{dayjs(receipt.import_date).format('DD/MM/YYYY')}</TableCell>
                                         <TableCell>{receipt.supplier?.factory_name || 'N/A'}</TableCell>
                                         <TableCell>
                                             {receipt.check_date ? 
@@ -331,12 +313,12 @@ const HistoryReceipt = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {selectedReceipt?.details?.map((detail) => (
+                                    {selectedReceipt?.details?.filter(detail => detail.status === 'Đã trả hàng').map((detail) => (
                                         <TableRow key={detail.id}>
                                             <TableCell>{detail.product?.product_name}</TableCell>
-                                            <TableCell align="right">{detail.quantity}</TableCell>
+                                            <TableCell align="right">{detail.return_quantity || detail.quantity}</TableCell>
                                             <TableCell align="right">{detail.price?.toLocaleString()} VNĐ</TableCell>
-                                            <TableCell align="right">{(detail.quantity * detail.price)?.toLocaleString()} VNĐ</TableCell>
+                                            <TableCell align="right">{((detail.return_quantity || detail.quantity) * detail.price)?.toLocaleString()} VNĐ</TableCell>
                                             <TableCell align="right">
                                                 <Chip
                                                     label={detail.status}

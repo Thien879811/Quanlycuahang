@@ -22,7 +22,7 @@ const Pay = () => {
 
     useEffect(() => {
         if (amountPaid) {
-            const totalAmount = getTotalAmount - ( getTotalDiscount + orders?.discount ? orders.discount/100 * (getTotalAmount - getTotalDiscount) : 0);
+            const totalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * (getTotalAmount - getTotalDiscount) : 0);
             setChange(parseFloat(amountPaid) - totalAmount);
         }
     }, [amountPaid, getTotalAmount, getTotalDiscount, orders]);

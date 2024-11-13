@@ -174,7 +174,8 @@ Route::controller(CustomerController::class)->group(function () {
     Route::post('/customer', 'create');
     Route::put('/customer/{id}', 'update');
     Route::get('/customer/{id}', 'get');
-
+    Route::get('/customer', 'getAll');
+    Route::get('/customer/{id}/info-buy', 'getInfoBuy');
 });
 
 Route::controller(OrdersController::class)->group(function () {

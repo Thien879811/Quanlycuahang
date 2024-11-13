@@ -17,6 +17,7 @@ class GoodsReceiptDetail extends Model
         'quantity',
         'price',
         'quantity_receipt',
+        'quantity_defective',
         'note',
         'production_date',
         'expiration_date',
