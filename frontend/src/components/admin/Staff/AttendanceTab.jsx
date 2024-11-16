@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Table, DatePicker, TimePicker, Button, message, Space, Select, Row, Col, Modal, Form, Input, Card, Typography } from 'antd';
-import { PlusOutlined, LeftOutlined, RightOutlined, EditOutlined, CalendarOutlined, FileExcelOutlined } from '@ant-design/icons';
+import { Table, DatePicker, TimePicker, Button, message, Space, Select, Row, Col, Modal, Form, Input, Card, Typography, Alert } from 'antd';
+import { PlusOutlined, LeftOutlined, RightOutlined, EditOutlined, CalendarOutlined, FileExcelOutlined, CheckOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import employeeService from '../../../services/employee.service';
 import { handleResponse } from '../../../functions';
@@ -9,7 +9,7 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
 
-const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek }) => {
+const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek, loadData }) => {
     
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [isAddAttendanceModalVisible, setIsAddAttendanceModalVisible] = useState(false);
@@ -17,6 +17,29 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek }) =>
     const [editingAttendance, setEditingAttendance] = useState(null);
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+
+    // Lọc ra các yêu cầu nghỉ phép chưa được duyệt
+    const pendingLeaveRequests = attendances?.filter(a => a.status === '-1') || [];
+
+    const handleApproveLeave = async (attendance) => {
+        try {
+            const updatedAttendance = {
+                ...attendance,
+                status: '1' // Cập nhật trạng thái sau khi duyệt
+            };
+            const response = await employeeService.updateAttendance(attendance.id, updatedAttendance);
+            const dataResponse = handleResponse(response);
+            if (dataResponse.success) {
+                message.success('Đã duyệt đơn nghỉ phép');
+                loadData();
+            } else {
+                message.error(dataResponse.message);
+            }
+        } catch (error) {
+            console.error('Error approving leave request:', error);
+            message.error('Không thể duyệt đơn nghỉ phép');
+        }
+    };
 
     const handleEdit = (record) => {
         setEditingAttendance(record);
@@ -27,6 +50,7 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek }) =>
             reason: record.reason
         });
         setIsEditModalVisible(true);
+        loadData();
     };
 
     const handleEditModalOk = async () => {
@@ -44,6 +68,7 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek }) =>
             if (dataResponse.success) {
                 message.success(dataResponse.message);
                 setIsEditModalVisible(false);
+                loadData();
             } else {
                 message.error(dataResponse.message);
             }
@@ -80,6 +105,7 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek }) =>
                 message.success(dataResponse.message);
                 setIsAddAttendanceModalVisible(false);
                 form.resetFields();
+                loadData();
             } else {
                 message.error(dataResponse.message);
             }
@@ -183,9 +209,6 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek }) =>
                                         <CalendarOutlined style={{ marginRight: 4 }} />
                                         {`${attendance.time_start} - ${attendance.time_end}`}
                                     </Text>
-                                    <Text type="secondary" style={{ fontSize: '11px' }}>
-                                        {attendance.status}
-                                    </Text>
                                     {attendance.reason && (
                                         <Text type="secondary" style={{ fontSize: '11px' }}>
                                             {attendance.reason}
@@ -215,6 +238,35 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek }) =>
     return (
         <Card style={{ width: '100%', borderRadius: '6px' }}>
             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                {pendingLeaveRequests.length > 0 && (
+                    <Alert
+                        message={
+                            <Space direction="vertical">
+                                <Text strong>Yêu cầu nghỉ phép chờ duyệt:</Text>
+                                {pendingLeaveRequests.map(request => {
+                                    const employee = employees.find(emp => emp.id === request.employee_id);
+                                    return (
+                                        <Space key={request.id}>
+                                            <Text>{employee?.name} - {moment(request.date).format('DD/MM/YYYY')}</Text>
+                                            <Text type="secondary">Lý do: {request.reason}</Text>
+                                            <Button
+                                                type="primary"
+                                                size="small"
+                                                icon={<CheckOutlined />}
+                                                onClick={() => handleApproveLeave(request)}
+                                            >
+                                                Duyệt
+                                            </Button>
+                                        </Space>
+                                    );
+                                })}
+                            </Space>
+                        }
+                        type="info"
+                        showIcon
+                    />
+                )}
+
                 <Row justify="space-between" align="middle">
                     <Col>
                         <Title level={4} style={{ fontSize: '18px', margin: 0 }}>Chấm công nhân viên</Title>

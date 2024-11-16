@@ -178,13 +178,41 @@ const orderUtils = () => {
         });
     }, [updateDiscount]);
 
-    const updateVoucher = (voucher_id, discount) => {
+    // Hàm updateVoucher dùng để cập nhật voucher cho đơn hàng
+    const updateVoucher = (voucher, discount) => {
+        // Sử dụng setOrders để cập nhật state orders
         setOrders(prevOrders => {
+            // Lấy tổng tiền đơn hàng trước khi áp dụng voucher
+            const totalAmount = getTotalAmount;
+
+            // Kiểm tra điều kiện giá trị đơn hàng tối thiểu
+            // Nếu đơn hàng không đạt giá trị tối thiểu thì hiện thông báo và giữ nguyên đơn hàng cũ
+            if (voucher.min_value && totalAmount < parseFloat(voucher.min_value)) {
+                alert(`Đơn hàng phải có giá trị tối thiểu ${voucher.min_value.toLocaleString()}đ để sử dụng voucher này`);
+                return prevOrders;
+            }
+
+            // Tính số tiền được giảm dựa trên phần trăm giảm giá
+            let discountAmount = (totalAmount * discount) / 100;
+
+            // Kiểm tra và áp dụng giới hạn giảm giá tối đa nếu có
+            if (voucher.max_value) {
+                const maxValue = parseFloat(voucher.max_value);
+                // Lấy giá trị nhỏ hơn giữa số tiền giảm và giới hạn tối đa
+                discountAmount = Math.min(discountAmount, maxValue);
+                // Tính lại phần trăm giảm giá dựa trên số tiền giảm đã được giới hạn
+                discount = (discountAmount / totalAmount) * 100;
+            }
+
+            // Tạo đơn hàng mới với thông tin voucher đã cập nhật
             const newOrders = {
                 ...prevOrders,
-                voucher_id: voucher_id,
-                discount: discount
+                voucher_id: voucher.id, // Lưu ID của voucher
+                voucher_code: voucher.code, // Lưu mã voucher
+                discount: parseFloat(discount.toFixed(2)) // Lưu phần trăm giảm giá, làm tròn 2 chữ số thập phân
             };
+
+            // Lưu đơn hàng mới vào localStorage
             localStorage.setItem('order', JSON.stringify(newOrders));
             return newOrders;
         });
@@ -242,7 +270,6 @@ const orderUtils = () => {
                     discount: detail.discount || 0
                 }))
             };
-            console.log(dataRequest);
             const response = await orderService.update(id, dataRequest);
         }catch(error){
             console.log(error);

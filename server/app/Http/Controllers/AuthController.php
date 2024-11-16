@@ -8,7 +8,8 @@ use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-
+use App\Models\Customer;
+use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
     public function login(LoginRequest $request)
@@ -106,5 +107,100 @@ class AuthController extends Controller
             'valid' => $user ? true : false,
             'user' => $user
         ]);
-    }   
+    }
+    
+    public function loginCustomer(Request $request)
+    {
+        $data = $request->all();
+        $customer = Customer::where('phone', $data['phone'])->first();
+
+        if (!$customer) {
+            return response()->json([
+                'message' => 'Không tìm thấy khách hàng',
+                'status' => 404
+            ], 404);
+        }
+
+        if (!$customer->password && !$data['password']) {
+            return response()->json([
+                'message' => 'Vui lòng tạo mật khẩu',
+                'requires_password' => true,
+                'status' => 403,
+                'data' => [
+                    'requires_password' => true,
+                    'message' => 'Vui lòng tạo mật khẩu'
+                ]
+            ], 403);
+        }
+
+        if (!$customer->password && $data['password']) {
+            $customer->password = bcrypt($data['password']);
+            $customer->save();
+            return response()->json([
+                'customer' => $customer,
+                'message' => 'Tạo mật khẩu thành công'
+            ]);
+        }
+
+        if ($customer->password && !$data['password']) {
+            return response()->json([
+                'message' => 'Vui lòng nhập mật khẩu',
+                'requires_password' => true,
+                'status' => 403,
+                'data' => [
+                    'requires_password' => true,
+                    'message' => 'Vui lòng nhập mật khẩu'
+                ]
+            ], 403);
+        }
+
+        if ($customer->password && !Hash::check($data['password'], $customer->password)) {
+            return response()->json([
+                'message' => 'Mật khẩu không đúng',
+                'status' => 401,
+                'data' => [
+                    'message' => 'Mật khẩu không đúng'
+                ]
+            ], 401);
+        }
+
+
+        return response()->json([
+            'customer' => $customer,
+            'message' => 'Đăng nhập thành công'
+        ]);
+    }
+
+    public function registerCustomer(Request $request)
+    {
+        $data = $request->validate([
+            'phone' => 'required',
+            'name' => 'required|string', 
+            'password' => 'required|min:6',
+        ]);
+
+        // Kiểm tra số điện thoại đã tồn tại chưa
+        $existingCustomer = Customer::where('phone', $data['phone'])->first();
+        if ($existingCustomer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Số điện thoại đã được đăng ký'
+            ], 400);
+        }
+
+        $data['password'] = bcrypt($data['password']);
+        
+        $customer = Customer::create([
+            'phone' => $data['phone'],
+            'name' => $data['name'],
+            'password' => $data['password'],
+            'diem' => 0,
+        ]);
+        
+        return response()->json([
+            'customer' => $customer,
+            'success' => true,
+            'message' => 'Đăng ký thành công'
+        ], 201);
+    }
 }

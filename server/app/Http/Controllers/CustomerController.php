@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class CustomerController extends Controller
 {
@@ -112,5 +113,32 @@ class CustomerController extends Controller
             ],
             'customer_info' => $customer
         ]);
+    }
+
+    public function changePassword(Request $request){
+        $validated = $request->validate([
+            'customer_id' => 'required',
+            'old_password' => 'required',
+            'new_password' => 'required',
+        ]);
+
+        $customer = Customer::find($validated['customer_id']);
+        if (!$customer) {
+            return response()->json(['error' => 'Không tìm thấy khách hàng'], 404);
+        }
+
+        if (!Hash::check($validated['old_password'], $customer->password)) {
+            return response()->json(['error' => 'Mật khẩu hiện tại không đúng'], 400);
+        }
+
+        $customer->password = Hash::make($validated['new_password']);
+        $customer->save();
+
+        return response()->json(['message' => 'Đổi mật khẩu thành công']);
+    }
+
+    public function getInfo($id){
+        $customer = Customer::find($id);
+        return response()->json($customer);
     }
 }

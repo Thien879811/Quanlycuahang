@@ -51,7 +51,10 @@ class LichLamViecController extends Controller
 
     public function getByStaffId($staffId)
     {
-        $lichLamViec = LichLamViec::where('staff_id', $staffId)->get();
+        $currentMonth = now()->format('Y-m');
+        $lichLamViec = LichLamViec::where('staff_id', $staffId)
+            ->whereRaw("DATE_FORMAT(date, '%Y-%m') = ?", [$currentMonth])
+            ->get();
         return response()->json($lichLamViec);
     }
 

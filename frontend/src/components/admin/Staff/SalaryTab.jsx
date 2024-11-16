@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, message, Modal, Form, Input, DatePicker, Select, Space, InputNumber } from 'antd';
 import moment from 'moment';
 import EmployeeService from '../../../services/employee.service';
-import {fetchSalaries} from '../../../pages/admin/api/index';
 
 const { Option } = Select;
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Promotion;
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\Customer;
 
 class PromotionController extends Controller
 {
@@ -120,6 +121,92 @@ class PromotionController extends Controller
         $promotion->save();
         return response()->json($promotion);
     }
+
+    public function getPromotionsCustomer()
+    {
+        $promotions = Promotion::with('product')
+            ->whereNull('customer_id')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->get();
+        return response()->json($promotions);
+    }
+
+    public function createRedeemPoint(Request $request)
+    {
+        $voucher = $request->input('voucher');
+        $customerId = $request->input('customer_id');
+
+        // Tìm khách hàng và kiểm tra điểm
+        $customer = Customer::find($customerId);
+        if (!$customer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy khách hàng'
+            ], 404);
+        }
+
+        if ($customer->diem < $voucher['points']) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Không đủ điểm để đổi voucher'
+            ], 400);
+        }
+
+        $promotion = new Promotion();
+        $promotion->name = 'Voucher giảm giá ' . $voucher['discount'];
+        $promotion->catalory = '2'; // Voucher đổi điểm
+        
+        // Tạo mã voucher ngẫu nhiên gồm chữ và số
+        $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $code = '';
+        for ($i = 0; $i < 8; $i++) {
+            $code .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        $promotion->code = $code;
+        
+        $promotion->discount_percentage = (float) str_replace('%', '', $voucher['discount']);
+        $promotion->max_value = str_replace('.000đ', '', $voucher['max_value']);
+        $promotion->min_value = str_replace('.000đ', '', $voucher['minSpend']);
+        $promotion->start_date = now();
+        $promotion->customer_id = $customerId;
+        $promotion->quantity = 1;
+        $promotion->end_date = now()->addDays(30);
+        $promotion->save();
+
+        // Cập nhật điểm khách hàng
+        $customer->diem = $customer->diem - $voucher['points'];
+        $customer->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đổi điểm thành công',
+            'data' => [
+                'promotion' => $promotion,
+                'customer' => $customer
+            ]
+        ]);
+    }
+    public function getPromotionByCustomerId($customerId)
+    {
+        $promotions = Promotion::where('customer_id', $customerId)
+                              ->where('quantity', '>', 0)
+                              ->where('end_date', '>=', now())
+                              ->get();
+
+        if ($promotions->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy voucher nào'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $promotions
+        ]);
+    }
+
 }
 
 

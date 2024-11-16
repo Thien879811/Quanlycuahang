@@ -30,14 +30,7 @@ use Illuminate\Support\Facades\Route;
 */ 
 
 
-Route::post('/employee/cham-cong',[ChamCongController::class,'create']);
-Route::put('/employee/cham-cong/{id}',[ChamCongController::class,'update']);
-Route::post('employee/check-in',[ChamCongController::class,'create']);
-Route::put('employee/check-out/{id}',[ChamCongController::class,'update']);
-Route::get('employee/cham-cong/{staff_id}/{day}',[ChamCongController::class,'getByStaffIdAndDay']);
-Route::get('employee/cham-cong',[ChamCongController::class,'index']);
-Route::put('employee/{id}',[ChamCongController::class,'update']);
-Route::get('/employee/attendance',[ChamCongController::class,'getAttendance']);
+
 
 Route::controller(PromotionController::class)->group(function () {
     Route::get('/promotion', 'getPromotion');
@@ -46,6 +39,10 @@ Route::controller(PromotionController::class)->group(function () {
     Route::put('/promotion/{id}', 'update');
     Route::put('/promotion/voucher/quantity/{id}', 'updateQuantity');
     Route::get('/promotion/product', 'Promotion');
+    Route::get('/promotions/customer', 'getPromotionsCustomer');
+    Route::get('/promotions/customer/{id}', 'getPromotionDetail');
+    Route::post('/promotions/redeem-point', 'createRedeemPoint');
+    Route::get('/promotions/customer/{id}', 'getPromotionByCustomerId');
 });
 
 
@@ -100,14 +97,27 @@ Route::delete('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'dele
 Route::get('employee/lich-lam-viec/{staff_id}',[LichLamViecController::class,'getByStaffId']);
 
 Route::get('employee/',[SatffController::class,'getAll']);
-Route::get('employee/{user_id}',[SatffController::class,'getInfoEmployee']);
+Route::get('/employee/{user_id}',[SatffController::class,'getInfoEmployee']);
 Route::post('/employee/salary',[SatffController::class,'createSalary']);
 Route::get('/employee/salary',[SatffController::class,'getAllSalary']);
+Route::put('/employee/edit/{id}',[SatffController::class,'update']);
 
+Route::post('/employee/cham-cong',[ChamCongController::class,'create']);
+Route::put('/employee/cham-cong/{id}',[ChamCongController::class,'update']);
+Route::post('/employee/check-in',[ChamCongController::class,'create']);
+Route::put('/employee/check-out/{id}',[ChamCongController::class,'update']);
+Route::get('/employee/cham-cong/{staff_id}/{day}',[ChamCongController::class,'getByStaffIdAndDay']);
+Route::get('/employee/cham-cong',[ChamCongController::class,'index']);
+Route::put('/employee/{id}',[ChamCongController::class,'update']);
+Route::get('/employee/attendance/{month?}',[ChamCongController::class,'getAttendance']);
+Route::get('/employee/attendance/{id}/{month?}',[ChamCongController::class,'getAttendanceByMonth']);
+Route::post('/employee/leave-request',[ChamCongController::class,'createLeaveRequest']);
 
 
 Route::post('login',[AuthController::class,'login']);
+Route::post('login-customer',[AuthController::class,'loginCustomer']);
 Route::post('register',[AuthController::class,'register']);
+Route::post('register-customer',[AuthController::class,'registerCustomer']);
 Route::post('/logout',[AuthController::class,'logout']);
 
 Route::get('/product',[ProductController::class,'getAll']);
@@ -176,12 +186,15 @@ Route::controller(CustomerController::class)->group(function () {
     Route::get('/customer/{id}', 'get');
     Route::get('/customer', 'getAll');
     Route::get('/customer/{id}/info-buy', 'getInfoBuy');
+    Route::put('/customer/change-password', 'changePassword');
+    Route::get('/customer/{id}/info', 'getInfo');
 });
 
 Route::controller(OrdersController::class)->group(function () {
     Route::get('/orders', 'getAll');
     // Route::post('/order', 'create');
 });
+
 Route::post('/orders', [OrdersController::class, 'create']);
 Route::put('/orders/{order_id}', [OrdersController::class, 'update']);
 Route::get('/orders/order-products',[OrdersController::class,'getOrders']);
@@ -199,6 +212,7 @@ Route::post('/orders/add-discount/{order_id}', [OrdersController::class, 'addDis
 Route::post('/orders/cancel/{order_id}', [OrdersController::class, 'cancelOrder']);
 Route::put('/orders/accept-cancel/{order_id}', [OrdersController::class, 'acceptCancel']);
 Route::put('/orders/cancel-request/{order_id}', [OrdersController::class, 'cancelRequest']);
+Route::get('/orders/customer/{id}/{date}', [OrdersController::class, 'getOrdersByCustomerId']);
 
 
 
@@ -214,7 +228,6 @@ Route::get('/hang-su-dung-product',[HangSuDungController::class,'get']);
 
 
 
-
-///php artisan serve --host=10.0.2.16 
+///php artisan serve --host=192.168.101.11
 
 

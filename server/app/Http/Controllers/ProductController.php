@@ -317,4 +317,9 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    public function get(){
+        $product = Product::all();
+        return response()->json($product);
+    }
 }

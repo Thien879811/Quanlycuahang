@@ -4,9 +4,23 @@ namespace App\Http\Controllers;
 use App\Models\Staff;
 use App\Models\ChamCong;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ChamCongController extends Controller
 {
+    public function createLeaveRequest(Request $request)
+    {
+        $leaveRequest = $request->all();
+        $newLeaveRequest = ChamCong::create([
+            'staff_id' => $leaveRequest['staff_id'],
+            'date' => $leaveRequest['date'],
+            'time_start' => '00:00:00',
+            'time_end' => '00:00:00',
+            'reason' => $leaveRequest['reason'],
+            'status' => $leaveRequest['status']
+        ]);
+        return response()->json($newLeaveRequest);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -63,7 +77,7 @@ class ChamCongController extends Controller
             ], 404);
         }
 
-        $chamCong->update($request->all());
+        $chamCong->time_end = $request->time_end;
         $chamCong->save();
 
         return response()->json([
@@ -85,9 +99,26 @@ class ChamCongController extends Controller
         ]);
     }
 
-    public function getAttendance(Request $request)
+    public function getAttendance(Request $request,$month = null)
     {
-        $attendance = ChamCong::with('staff')->get();
+        $attendance = ChamCong::with('staff');
+        if ($month) {
+            $attendance->whereMonth('date', $month);
+        }
+        $attendance = $attendance->get();
         return response()->json($attendance);
+    }
+
+    public function getAttendanceByMonth($id, $month = null)
+    {
+        $attendance = ChamCong::with('staff')
+            ->where('staff_id', $id)
+            ->whereMonth('date', $month)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $attendance
+        ]);
     }
 }

@@ -15,4 +15,9 @@ class customer extends Model
     {
         return $this->hasMany(Orders::class)->with(['details.product'])->orderBy('created_at', 'desc');
     }
+
+    public function tokens()
+    {
+        return $this->morphMany('Laravel\Sanctum\PersonalAccessToken', 'tokenable');
+    }
 }

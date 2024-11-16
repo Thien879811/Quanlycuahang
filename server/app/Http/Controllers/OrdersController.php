@@ -150,7 +150,6 @@ class OrdersController extends Controller
         } else {
             DetailOrder::where('order_id', $order->id)->delete();
         }
-
         return response()->json($order, 201);
     }
 
@@ -233,7 +232,7 @@ class OrdersController extends Controller
                 $existingDetail->delete();
             }
         }
-
+        Promotion::where('code', $order->voucher_code)->update(['quantity' => DB::raw('quantity - 1')]);
         return response()->json($order, 200);
     }
 
@@ -570,8 +569,39 @@ class OrdersController extends Controller
             }
         }
     }
+    public function getOrdersByCustomerId($id, $date)
+    {
+        $orders = Orders::with(['details.product', 'pays'])
+            ->where('customer_id', $id)
+            ->whereDate('created_at', $date)
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'total' => $order->details->sum(function($detail) {
+                        return $detail->dongia * $detail->soluong - $detail->discount;
+                    }),
+                    'created_at' => $order->created_at,
+                    'status' => $order->status,
+                    'pay' => $order->pays->tt_hinhthuc,
+                    'voucher' => $order->voucher_code,
+                    'discount' => $order->discount,
+                    'items' => $order->details->map(function($detail) {
+                        return [
+                            'product_name' => $detail->product->product_name,
+                            'quantity' => $detail->soluong,
+                            'price' => $detail->dongia,
+                            'discount' => $detail->discount
+                        ];
+                    })
+                ];
+            });
 
-   
+        return response()->json([
+            'status' => 'success',
+            'data' => $orders
+        ]);
+    }
 
 }
 

@@ -17,7 +17,7 @@ class ChamCongSeeder extends Seeder
     public function run()
     {
         $staff_ids = Staff::pluck('id')->toArray();
-        $months = range(9, 12);
+        $months = range(9, 11);
         
         foreach ($staff_ids as $staff_id) {
             foreach ($months as $month) {

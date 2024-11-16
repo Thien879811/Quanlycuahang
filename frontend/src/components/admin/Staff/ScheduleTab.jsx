@@ -5,7 +5,6 @@ import moment from 'moment';
 import AddEmployeeModal from './Modal/AddEmployeeModal';
 import AddTaskModal from './Modal/AddTaskModal';
 import employeeService from '../../../services/employee.service';
-import { fetchSchedules } from '../../../pages/admin/api';
 import { handleResponse } from '../../../functions';
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -49,7 +48,6 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
       if(dataResponse.success) {
         message.success(dataResponse.message);
         setIsEditModalVisible(false);
-        fetchSchedules();
         form.resetFields();
         setEditingSchedule(null);
       } else {

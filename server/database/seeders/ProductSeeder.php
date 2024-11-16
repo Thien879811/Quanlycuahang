@@ -23,7 +23,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/sting-dau.jpg',
+            'image' => 'http://192.168.101.11:8000/images/sting-dau.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -35,7 +35,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/1725687730.jpg',
+            'image' => 'http://192.168.101.11:8000/images/1725687730.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -47,7 +47,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/pepsi-chai.jpg',
+            'image' => 'http://192.168.101.11:8000/images/pepsi-chai.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -59,7 +59,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/pepsi-lon.jpg',
+            'image' => 'http://192.168.101.11:8000/images/pepsi-lon.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -71,7 +71,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/mirinda-lon.jpg',
+            'image' => 'http://192.168.101.11:8000/images/mirinda-lon.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -83,7 +83,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/xaxi-chai.jpg',
+            'image' => 'http://192.168.101.11:8000/images/xaxi-chai.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -95,7 +95,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/olong.jpg',
+            'image' => 'http://192.168.101.11:8000/images/olong.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -107,7 +107,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/coca.jpg',
+            'image' => 'http://192.168.101.11:8000/images/coca.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -119,7 +119,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/coca-lon.jpg',
+            'image' => 'http://192.168.101.11:8000/images/coca-lon.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -131,7 +131,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/fanta-cam-600ml.jpg',
+            'image' => 'http://192.168.101.11:8000/images/fanta-cam-600ml.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -143,7 +143,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 1,
-            'image' => 'http://127.0.0.1:8000/images/fanta-lon-330.jpg',
+            'image' => 'http://192.168.101.11:8000/images/fanta-lon-330.jpg',
             'factory_id' => 1,
             'purchase_price' => 7000,
         ]);
@@ -158,7 +158,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 12000,
             'catalogy_id' => 2,
-            'image' => 'http://127.0.0.1:8000/images/hao-hao-ly.png',
+            'image' => 'http://192.168.101.11:8000/images/hao-hao-ly.png',
             'factory_id' => 2,
             'purchase_price' => 7000,
         ]);
@@ -170,7 +170,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 12000,
             'catalogy_id' => 2,
-            'image' => 'http://127.0.0.1:8000/images/modern-tom.png',
+            'image' => 'http://192.168.101.11:8000/images/modern-tom.png',
             'factory_id' => 2,
             'purchase_price' => 7000,
         ]);
@@ -182,7 +182,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 12000,
             'catalogy_id' => 2,
-            'image' => 'http://127.0.0.1:8000/images/modern-cua.jpg',
+            'image' => 'http://192.168.101.11:8000/images/modern-cua.jpg',
             'factory_id' => 2,
             'purchase_price' => 7000,
         ]);
@@ -194,7 +194,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 18000,
             'catalogy_id' => 2,
-            'image' => 'http://127.0.0.1:8000/images/omachi-xot.jpg',
+            'image' => 'http://192.168.101.11:8000/images/omachi-xot.jpg',
             'factory_id' => 2,
             'purchase_price' => 13000,
         ]);
@@ -206,7 +206,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 12000,
             'catalogy_id' => 2,
-            'image' => 'http://127.0.0.1:8000/images/omachi-bo.jpg',
+            'image' => 'http://192.168.101.11:8000/images/omachi-bo.jpg',
             'factory_id' => 2,
             'purchase_price' => 5000,
         ]);
@@ -218,7 +218,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 12000,
             'catalogy_id' => 2,
-            'image' => 'http://127.0.0.1:8000/images/hao-hao-tomyum.jpg',
+            'image' => 'http://192.168.101.11:8000/images/hao-hao-tomyum.jpg',
             'factory_id' => 2,
             'purchase_price' => 7000,
         ]);
@@ -230,7 +230,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 18000,
             'catalogy_id' => 2,
-            'image' => 'http://127.0.0.1:8000/images/pho-tron.jpg',
+            'image' => 'http://192.168.101.11:8000/images/pho-tron.jpg',
             'factory_id' => 2,
             'purchase_price' => 12000,
         ]);
@@ -242,7 +242,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 14000,
             'catalogy_id' => 2,
-            'image' => 'http://127.0.0.1:8000/images/mi-shin.jpg',
+            'image' => 'http://192.168.101.11:8000/images/mi-shin.jpg',
             'factory_id' => 2,
             'purchase_price' => 9000,
         ]);
@@ -254,7 +254,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 12000,
             'catalogy_id' => 2,
-            'image' => 'http://127.0.0.1:8000/images/mi-meo-hs.jpg',
+            'image' => 'http://192.168.101.11:8000/images/mi-meo-hs.jpg',
             'factory_id' => 2,
             'purchase_price' => 7000,
         ]);
@@ -266,7 +266,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 16000,
             'catalogy_id' => 2,
-            'image' => 'http://127.0.0.1:8000/images/nho-mai.jpg',
+            'image' => 'http://192.168.101.11:8000/images/nho-mai.jpg',
             'factory_id' => 2,
             'purchase_price' => 10000,
         ]);
@@ -282,7 +282,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 6000,
             'catalogy_id' => 3,
-            'image' => 'http://127.0.0.1:8000/images/poca-tom.jpg',
+            'image' => 'http://192.168.101.11:8000/images/poca-tom.jpg',
             'factory_id' => 3,
             'purchase_price' => 3000,
         ]);
@@ -295,7 +295,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 10000,
             'catalogy_id' => 3,
-            'image' => 'http://127.0.0.1:8000/images/poca-bo-ll.jpg',
+            'image' => 'http://192.168.101.11:8000/images/poca-bo-ll.jpg',
             'factory_id' => 3,
             'purchase_price' => 6000,
         ]);
@@ -307,7 +307,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 6000,
             'catalogy_id' => 3,
-            'image' => 'http://127.0.0.1:8000/images/poca-ga.jpg',
+            'image' => 'http://192.168.101.11:8000/images/poca-ga.jpg',
             'factory_id' => 3,
             'purchase_price' => 3000,
         ]);
@@ -319,7 +319,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 6000,
             'catalogy_id' => 3,
-            'image' => 'http://127.0.0.1:8000/images/poca-muc.jpg',
+            'image' => 'http://192.168.101.11:8000/images/poca-muc.jpg',
             'factory_id' => 3,
             'purchase_price' => 3000,
         ]);
@@ -331,7 +331,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 6000,
             'catalogy_id' => 3,
-            'image' => 'http://127.0.0.1:8000/images/oishi-bap.jpeg',
+            'image' => 'http://192.168.101.11:8000/images/oishi-bap.jpeg',
             'factory_id' => 3,
             'purchase_price' => 3000,
         ]);
@@ -343,7 +343,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 6000,
             'catalogy_id' => 3,
-            'image' => 'http://127.0.0.1:8000/images/oishi-cachua.jpg',
+            'image' => 'http://192.168.101.11:8000/images/oishi-cachua.jpg',
             'factory_id' => 3,
             'purchase_price' => 3000,
         ]);
@@ -355,7 +355,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 6000,
             'catalogy_id' => 3,
-            'image' => 'http://127.0.0.1:8000/images/oishi-hanh.jpg',
+            'image' => 'http://192.168.101.11:8000/images/oishi-hanh.jpg',
             'factory_id' => 3,
             'purchase_price' => 3000,
         ]);
@@ -367,7 +367,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 6000,
             'catalogy_id' => 3,
-            'image' => 'http://127.0.0.1:8000/images/oishi-muc.jpg',
+            'image' => 'http://192.168.101.11:8000/images/oishi-muc.jpg',
             'factory_id' => 3,
             'purchase_price' => 3000,
         ]);
@@ -379,7 +379,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 6000,
             'catalogy_id' => 3,
-            'image' => 'http://127.0.0.1:8000/images/oishi-cay.jpg',
+            'image' => 'http://192.168.101.11:8000/images/oishi-cay.jpg',
             'factory_id' => 3,
             'purchase_price' => 3000,
         ]);
@@ -391,7 +391,7 @@ class ProductSeeder extends Seeder
             'quantity' => 100,
             'selling_price' => 6000,
             'catalogy_id' => 3,
-            'image' => 'http://127.0.0.1:8000/images/oishi-phomat.jpg',
+            'image' => 'http://192.168.101.11:8000/images/oishi-phomat.jpg',
             'factory_id' => 3,
             'purchase_price' => 3000,
         ]);

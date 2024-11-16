@@ -11,9 +11,20 @@ use Carbon\Carbon;
 
 class SatffController extends Controller
 {
+    public function update(Request $request, $id){
+        $data = $request->all();
+        $employee = Staff::find($id);
+        $employee->names = $data['names'];
+        $employee->age = $data['age']; 
+        $employee->address = $data['address'];
+        $employee->phone = $data['phone'];
+        $employee->gioitinh = $data['gioitinh'];
+        $employee->save();
+        return response()->json(['success' => true, 'message' => 'Cập nhật thông tin nhân viên thành công', 'employee' => $employee]);
+    }
     // Phương thức này lấy thông tin của một nhân viên dựa trên user_id
     public function getInfoEmployee($user_id){
-        $employee = Staff::where('user_id', $user_id)->first();
+        $employee = Staff::find($user_id);
         return response()->json($employee);
     }
 

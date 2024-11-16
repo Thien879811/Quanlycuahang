@@ -217,7 +217,8 @@ const Home = () => {
 		);
 
 		if (voucher) {
-			updateVoucher(voucher.code, voucher.discount_percentage);
+			console.log(voucher.code);
+			updateVoucher(voucher, voucher.discount_percentage);
 			handleCloseVoucherDialog();
 		} else {
 			alert('Mã voucher không hợp lệ hoặc đã hết hạn');

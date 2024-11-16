@@ -23,7 +23,7 @@ class StaffsSeeder extends Seeder
             'gioitinh' => 'Nam',
             'position' => 'Nhan vien',
             'user_id' => 1,
-            'salary' => 4700000,
+            'salary' => '',
         ]);
 
         Staff::create([
@@ -33,9 +33,18 @@ class StaffsSeeder extends Seeder
             'phone' => '0987654321',
             'gioitinh' => 'Nam',
             'position' => 'Nhan vien',
-            'user_id' => 1,
+            'user_id' => 2,
             'salary' => 4700000,
         ]);
-
+        Staff::create([
+            'names' => 'Nguyen Van C',
+            'age' => 20,
+            'address' => 'Ha Noi',
+            'phone' => '0987654321',
+            'gioitinh' => 'Nam',
+            'position' => 'Nhan vien',
+            'user_id' => 3,
+            'salary' => 4700000,
+        ]);
     }
 }

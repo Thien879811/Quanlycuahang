@@ -26,7 +26,11 @@ return new class extends Migration
             $table->string('quantity')->nullable(); // Số lượng khuyến mãi, có thể để trống
             $table->date('start_date')->nullable(); // Ngày bắt đầu khuyến mãi, có thể để trống
             $table->date('end_date')->nullable(); // Ngày kết thúc khuyến mãi, có thể để trống
-            $table->string('catalory')->nullable(); // Loại khuyến mãi, có thể để trống
+            $table->string('catalory')->nullable();
+            $table->string('max_value')->nullable();
+            $table->string('min_value')->nullable(); // Số lượng voucher tối thiểu có thể đổi, có thể để trống
+            $table->unsignedBigInteger('customer_id')->nullable(); // Liên kết với bảng 'customers', có thể để trống
+            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('set null');
             $table->timestamps(); // Tự động tạo cột 'created_at' và 'updated_at'
         });
     }
