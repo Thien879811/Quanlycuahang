@@ -34,7 +34,7 @@ class OrderSeeder extends Seeder
         }
 
         // Create orders with status 2 across different months and dates
-        for ($i = 0; $i < 3000; $i++) {
+        for ($i = 0; $i < 2000; $i++) {
             $randomDate = Carbon::createFromTimestamp(
                 rand($startDate->timestamp, $endDate->timestamp)
             );

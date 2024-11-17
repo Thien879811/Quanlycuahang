@@ -9,6 +9,7 @@ use App\Models\DetailOrder;
 use App\Models\Product;
 use App\Models\Promotion;
 use Carbon\Carbon;
+use App\Events\NewNotification;
 use Illuminate\Support\Facades\DB;
 
 class OrdersController extends Controller
@@ -233,6 +234,22 @@ class OrdersController extends Controller
             }
         }
         Promotion::where('code', $order->voucher_code)->update(['quantity' => DB::raw('quantity - 1')]);
+
+        broadcast(new NewNotification([
+            'id' => $order->id,
+            'message' => 'Có đơn hàng mới',
+            'created_at' => $order->created_at,
+            'total' => $order->tongcong,
+            'items' => $order->details->map(function($detail) {
+                return [
+                    'product_name' => $detail->product->product_name,
+                    'quantity' => $detail->soluong,
+                    'price' => $detail->dongia,
+                    'discount' => $detail->discount
+                ];
+            })
+        ]));
+
         return response()->json($order, 200);
     }
 
@@ -602,7 +619,54 @@ class OrdersController extends Controller
             'data' => $orders
         ]);
     }
+    public function createOrderCustomer(Request $request)
+    {
 
+        $validated = $request->all();
+        $order = new Orders();
+        $order->customer_id = $validated['customer_id'];
+        $order->status = $validated['status'];
+        $order->pays_id = 2;
+        $order->save();
+
+        foreach ($validated['products'] as $product) {
+            $detail = new DetailOrder();
+            $detail->order_id = $order->id;
+            $detail->product_id = $product['product_id'];
+            $detail->soluong = $product['soluong'];
+            $detail->dongia = $product['dongia'];
+            $detail->discount = $product['discount'];
+            $detail->save();
+
+            $productModel = Product::find($product['product_id']);
+            if ($productModel) {
+                $productModel->quantity -= $product['soluong'];
+                $productModel->save();
+            }
+        }
+
+        broadcast(new NewNotification([
+            'id' => $order->id,
+            'message' => 'Đã có đơn hàng online vui lòng kiểm tra',
+            'created_at' => $order->created_at,
+            'total' => $order->details->sum(function($detail) {
+                return $detail->dongia * $detail->soluong - $detail->discount;
+            }),
+            'items' => $order->details->map(function($detail) {
+                return [
+                    'product_name' => $detail->product->product_name,
+                    'quantity' => $detail->soluong,
+                    'price' => $detail->dongia,
+                    'discount' => $detail->discount
+                ];
+            })
+        ]));
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $order
+        ]);
+    }
 }
 
 

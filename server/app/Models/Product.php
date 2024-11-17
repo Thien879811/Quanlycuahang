@@ -54,5 +54,21 @@ class Product extends Model
     {
         return $this->hasMany(HangSuDung::class)->select();
     }
+
+    public function catalory()
+    {
+        return $this->belongsTo(Catalory::class);
+    }
+
+    public function factory()
+    {
+        return $this->belongsTo(Factory::class);
+    }
+    public function promotion()
+    {
+        return $this->hasMany(Promotion::class)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now());
+    }
 }
 

@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Route;
 |
 */ 
 
-
+Route::post('/orders/customer', [OrdersController::class, 'createOrderCustomer']);
 
 
 Route::controller(PromotionController::class)->group(function () {
@@ -130,7 +130,7 @@ Route::delete('/product/{id}',[ProductController::class,'delete']);
 Route::get('/product/destroy',[ProductController::class,'getDestroyProduct']);
 Route::put('/product/destroy/{id}',[ProductController::class,'updateDestroyProductStatus']);
 Route::put('/product/update-quantity/{id}',[ProductController::class,'updateQuantity']);
-
+Route::get('/product/customer',[ProductController::class,'getProduct']);
 
 
 

@@ -17,7 +17,6 @@ const Order = () => {
     const [cancelNote, setCancelNote] = useState('');
     const [openCancelNoteDialog, setOpenCancelNoteDialog] = useState(false);
     const navigate = useNavigate();
-    const { updateOrder } = useOrder();
 
     const fetchOrders = async () => {
         try {

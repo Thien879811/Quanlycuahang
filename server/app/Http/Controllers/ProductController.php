@@ -14,6 +14,29 @@ use App\Models\DestroyProduct;
 
 class ProductController extends Controller
 {
+    public function getProduct()
+    {
+        $products = Product::with(['catalory', 'factory', 'promotion' => function($query) {
+        }])->get();
+
+        $products = $products->map(function ($product) {
+            if ($product->promotion->isNotEmpty() && $product->promotion[0]->present) {
+                $presentProduct = Product::find($product->promotion[0]->present);
+                if ($presentProduct) {
+                    $product->promotion[0]->present = [
+                        'id' => $presentProduct->id,
+                        'product_name' => $presentProduct->product_name,
+                        'image' => $presentProduct->image,
+                        'selling_price' => $presentProduct->selling_price
+                    ];
+                }
+            }
+            return $product;
+        });
+
+        return response()->json($products);
+    }
+
     public function getAll()   
     {
         $products = Product::all();
@@ -322,4 +345,6 @@ class ProductController extends Controller
         $product = Product::all();
         return response()->json($product);
     }
+
+    
 }
