@@ -21,7 +21,8 @@ class GoodsReceiptDetail extends Model
         'note',
         'production_date',
         'expiration_date',
-        'return_quantity'
+        'return_quantity',
+        'is_added',
     ];
     public function product()
     {

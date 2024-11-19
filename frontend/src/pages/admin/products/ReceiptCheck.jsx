@@ -590,7 +590,6 @@ const ReceiptCheck = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
             <ReturnDialog
                 openReturnDialog={openReturnDialog}
                 setOpenReturnDialog={setOpenReturnDialog}

@@ -4,7 +4,6 @@ import { styled } from '@mui/material/styles';
 import productService from '../services/product.service';
 import useCatalogs from '../utils/catalogUtils';
 import useFactory from '../utils/factoryUtils';
-import Scanner from './BarcodeScanner';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -15,20 +14,6 @@ const StyledForm = styled('form')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(2),
-}));
-
-const ScannerContainer = styled(Box)(({ theme }) => ({
-  position: 'fixed',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '300px',
-  height: '300px',
-  zIndex: 1000,
-  backgroundColor: 'white',
-  padding: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[5],
 }));
 
 const ProductForm = ({ product, onSuccess, onCancel }) => {
@@ -47,7 +32,6 @@ const ProductForm = ({ product, onSuccess, onCancel }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [showScanner, setShowScanner] = useState(false);
   const { options } = useCatalogs();
   const { f_options } = useFactory();
 
@@ -114,15 +98,6 @@ const ProductForm = ({ product, onSuccess, onCancel }) => {
       console.error(error);
       setError(error.response?.data?.message || 'Đã xảy ra lỗi.');
     }
-  };
-
-  const handleScanComplete = (result) => {
-    setProductData(prevData => ({ ...prevData, barcode: result }));
-    setShowScanner(false);
-  };
-
-  const handleCloseScanner = () => {
-    setShowScanner(false);
   };
 
   return (
@@ -220,22 +195,13 @@ const ProductForm = ({ product, onSuccess, onCancel }) => {
             />
           </Grid>
           <Grid item xs={12}>
-            <Box display="flex" alignItems="center">
-              <TextField
-                fullWidth
-                label="Mã Vạch Sản Phẩm"
-                name="barcode"
-                value={productData.barcode}
-                onChange={handleChange}
-              />
-              <Button
-                variant="contained"
-                onClick={() => setShowScanner(true)}
-                style={{ marginLeft: '10px' }}
-              >
-                Quét mã
-              </Button>
-            </Box>
+            <TextField
+              fullWidth
+              label="Mã Vạch Sản Phẩm"
+              name="barcode"
+              value={productData.barcode}
+              onChange={handleChange}
+            />
           </Grid>
           <Grid item xs={12}>
             <input
@@ -270,17 +236,6 @@ const ProductForm = ({ product, onSuccess, onCancel }) => {
           </Button>
         </Box>
       </StyledForm>
-      
-      {showScanner && (
-        <ScannerContainer>
-          <Scanner
-            onDetected={handleScanComplete}
-          />
-          <Button onClick={handleCloseScanner} style={{ marginTop: '10px' }}>
-            Đóng
-          </Button>
-        </ScannerContainer>
-      )}
     </StyledPaper>
   );
 };

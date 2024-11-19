@@ -61,11 +61,11 @@ const useCustomer = () => {
             if(data !== null){
                 localStorage.setItem('customer', JSON.stringify(data));
                 setCustomer(data);
+                return data.id;
             }else{
                 setCustomer(null);
                 localStorage.removeItem('customer');
             }
-
         } catch (err) {
             setError(err.response?.data?.message || 'An error occurred while creating the customer');
         }

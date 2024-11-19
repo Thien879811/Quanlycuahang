@@ -10,7 +10,7 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
 
-const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChangeWeek }) => {
+const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChangeWeek, previousSchedules ,fetchSchedules}) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isAddEmployeeModalVisible, setIsAddEmployeeModalVisible] = useState(false);
   const [isAddTaskModalVisible, setIsAddTaskModalVisible] = useState(false);
@@ -20,6 +20,44 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
   const [form] = Form.useForm();
   const [selectedWeek, setSelectedWeek] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const getPreviousWeek = async () => {
+    try {
+      const values = await form.validateFields(['employee', 'selectedWeek']);
+      const response = await employeeService.getPreviousWeek(
+        values.employee,
+        values.selectedWeek.clone().startOf('isoWeek').format('YYYY-MM-DD')
+      );
+      const dataResponse = handleResponse(response);
+
+      
+      if(dataResponse.success) {
+        const prevSchedules = dataResponse.data;
+        
+        // Áp dụng lịch trình cũ vào form
+        prevSchedules.forEach(schedule => {
+          const scheduleDate = moment(schedule.date);
+          const dayIndex = scheduleDate.day() - 1; // Trừ 1 vì thứ 2 là ngày đầu tuần (index 0)
+          
+          if(dayIndex >= 0) { // Chỉ áp dụng cho các ngày từ thứ 2-CN
+            form.setFieldsValue({
+              [`timeRange_${dayIndex}`]: [
+                moment(schedule.time_start, 'HH:mm'),
+                moment(schedule.time_end, 'HH:mm')
+              ],
+              [`reason_${dayIndex}`]: schedule.reason
+            });
+          }
+        });
+        
+        message.success('Đã áp dụng lịch trình tuần trước');
+      } else {
+        message.error(dataResponse.message);
+      }
+    } catch (error) {
+      console.error('Error fetching previous week:', error);
+    }
+  };
 
   const handleEdit = (record) => {
     setEditingSchedule(record);
@@ -72,7 +110,6 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
       }
     } catch (error) {
       console.error('Error deleting schedule:', error);
-      message.error('Failed to delete schedule');
     }
   };
 
@@ -114,7 +151,6 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
       }
     } catch (error) {
       console.error('Error adding schedule:', error);
-      message.error('Failed to add schedule');
     }
   };
 
@@ -128,14 +164,14 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
       render: (text) => <Text strong>{text}</Text>
     },
     ...Array.from({ length: 7 }, (_, i) => ({
-      title: currentWeek.clone().add(i, 'days').format('DD/MM (ddd)'),
+      title: currentWeek.clone().startOf('isoWeek').add(i, 'days').format('DD/MM (ddd)'),
       dataIndex: `day${i}`,
       key: `day${i}`,
       width: 180,
       render: (_, record) => {
         const daySchedules = schedules?.filter(
           s => s.staff_id === record.id && 
-          moment(s.date).isSame(currentWeek.clone().add(i, 'days'), 'day')
+          moment(s.date).isSame(currentWeek.clone().startOf('isoWeek').add(i, 'days'), 'day')
         );
 
         if (!daySchedules?.length) return null;
@@ -245,7 +281,7 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
           </Col>
           <Col>
             <RangePicker
-              value={[currentWeek, currentWeek.clone().endOf('week')]}
+              value={[currentWeek.clone().startOf('isoWeek'), currentWeek.clone().startOf('isoWeek').endOf('week')]}
               format="DD/MM/YYYY"
               disabled
               style={{ width: '240px' }}
@@ -315,12 +351,14 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
               />
             </Form.Item>
 
+            <Button type="primary" onClick={getPreviousWeek}>Lấy lịch trình tuần trước</Button>
+
             {selectedWeek && Array.from({ length: 7 }, (_, i) => (
               <Card key={i} style={{ marginBottom: '12px' }} size="small">
                 <Row gutter={12}>
                   <Col span={8}>
-                    <Form.Item label={`Ngày ${selectedWeek.clone().add(i, 'days').format('DD/MM (ddd)')}`}>
-                      <Input disabled value={selectedWeek.clone().add(i, 'days').format('DD/MM/YYYY')} />
+                    <Form.Item label={`Ngày ${selectedWeek.clone().startOf('isoWeek').add(i, 'days').format('DD/MM (ddd)')}`}>
+                      <Input disabled value={selectedWeek.clone().startOf('isoWeek').add(i, 'days').format('DD/MM/YYYY')} />
                     </Form.Item>
                   </Col>
                   <Col span={8}>

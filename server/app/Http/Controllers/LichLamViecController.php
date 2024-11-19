@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LichLamViec;
 use Illuminate\Http\Request;
 use App\Models\Staff;
+use Carbon\Carbon;
 
 
 class LichLamViecController extends Controller
@@ -39,13 +40,17 @@ class LichLamViecController extends Controller
     public function update(Request $request, $id)
     {
         $lichLamViec = LichLamViec::find($id);
+        if (!$lichLamViec) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy lịch làm việc']);
+        }
+        
         $lichLamViec->update([
             'date' => $request->date,
             'time_start' => $request->time_start,
             'time_end' => $request->time_end,
             'reason' => $request->reason,
         ]);
-        $lichLamViec->save();
+
         return response()->json(['success' => true, 'message' => 'Cập nhật lịch làm việc thành công']);
     }
 
@@ -72,5 +77,29 @@ class LichLamViecController extends Controller
             return response()->json(['success' => true, 'message' => 'Xóa lịch làm việc thành công']);
         }
         return response()->json(['success' => false, 'message' => 'Không tìm thấy lịch làm việc']);
+    }
+    public function getPreviousWeek($staff_id, $week)
+    {
+        try {
+            $startDate = Carbon::parse($week)->subWeek()->startOfWeek();
+            $endDate = Carbon::parse($week)->subDays();
+
+            $previousSchedules = LichLamViec::where('staff_id', 2)
+                ->where('date', '>=', $startDate)
+                ->where('date', '<=', $endDate)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $previousSchedules,
+                'message' => 'Lấy lịch làm việc tuần trước thành công'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng Y-m-d'
+            ], 400);
+        }
     }
 }

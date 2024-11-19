@@ -30,6 +30,9 @@ import ProductDisposal from './pages/admin/products/ProductDisposal.jsx';
 import ProductDisposalEmployee from './pages/Employee/ProductDisposalEmployee.jsx';
 import InventoryReportAdmin from './pages/admin/products/InventoryReportAdmin.jsx';
 import CustomerAdmin from './pages/admin/CustomerAdmin.jsx';
+import ImportProduct from './pages/admin/products/ImportProduct/ImportProduct.jsx';
+import ReceiptProduct from './pages/admin/products/ImportProduct/ReceiptProduct.jsx';
+import { useAuth } from './context/authprovider.jsx';
 
 const router = createBrowserRouter ([
     {
@@ -42,15 +45,15 @@ const router = createBrowserRouter ([
             },
             {
                 path: '/users',
-                element: <PrivateRoute roles={['manager']}><Users /></PrivateRoute>,
+                element: <Users />
             },
             {
                 path: '/users/new',
-                element: <PrivateRoute roles={['manager']}><UserForm key="userCreate"/></PrivateRoute>
+                element: <UserForm key="userCreate"/>
             },
             {
                 path: '/users/:id',
-                element: <PrivateRoute roles={['manager']}><UserForm key="userUpdate" /></PrivateRoute>
+                element: <UserForm key="userUpdate"/>
             },
             {
                 path: '/vnpay/return',
@@ -63,7 +66,7 @@ const router = createBrowserRouter ([
             },
             {
                 path: '/create_product',
-                element: <PrivateRoute roles={['warehouse', 'manager']}><ProductForm /></PrivateRoute>
+                element: <ProductForm />
             },
             {
                 path: '/pay',
@@ -129,9 +132,13 @@ const router = createBrowserRouter ([
                 path: '/admin/sales',
                 element: <SalesAdmin />
             },
+            // {
+            //     path: '/admin/import-product',
+            //     element: <ImportAdmin />
+            // },
             {
                 path: '/admin/import-product',
-                element: <ImportAdmin />
+                element: <ImportProduct />
             },
             {
                 path: '/admin/import-history',
@@ -152,6 +159,10 @@ const router = createBrowserRouter ([
             {
                 path: '/admin/customers',
                 element: <CustomerAdmin />
+            },
+            {
+                path: '/admin/receipt-product',
+                element: <ReceiptProduct />
             }
 
 

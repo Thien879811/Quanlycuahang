@@ -22,7 +22,7 @@ class PromotionSeeder extends Seeder
             'product_id' => 2,
             'present' => null,
             'description' => 'Khuyến mãi đồ uống',
-            'quantity' => 0,
+            'quantity' => null,
             'start_date' => now(),
             'end_date' => now()->addDays(30),
         ]);
@@ -35,7 +35,7 @@ class PromotionSeeder extends Seeder
             'product_id' => 3,
             'present' => null,
             'description' => 'Khuyến mãi mì gói',
-            'quantity' => 0,
+            'quantity' => null,
             'start_date' => now(),
             'end_date' => now()->addDays(15),
         ]);
@@ -48,7 +48,7 @@ class PromotionSeeder extends Seeder
             'product_id' => 4,
             'present' => null,
             'description' => 'Khuyến mãi snack',
-            'quantity' => 0,
+            'quantity' => null,
             'start_date' => now(),
             'end_date' => now()->addDays(20),
         ]);

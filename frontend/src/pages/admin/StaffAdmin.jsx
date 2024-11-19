@@ -17,7 +17,9 @@ const StaffAdmin = () => {
   const [schedules, setSchedules] = useState([]);
   const [salaries, setSalaries] = useState([]);
   const [attendances, setAttendances] = useState([]);
-  const [currentWeek, setCurrentWeek] = useState(moment().startOf('week'));
+  // Khởi tạo tuần hiện tại từ thứ 2
+  const [currentWeek, setCurrentWeek] = useState(moment().startOf('isoWeek'));
+  const [previousSchedules, setPreviousSchedules] = useState([]);
 
   const fetchEmployees = async () => {
     try {
@@ -90,23 +92,33 @@ const StaffAdmin = () => {
       setEmployees(employeesData);
 
       const schedulesData = await fetchSchedules();
+      
+      // Set previous schedules - lọc lịch trước thứ 2 của tuần hiện tại
+      const prevSchedules = schedulesData.filter(schedule => {
+        const scheduleDate = moment(schedule.date);
+        return scheduleDate.isBefore(currentWeek.clone().startOf('isoWeek'));
+      });
+      setPreviousSchedules(prevSchedules);
+
+      // Set current week schedules - lọc lịch từ thứ 2 đến chủ nhật
       const filteredSchedules = schedulesData.filter(schedule => {
         const scheduleDate = moment(schedule.date);
         return scheduleDate.isBetween(
-          currentWeek.clone().startOf('week'), 
-          currentWeek.clone().endOf('week'), 
+          currentWeek.clone().startOf('isoWeek'), 
+          currentWeek.clone().endOf('isoWeek'), 
           'day', 
           '[]'
         );
       });
       setSchedules(filteredSchedules);
+
       const attendancesData = await fetchAttendances();
       console.log(attendancesData);
       const filteredAttendances = attendancesData.filter(attendance => {
         const attendanceDate = moment(attendance.date);
         return attendanceDate.isBetween(
-          currentWeek.clone().startOf('week'), 
-          currentWeek.clone().endOf('week'), 
+          currentWeek.clone().startOf('isoWeek'), 
+          currentWeek.clone().endOf('isoWeek'), 
           'day', 
           '[]'
         );
@@ -139,6 +151,8 @@ const StaffAdmin = () => {
                 currentWeek={currentWeek}
                 onChangeWeek={changeWeek}
                 loadData={loadData}
+                previousSchedules={previousSchedules}
+                fetchSchedules={fetchSchedules}
               />
             </TabPane>
             <TabPane tab="Chấm Công" key="2">

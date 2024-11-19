@@ -306,4 +306,45 @@ class GoodsReceiptController extends Controller
             'goods_receipt' => $goodsReceipt,
         ]);
     }
+
+    public function createReceipt(Request $request) {
+        $validated = $request->validate([
+            'supplier_id' => 'required',
+            'import_date' => 'required',
+            'products' => 'required',
+        ]);
+
+        $goodsReceipt = GoodsReceipt::create([
+            'supplier_id' => $validated['supplier_id'],
+            'import_date' => $validated['import_date'],
+            'status' => '1',
+        ]);
+
+        foreach ($validated['products'] as $product) {
+            GoodsReceiptDetail::create([
+                'goods_receipt_id' => $goodsReceipt->id,
+                'product_id' => $product['product_id'],
+                'quantity' => $product['quantity'],
+                'quantity_receipt' => $product['quantity'],
+                'price' => $product['price'],
+                'status' => '1',
+                'production_date' => $product['production_date'] ?? null,
+                'expiration_date' => $product['expiration_date'] ?? null,
+                'quantity_defective' => 0,
+                'return_quantity' => 0,
+                'note' => '',
+                'is_added' => true,
+            ]);
+            $product = Product::find($product['product_id']);
+            $product->quantity += $product['quantity'];
+            $product->purchase_price = $product['price'];
+            $product->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tạo phiếu nhập hàng thành công',
+            'goods_receipt' => $goodsReceipt,
+        ]);
+    }
 }

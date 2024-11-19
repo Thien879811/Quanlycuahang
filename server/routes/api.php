@@ -28,9 +28,7 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */ 
-
-Route::post('/orders/customer', [OrdersController::class, 'createOrderCustomer']);
-
+Route::get('/employee/lich-lam-viec/{staff_id}/{week}',[LichLamViecController::class,'getPreviousWeek']);
 
 Route::controller(PromotionController::class)->group(function () {
     Route::get('/promotion', 'getPromotion');
@@ -44,8 +42,6 @@ Route::controller(PromotionController::class)->group(function () {
     Route::post('/promotions/redeem-point', 'createRedeemPoint');
     Route::get('/promotions/customer/{id}', 'getPromotionByCustomerId');
 });
-
-
 
 Route::controller(DashBoardController::class)->group(function () {
     Route::get('/dashboard/sales-overview/{type}', 'getSalesOverview');
@@ -75,6 +71,7 @@ Route::controller(GoodsReceiptController::class)->group(function () {
     Route::get('/goods-receipt/{type}/return', 'getReceiptReturn');
     Route::delete('/goods-receipt/{id}', 'deleteReceipt');
     Route::put('/goods-receipt/update/{id}', 'update');
+    Route::post('/goods-receipt/create', 'createReceipt');
 });
 
 //catalog api
@@ -95,6 +92,7 @@ Route::get('/employee/lich-lam-viec',[LichLamViecController::class,'getAll']);
 Route::put('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'update']);
 Route::delete('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'delete']);
 Route::get('employee/lich-lam-viec/{staff_id}',[LichLamViecController::class,'getByStaffId']);
+
 
 Route::get('employee/',[SatffController::class,'getAll']);
 Route::get('/employee/{user_id}',[SatffController::class,'getInfoEmployee']);
@@ -132,13 +130,6 @@ Route::put('/product/destroy/{id}',[ProductController::class,'updateDestroyProdu
 Route::put('/product/update-quantity/{id}',[ProductController::class,'updateQuantity']);
 Route::get('/product/customer',[ProductController::class,'getProduct']);
 
-
-
-
-
-
-
-// user manager api
 Route::controller(UserController::class)->group(function () {
     Route::get('/users/{id}', 'getUserById');
     Route::post('/users', 'createUser');
@@ -147,18 +138,6 @@ Route::controller(UserController::class)->group(function () {
     Route::get('/users', 'getAll');
     Route::delete('/users/{id}', 'deleteUser');
 });
-
-
-Route::controller(HangSuDungController::class)->group(function () {
-    Route::get('/hang-su-dung', 'getAll');
-    Route::get('/hang-su-dung/{id}', 'getById');
-    Route::post('/hang-su-dung', 'create');
-    Route::put('/hang-su-dung/{id}', 'update');
-    Route::delete('/hang-su-dung/{id}', 'delete');
-});
-
-
-
 
 Route::middleware('auth:sanctum')->group(function() {
     
@@ -173,11 +152,6 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::get('/current-user',[AuthController::class,'getCurrentUser']);
     Route::post('/verify-token',[AuthController::class,'verifyToken']);
 });
-
-
-
-
-
 
 Route::controller(CustomerController::class)->group(function () {
     Route::get('/customer/{phone}', 'getOne');
@@ -205,14 +179,13 @@ Route::get('/orders', [OrdersController::class, 'getAll']);
 Route::post('/orders/{type}', [OrdersController::class, 'getOrder']);
 Route::put('/orders/voucher/{order_id}', [OrdersController::class, 'updateVoucher']);
 Route::get('/orders/{order_id}', [OrdersController::class, 'get']);
-
 Route::delete('/orders/products/{order_id}/{product_id}', [OrdersController::class, 'deleteOrderProducts']);
 Route::post('/orders/add-discount/{order_id}', [OrdersController::class, 'addDiscount']);
-
 Route::post('/orders/cancel/{order_id}', [OrdersController::class, 'cancelOrder']);
 Route::put('/orders/accept-cancel/{order_id}', [OrdersController::class, 'acceptCancel']);
 Route::put('/orders/cancel-request/{order_id}', [OrdersController::class, 'cancelRequest']);
 Route::get('/orders/customer/{id}/{date}', [OrdersController::class, 'getOrdersByCustomerId']);
+Route::post('/orders/customer', [OrdersController::class, 'createOrderCustomer']);
 
 
 
@@ -221,10 +194,6 @@ Route::get('/vnpay/return', [PaymentController::class, 'return']);
 Route::post('/vnpay/notify', [PaymentController::class, 'notify']);
 
 
-
-
-Route::get('/hang-su-dung',[HangSuDungController::class,'getAll']);
-Route::get('/hang-su-dung-product',[HangSuDungController::class,'get']);
 
 
 

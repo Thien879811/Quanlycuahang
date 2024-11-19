@@ -233,23 +233,11 @@ class OrdersController extends Controller
                 $existingDetail->delete();
             }
         }
-        Promotion::where('code', $order->voucher_code)->update(['quantity' => DB::raw('quantity - 1')]);
-
-        broadcast(new NewNotification([
-            'id' => $order->id,
-            'message' => 'Có đơn hàng mới',
-            'created_at' => $order->created_at,
-            'total' => $order->tongcong,
-            'items' => $order->details->map(function($detail) {
-                return [
-                    'product_name' => $detail->product->product_name,
-                    'quantity' => $detail->soluong,
-                    'price' => $detail->dongia,
-                    'discount' => $detail->discount
-                ];
-            })
-        ]));
-
+        if ($order->voucher_code) {
+            Promotion::where('code', $order->voucher_code)
+                    ->where('quantity', '>', 0)
+                    ->update(['quantity' => DB::raw('quantity - 1')]);
+        }
         return response()->json($order, 200);
     }
 

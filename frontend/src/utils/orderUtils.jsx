@@ -119,13 +119,18 @@ const orderUtils = () => {
         });
     }
     
-    const updateDiscount = useCallback((productCode, discount) => {
+    const updateDiscount = useCallback((productCode, discount,present) => {
         setOrders(prevOrders => {
-            const updatedDetails = prevOrders.details.map(product => {
-                if (product.product_id == productCode) {
-                    return { ...product, discount: product.dongia * discount / 100 * product.soluong};
+            const product = prevOrders.details.find(detail => detail.product_id == productCode);
+            console.log(product);
+            const updatedDetails = prevOrders.details.map(productPresent => {
+                if (productPresent.product_id == present) {
+                    if(productPresent.soluong > product.soluong){
+                        return { ...productPresent, discount: productPresent.dongia * discount / 100 * product.soluong};
+                    }
+                    return { ...productPresent, discount: productPresent.dongia * discount / 100 * productPresent.soluong};
                 }
-                return product;
+                return productPresent;
             });
             const newOrders = {...prevOrders, details: updatedDetails};
             localStorage.setItem('order', JSON.stringify(newOrders));
@@ -160,7 +165,7 @@ const orderUtils = () => {
                 }
 
                 if (promotion.present) {
-                    updateDiscount(promotion.present.product_id, promotion.discount_percentage);
+                    updateDiscount(promotion.product_id, promotion.discount_percentage,promotion.present.product_id);
                     return {
                         ...product,
                         discount: 0
@@ -180,39 +185,29 @@ const orderUtils = () => {
 
     // Hàm updateVoucher dùng để cập nhật voucher cho đơn hàng
     const updateVoucher = (voucher, discount) => {
-        // Sử dụng setOrders để cập nhật state orders
         setOrders(prevOrders => {
-            // Lấy tổng tiền đơn hàng trước khi áp dụng voucher
             const totalAmount = getTotalAmount;
 
-            // Kiểm tra điều kiện giá trị đơn hàng tối thiểu
-            // Nếu đơn hàng không đạt giá trị tối thiểu thì hiện thông báo và giữ nguyên đơn hàng cũ
             if (voucher.min_value && totalAmount < parseFloat(voucher.min_value)) {
                 alert(`Đơn hàng phải có giá trị tối thiểu ${voucher.min_value.toLocaleString()}đ để sử dụng voucher này`);
                 return prevOrders;
             }
 
-            // Tính số tiền được giảm dựa trên phần trăm giảm giá
             let discountAmount = (totalAmount * discount) / 100;
 
-            // Kiểm tra và áp dụng giới hạn giảm giá tối đa nếu có
             if (voucher.max_value) {
                 const maxValue = parseFloat(voucher.max_value);
-                // Lấy giá trị nhỏ hơn giữa số tiền giảm và giới hạn tối đa
                 discountAmount = Math.min(discountAmount, maxValue);
-                // Tính lại phần trăm giảm giá dựa trên số tiền giảm đã được giới hạn
                 discount = (discountAmount / totalAmount) * 100;
             }
 
-            // Tạo đơn hàng mới với thông tin voucher đã cập nhật
             const newOrders = {
                 ...prevOrders,
-                voucher_id: voucher.id, // Lưu ID của voucher
-                voucher_code: voucher.code, // Lưu mã voucher
-                discount: parseFloat(discount.toFixed(2)) // Lưu phần trăm giảm giá, làm tròn 2 chữ số thập phân
+                voucher_id: voucher.id,
+                voucher_code: voucher.code,
+                discount: Number(discount).toFixed(2) // Fixed by using Number() to ensure discount is a number
             };
 
-            // Lưu đơn hàng mới vào localStorage
             localStorage.setItem('order', JSON.stringify(newOrders));
             return newOrders;
         });

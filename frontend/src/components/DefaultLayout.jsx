@@ -24,6 +24,7 @@ export default function DefaultLayout() {
     const navigate = useNavigate();
     const location = useLocation();
 
+
     if (!token) {
         return <Navigate to='/login' />;
     }
@@ -85,7 +86,7 @@ export default function DefaultLayout() {
                         </div>
                         <p style="margin: 0 0 8px 0; font-size: 15px;">${data.message}</p>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 500;">Tổng tiền: ${data.total.toLocaleString('vi-VN')} đ</span>
+                            <span style="font-weight: 500;">Tổng tiền: ${data.total ? data.total.toLocaleString('vi-VN') : 0} đ</span>
                             <button style="
                                 background: rgba(255,255,255,0.2);
                                 border: none;
@@ -259,7 +260,7 @@ export default function DefaultLayout() {
                                                     {notification.message}
                                                 </Typography>
                                                 <Typography variant="caption" sx={{ color: '#666' }}>
-                                                    Tổng tiền: {notification.total.toLocaleString('vi-VN')} đ
+                                                    Tổng tiền: {notification.total ? notification.total.toLocaleString('vi-VN') : '0'} đ
                                                 </Typography>
                                             </div>
                                         </MenuItem>

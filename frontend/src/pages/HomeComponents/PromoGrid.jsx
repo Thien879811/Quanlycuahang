@@ -27,7 +27,7 @@ const PromoGrid = ({activePromotion}) => {
                             </ListItemIcon>
                             <ListItemText 
                                 primary={promo.product.product_name} 
-                                secondary={`Giảm giá ${promo.discount_percentage}%` + (promo.quantity ? `, khi mua ${promo.quantity} sản phẩm` : '')}
+                                secondary={promo.present ? '' : `Giảm giá ${promo.discount_percentage}%`}
                                 primaryTypographyProps={{ fontWeight: 'bold', color: '#2196f3' }}
                                 sx={{ ml: 2 }}
                             />
@@ -42,7 +42,7 @@ const PromoGrid = ({activePromotion}) => {
                                     <ListItemText
                                         primary={promo.present.product_name}
                                         primaryTypographyProps={{ fontWeight: 'bold', color: '#4CAF50' }}
-                                        secondary="Quà tặng kèm"
+                                        secondary={promo.present ? `Giảm giá ${promo.discount_percentage}% khi mua chung ${promo.product.product_name}` : "Giảm giá"}
                                         sx={{ ml: 2 }}
                                     />
                                 </>

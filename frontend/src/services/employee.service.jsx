@@ -62,5 +62,8 @@ class EmployeeService {
     async getAttendance(month = null) {
         return (await this.api.get(`/attendance/${month ? month : ''}`)).data;
     }
+    async getPreviousWeek(staff_id, date) {
+        return (await this.api.get(`/lich-lam-viec/${staff_id}/${date}`)).data;
+    }
 }
 export default new EmployeeService();

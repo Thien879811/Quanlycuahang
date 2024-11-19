@@ -9,7 +9,6 @@ import orderUtils from '../utils/orderUtils';
 import useCustomer from '../utils/customerUtils';
 import OrderDisplay from '../components/OrderDisplay';
 import useProduct from '../utils/productUtils';
-import Scanner from '../components/BarcodeScanner';
 import usePromotion from '../utils/promorionUtils'; // Fixed typo in import
 import orderService from '../services/order.service';
 import { handleResponse } from '../functions';
@@ -234,10 +233,11 @@ const Home = () => {
 		handleCloseCustomerDialog();
 	};
 
-	const handleCreateNewCustomer = () => {
-		createCustomer({ name: newCustomerName, phone: customerPhone, diem: 0 });
+	const handleCreateNewCustomer = async () => {
+		const customerId = await createCustomer({ name: newCustomerName, phone: customerPhone, diem: 0 });
+		updateCustomer(customerId);
 		handleCloseNewCustomerDialog();
-		updateCustomer(customer.id);
+		
 	};
 
 	const handleIncreaseQuantity = async (productId) => {
@@ -506,24 +506,6 @@ const Home = () => {
 				setVoucherCodeInput={setVoucherCodeInput}
 				handleVoucherSubmit={handleVoucherSubmit}
 			/>
-
-			<Dialog 
-				open={isScannerModalOpen} 
-				onClose={toggleScanner} 
-				maxWidth="sm" 
-				fullWidth
-				PaperProps={{
-					sx: {
-						borderRadius: '12px',
-						overflow: 'hidden',
-						backgroundColor: '#ffffff'
-					}
-				}}
-			>
-				<DialogContent sx={{ p: 0 }}>
-					<Scanner onDetected={handleBarcodeScanned} />
-				</DialogContent>
-			</Dialog>
 			
 		</Grid>
 	);

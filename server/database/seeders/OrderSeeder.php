@@ -20,7 +20,7 @@ class OrderSeeder extends Seeder
         $endDate = Carbon::createFromDate(2024, 11, 30); // Fixed incorrect date (November has 30 days)
         
         // Create orders with status 1 across different months and dates
-        for ($i = 0; $i < 12000; $i++) {
+        for ($i = 0; $i < 11000; $i++) {
             $randomDate = Carbon::createFromTimestamp(
                 rand($startDate->timestamp, $endDate->timestamp)
             );
