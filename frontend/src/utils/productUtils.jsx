@@ -68,7 +68,7 @@ const useProducts = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  return { products, createProduct, updateProduct, deleteProduct };
+  return { products, createProduct, updateProduct, deleteProduct, fetchProducts };
 };
 
 export default useProducts;

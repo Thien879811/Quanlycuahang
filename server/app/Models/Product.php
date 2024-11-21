@@ -36,9 +36,6 @@ class Product extends Model
         // Đường dẫn hình ảnh sản phẩm
         'image',
         
-        // ID nhà máy sản xuất
-        'factory_id',
-        
         // Giá mua vào
         'purchase_price',
     ];
@@ -60,10 +57,6 @@ class Product extends Model
         return $this->belongsTo(Catalory::class);
     }
 
-    public function factory()
-    {
-        return $this->belongsTo(Factory::class);
-    }
     public function promotion()
     {
         return $this->hasMany(Promotion::class)

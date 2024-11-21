@@ -17,9 +17,4 @@ class Factory extends Model
         'phone',
         'email',
     ];
-
-    public function products()
-    {
-        return $this->hasMany(Product::class, 'factory_id');
-    }
 }

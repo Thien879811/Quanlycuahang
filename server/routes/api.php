@@ -28,7 +28,26 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */ 
-Route::get('/employee/lich-lam-viec/{staff_id}/{week}',[LichLamViecController::class,'getPreviousWeek']);
+
+Route::post('/orders/customer', [OrdersController::class, 'createOrderCustomer']);
+Route::get('/orders', [OrdersController::class, 'getAll']   );
+Route::post('/orders', [OrdersController::class, 'create']);
+Route::put('/orders/{order_id}', [OrdersController::class, 'update']);
+Route::get('/orders/order-products', [OrdersController::class, 'getOrders']);
+Route::post('/orders/order-products/{order_id}', [OrdersController::class, 'updateOrderProducts']);
+Route::put('/orders/cancel/{order_id}', [OrdersController::class, 'cancelOrder']);
+Route::get('/orders/detail/{order_id}', [OrdersController::class, 'getDetail']);
+Route::post('/orders/{type}', [OrdersController::class, 'getOrder']);
+Route::put('/orders/voucher/{order_id}', [OrdersController::class, 'updateVoucher']);
+Route::get('/orders/{order_id}', [OrdersController::class, 'get']);
+Route::delete('/orders/products/{order_id}/{product_id}', [OrdersController::class, 'deleteOrderProducts']);
+Route::post('/orders/add-discount/{order_id}', [OrdersController::class, 'addDiscount']);
+Route::post('/orders/cancel/{order_id}', [OrdersController::class, 'cancelOrder']);
+Route::put('/orders/accept-cancel/{order_id}', [OrdersController::class, 'acceptCancel']);
+Route::put('/orders/cancel-request/{order_id}', [OrdersController::class, 'cancelRequest']);
+Route::get('/orders/customer/{id}/{date}', [OrdersController::class, 'getOrdersByCustomerId']);
+
+
 
 Route::controller(PromotionController::class)->group(function () {
     Route::get('/promotion', 'getPromotion');
@@ -43,37 +62,21 @@ Route::controller(PromotionController::class)->group(function () {
     Route::get('/promotions/customer/{id}', 'getPromotionByCustomerId');
 });
 
-Route::controller(DashBoardController::class)->group(function () {
-    Route::get('/dashboard/sales-overview/{type}', 'getSalesOverview');
-    Route::get('/dashboard/inventory-summary/{type}', 'getInventorySummary');
-    Route::get('/dashboard/product-summary', 'getProductSummary');
-    Route::get('/dashboard/order-summary', 'getOrderSummary');
-    Route::get('/dashboard/sales-and-purchase-chart-data', 'getSalesAndPurchaseChartData');
-    Route::get('/dashboard/top-selling-stock/{type}', 'getTopSellingStock');
-    Route::get('/dashboard/low-quantity-stock/{type}', 'getLowQuantityStock');
-    Route::get('/dashboard/purchase-data/{type}', 'getPurchaseData');
-});
 //check inventory api
-Route::controller(CheckInventoryController::class)->group(function () {
-    Route::get('/check-inventory', 'getAllCheckInventories');
-    Route::post('/check-inventory', 'createCheckInventory');
-    Route::delete('/check-inventory/{id}', 'deleteCheckInventory');
-    Route::put('/check-inventory/{id}', 'updateCheckInventory');
-});
-
+Route::get('/check-inventory', [CheckInventoryController::class, 'getAllCheckInventories']);
+Route::post('/check-inventory', [CheckInventoryController::class, 'createCheckInventory']);
+Route::delete('/check-inventory/{id}', [CheckInventoryController::class, 'deleteCheckInventory']);
+Route::put('/check-inventory/{id}', [CheckInventoryController::class, 'updateCheckInventory']);
 //goods receipt api
-Route::controller(GoodsReceiptController::class)->group(function () {
-    Route::post('/goods-receipt', 'createGoodsReceipt');
-    Route::get('/goods-receipt', 'getAll');
-    Route::put('/goods-receipt/{id}', 'updateReceipt');
-    Route::post('/goods-receipt/return', 'returnReceipt');
-    Route::get('/goods-receipt/{type}', 'getReceipt');
-    Route::get('/goods-receipt/{type}/return', 'getReceiptReturn');
-    Route::delete('/goods-receipt/{id}', 'deleteReceipt');
-    Route::put('/goods-receipt/update/{id}', 'update');
-    Route::post('/goods-receipt/create', 'createReceipt');
-});
-
+Route::post('/goods-receipt', [GoodsReceiptController::class, 'createGoodsReceipt'] );
+Route::get('/goods-receipt', [GoodsReceiptController::class, 'getAll']);
+Route::put('/goods-receipt/{id}', [GoodsReceiptController::class, 'updateReceipt']);
+Route::post('/goods-receipt/return', [GoodsReceiptController::class, 'returnReceipt']);
+Route::get('/goods-receipt/{type}', [GoodsReceiptController::class, 'getReceipt']);
+Route::get('/goods-receipt/{type}/return', [GoodsReceiptController::class, 'getReceiptReturn']);
+Route::delete('/goods-receipt/{id}', [GoodsReceiptController::class, 'deleteReceipt']);
+Route::put('/goods-receipt/update/{id}', [GoodsReceiptController::class, 'update']);
+Route::post('/goods-receipt/create', [GoodsReceiptController::class, 'createReceipt']); 
 //catalog api
 Route::get('/catalory',[CataloryController::class,'getCatalory']);
 Route::post('/catalory',[CataloryController::class,'create']);
@@ -85,6 +88,7 @@ Route::get('/factory/{id}',[FactoryController::class,'getById']);
 Route::post('/factory',[FactoryController::class,'create']);
 Route::put('/factory/{id}',[FactoryController::class,'update']);
 Route::delete('/factory/{id}',[FactoryController::class,'delete']);
+Route::get('/factory/{id}/history-receive',[FactoryController::class,'getHistoryReceive']);
 
 //employee api
 Route::post('/employee/create-working-schedule',[LichLamViecController::class,'create']);
@@ -92,6 +96,7 @@ Route::get('/employee/lich-lam-viec',[LichLamViecController::class,'getAll']);
 Route::put('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'update']);
 Route::delete('/employee/lich-lam-viec/{id}',[LichLamViecController::class,'delete']);
 Route::get('employee/lich-lam-viec/{staff_id}',[LichLamViecController::class,'getByStaffId']);
+Route::get('/employee/lich-lam-viec/{staff_id}/{week}',[LichLamViecController::class,'getPreviousWeek']);
 
 
 Route::get('employee/',[SatffController::class,'getAll']);
@@ -140,59 +145,39 @@ Route::controller(UserController::class)->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function() {
-    
     Route::get('/logout',[AuthController::class,'logout']);
-
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-
-
     Route::post('/check-login-status',[AuthController::class,'checkLoginStatus']);
     Route::get('/current-user',[AuthController::class,'getCurrentUser']);
     Route::post('/verify-token',[AuthController::class,'verifyToken']);
 });
 
-Route::controller(CustomerController::class)->group(function () {
-    Route::get('/customer/{phone}', 'getOne');
-    Route::post('/customer', 'create');
-    Route::put('/customer/{id}', 'update');
-    Route::get('/customer/{id}', 'get');
-    Route::get('/customer', 'getAll');
-    Route::get('/customer/{id}/info-buy', 'getInfoBuy');
-    Route::put('/customer/change-password', 'changePassword');
-    Route::get('/customer/{id}/info', 'getInfo');
-});
-
-Route::controller(OrdersController::class)->group(function () {
-    Route::get('/orders', 'getAll');
-    // Route::post('/order', 'create');
-});
-
-Route::post('/orders', [OrdersController::class, 'create']);
-Route::put('/orders/{order_id}', [OrdersController::class, 'update']);
-Route::get('/orders/order-products',[OrdersController::class,'getOrders']);
-Route::post('/orders/order-products/{order_id}',[OrdersController::class,'updateOrderProducts']);
-Route::put('/orders/cancel/{order_id}',[OrdersController::class,'cancelOrder']);
-Route::get('/orders/detail/{order_id}', [OrdersController::class, 'getDetail']);
-Route::get('/orders', [OrdersController::class, 'getAll']);
-Route::post('/orders/{type}', [OrdersController::class, 'getOrder']);
-Route::put('/orders/voucher/{order_id}', [OrdersController::class, 'updateVoucher']);
-Route::get('/orders/{order_id}', [OrdersController::class, 'get']);
-Route::delete('/orders/products/{order_id}/{product_id}', [OrdersController::class, 'deleteOrderProducts']);
-Route::post('/orders/add-discount/{order_id}', [OrdersController::class, 'addDiscount']);
-Route::post('/orders/cancel/{order_id}', [OrdersController::class, 'cancelOrder']);
-Route::put('/orders/accept-cancel/{order_id}', [OrdersController::class, 'acceptCancel']);
-Route::put('/orders/cancel-request/{order_id}', [OrdersController::class, 'cancelRequest']);
-Route::get('/orders/customer/{id}/{date}', [OrdersController::class, 'getOrdersByCustomerId']);
-Route::post('/orders/customer', [OrdersController::class, 'createOrderCustomer']);
-
-
+Route::get('/customer/{phone}',[CustomerController::class,'getOne']);
+Route::post('/customer', [CustomerController::class,'create']);
+Route::put('/customer/{id}', [CustomerController::class,'update']);
+Route::get('/customer/{id}', [CustomerController::class,'get']);
+Route::get('/customer', [CustomerController::class,'getAll']);
+Route::get('/customer/{id}/info-buy', [CustomerController::class,'getInfoBuy']);
+Route::put('/customer/change-password', [CustomerController::class,'changePassword']);
+Route::get('/customer/{id}/info', [CustomerController::class,'getInfo']);
+Route::get('/customer/{id}/history-redeem-point', [CustomerController::class,'getHistoryRedeemPoint']);
 
 Route::post('/vnpay/pay', [PaymentController::class, 'pay']);
 Route::get('/vnpay/return', [PaymentController::class, 'return']);
 Route::post('/vnpay/notify', [PaymentController::class, 'notify']);
 
+Route::controller(DashBoardController::class)->group(function () {
+    Route::get('/dashboard/sales-overview/{type}', 'getSalesOverview');
+    Route::get('/dashboard/inventory-summary/{type}', 'getInventorySummary');
+    Route::get('/dashboard/product-summary', 'getProductSummary');
+    Route::get('/dashboard/order-summary', 'getOrderSummary');
+    Route::get('/dashboard/sales-and-purchase-chart-data', 'getSalesAndPurchaseChartData');
+    Route::get('/dashboard/top-selling-stock/{type}', 'getTopSellingStock');
+    Route::get('/dashboard/low-quantity-stock/{type}', 'getLowQuantityStock');
+    Route::get('/dashboard/purchase-data/{type}', 'getPurchaseData');
+});
 
 
 

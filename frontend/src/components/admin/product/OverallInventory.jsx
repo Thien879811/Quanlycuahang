@@ -1,49 +1,82 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Typography, Button, Modal, List, Input, Form } from 'antd';
+import { Row, Col, Card, Typography, Button, Modal, List, Input, Form, Avatar } from 'antd';
 import { createGlobalStyle } from 'styled-components';
-import { EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import { EyeOutlined, PlusOutlined, AppstoreOutlined, ShoppingOutlined, WarningOutlined } from '@ant-design/icons';
 import useCatalogs from '../../../utils/catalogUtils';
 import useProducts from '../../../utils/productUtils';
 import dashboardService from '../../../services/dashboard.service';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
   
   body {
     font-family: 'Poppins', sans-serif;
+    background: #f0f2f5;
   }
 `;
 
-const StatisticCard = ({ title, value1, value2, subLabel1, subLabel2, titleColor, showViewButton, onViewClick }) => (
+const StatisticCard = ({ title, value1, value2, subLabel1, subLabel2, titleColor, showViewButton, onViewClick, icon }) => (
   <Col span={8}>
-    <Card bodyStyle={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-        <Text strong style={{ color: titleColor, fontSize: '16px', fontWeight: 600 }}>
-          {title}
-        </Text>
+    <Card 
+      hoverable
+      bodyStyle={{ padding: '24px' }}
+      style={{ 
+        borderRadius: '12px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        height: '100%'
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Avatar 
+            icon={icon} 
+            style={{ 
+              backgroundColor: titleColor,
+              padding: '8px',
+              fontSize: '20px'
+            }} 
+          />
+          <Text strong style={{ color: titleColor, fontSize: '18px', fontWeight: 600 }}>
+            {title}
+          </Text>
+        </div>
         {showViewButton && (
-          <Button type="text" icon={<EyeOutlined />} size="small" onClick={onViewClick}>
+          <Button 
+            type="text" 
+            icon={<EyeOutlined />} 
+            size="large"
+            onClick={onViewClick}
+            style={{ color: titleColor }}
+          >
             Xem
           </Button>
         )}
       </div>
-      <Row gutter={16} align="bottom">
+      <Row gutter={24} align="bottom">
         <Col>
-          <Text style={{ fontSize: '24px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+          <Text style={{ 
+            fontSize: '32px', 
+            fontWeight: 700, 
+            display: 'block', 
+            marginBottom: '8px',
+            background: `linear-gradient(45deg, ${titleColor}, ${titleColor}dd)`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
             {value1}
           </Text>
-          <Text type="secondary" style={{ fontSize: '12px', fontWeight: 300 }}>
+          <Text type="secondary" style={{ fontSize: '14px', fontWeight: 400 }}>
             {subLabel1}
           </Text>
         </Col>
         {value2 && (
           <Col>
-            <Text style={{ fontSize: '24px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+            <Text style={{ fontSize: '32px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
               {value2}
             </Text>
-            <Text type="secondary" style={{ fontSize: '12px', fontWeight: 300 }}>
+            <Text type="secondary" style={{ fontSize: '14px', fontWeight: 400 }}>
               {subLabel2}
             </Text>
           </Col>
@@ -53,17 +86,16 @@ const StatisticCard = ({ title, value1, value2, subLabel1, subLabel2, titleColor
   </Col>
 );
 
-const OverallInventory = () => {
+const OverallInventory = ({products}) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isOutOfStockModalVisible, setIsOutOfStockModalVisible] = useState(false);
   const { catalogs, fetchCatalogs, createCatalog } = useCatalogs();
-  const { products } = useProducts();
   const [form] = Form.useForm();
   const [purchaseData, setPurchaseData] = useState(null);
 
   useEffect(() => {
     fetchPurchaseData();
-  }, []);
+  }, [products]);
 
   const handleResponse = (response, setter) => {
     if (response && response.data) {
@@ -99,6 +131,7 @@ const OverallInventory = () => {
   const handleAddCategory = async (values) => {
     await createCatalog(values);
     await fetchCatalogs();
+    await fetchProducts();
     form.resetFields();
     handleCancel();
   };
@@ -112,23 +145,24 @@ const OverallInventory = () => {
   };
 
   return (
-    <div>
+    <div style={{ padding: '24px' }}>
       <GlobalStyle />
-      <Row gutter={16}>
+      <Title level={2} style={{ marginBottom: '24px' }}>Tổng quan kho hàng</Title>
+      <Row gutter={[24, 24]}>
         <StatisticCard
           title="Danh mục"
           value1={catalogs?.length || 0}
-          subLabel1="7 ngày qua"
           titleColor="#1890ff"
           showViewButton={true}
           onViewClick={showModal}
+          icon={<AppstoreOutlined />}
         />
         <StatisticCard
           title="Tổng sản phẩm"
           value1={products?.length || 0}
-          subLabel1="7 ngày qua"
           subLabel2="Doanh thu"
-          titleColor="#ffa940"
+          titleColor="#52c41a"
+          icon={<ShoppingOutlined />}
         />
         <StatisticCard
           title="Sản phẩm đã hết"
@@ -137,37 +171,61 @@ const OverallInventory = () => {
           titleColor="#ff4d4f"
           showViewButton={true}
           onViewClick={showOutOfStockModal}
+          icon={<WarningOutlined />}
         />
       </Row>
+
       <Modal 
-        title="Danh sách danh mục" 
+        title={<Title level={4}>Danh sách danh mục</Title>}
         open={isModalVisible} 
         onOk={handleOk} 
         onCancel={handleCancel}
+        width={600}
         footer={[
-          <Button key="back" onClick={handleCancel}>
+          <Button key="back" onClick={handleCancel} size="large">
             Đóng
           </Button>,
         ]}
       >
         <List
           bordered
+          style={{ 
+            borderRadius: '8px',
+            marginBottom: '24px'
+          }}
           dataSource={catalogs}
           renderItem={(item) => (
-            <List.Item>
-              <Typography.Text>{item.catalogy_name}</Typography.Text>
+            <List.Item style={{ padding: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Avatar icon={<AppstoreOutlined />} style={{ backgroundColor: '#1890ff' }} />
+                <Typography.Text strong>{item.catalogy_name}</Typography.Text>
+              </div>
             </List.Item>
           )}
         />
-        <Form form={form} onFinish={handleAddCategory} style={{ marginTop: '20px' }}>
+        <Form 
+          form={form} 
+          onFinish={handleAddCategory} 
+          layout="vertical"
+        >
           <Form.Item
             name="catalogy_name"
             rules={[{ required: true, message: 'Vui lòng nhập tên danh mục!' }]}
           >
-            <Input placeholder="Nhập tên danh mục mới" />
+            <Input 
+              placeholder="Nhập tên danh mục mới" 
+              size="large"
+              prefix={<AppstoreOutlined style={{ color: '#1890ff' }} />}
+            />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" icon={<PlusOutlined />}>
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              icon={<PlusOutlined />}
+              size="large"
+              block
+            >
               Thêm danh mục
             </Button>
           </Form.Item>
@@ -175,21 +233,26 @@ const OverallInventory = () => {
       </Modal>
 
       <Modal
-        title="Danh sách sản phẩm đã hết"
+        title={<Title level={4}>Danh sách sản phẩm đã hết</Title>}
         open={isOutOfStockModalVisible}
         onCancel={handleOutOfStockCancel}
+        width={600}
         footer={[
-          <Button key="back" onClick={handleOutOfStockCancel}>
+          <Button key="back" onClick={handleOutOfStockCancel} size="large">
             Đóng
           </Button>,
         ]}
       >
         <List
           bordered
+          style={{ borderRadius: '8px' }}
           dataSource={getOutOfStockProducts()}
           renderItem={(item) => (
-            <List.Item>
-              <Typography.Text>{item.product_name}</Typography.Text>
+            <List.Item style={{ padding: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Avatar icon={<WarningOutlined />} style={{ backgroundColor: '#ff4d4f' }} />
+                <Typography.Text strong>{item.product_name}</Typography.Text>
+              </div>
             </List.Item>
           )}
         />

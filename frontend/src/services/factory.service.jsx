@@ -21,6 +21,9 @@ class FactoryService {
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
     }
+    async getHistoryReceive(id) {
+        return (await this.api.get(`/${id}/history-receive`)).data;
+    }
 }
 export default new FactoryService();
 

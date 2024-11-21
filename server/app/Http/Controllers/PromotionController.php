@@ -53,6 +53,8 @@ class PromotionController extends Controller
                     'quantity' => $promotionData['quantity'] ?? null,
                     'start_date' => $promotionData['start_date'] ?? null,
                     'end_date' => $promotionData['end_date'] ?? null,
+                    'max_value' => $promotionData['max_value'] ?? null,
+                    'min_value' => $promotionData['min_value'] ?? null,
                 ]);
 
                 $createdPromotions[] = $promotion;
@@ -74,6 +76,8 @@ class PromotionController extends Controller
                 'quantity' => $promotionData['quantity'] ?? null,
                 'start_date' => $promotionData['start_date'] ?? null,
                 'end_date' => $promotionData['end_date'] ?? null,
+                'max_value' => $promotionData['max_value'] ?? null,
+                'min_value' => $promotionData['min_value'] ?? null,
             ]);
 
             return response()->json([

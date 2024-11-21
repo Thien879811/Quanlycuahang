@@ -6,6 +6,8 @@ import CardContent from '@mui/joy/CardContent';
 import IconButton from '@mui/joy/IconButton';
 import Typography from '@mui/joy/Typography';
 import BookmarkAdd from '@mui/icons-material/BookmarkAddOutlined';
+import { API_URL } from '../services/config';
+
 
 export default function BasicCard({product,onClick}) {
   const handleOnClick = () => {
@@ -29,8 +31,8 @@ export default function BasicCard({product,onClick}) {
       </div>
       <AspectRatio minHeight="120px" maxHeight="200px">
         <img
-          src={product.image}
-          srcSet={product.image}
+          src={`${API_URL}${product.image}`}
+          srcSet={`${API_URL}${product.image}`}
           loading="lazy"
           alt={product.product_name}
         />

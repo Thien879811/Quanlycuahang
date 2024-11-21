@@ -20,6 +20,9 @@ class Promotion extends Model
         'description',
         'quantity',
         'start_date',
+        'customer_id',
+        'max_value',
+        'min_value',
         'end_date',
     ];
 

@@ -132,6 +132,7 @@ const Order = () => {
             case 1: return { bg: '#e8f5e9', text: '#2e7d32' };
             case 2: return { bg: '#e3f2fd', text: '#1976d2' };
             case 3: return { bg: '#fafafa', text: '#757575' };
+            case 5: return { bg: '#e8f5e9', text: '#2e7d32' };
             default: return { bg: '#e3f2fd', text: '#1976d2' };
         }
     };
@@ -142,6 +143,7 @@ const Order = () => {
             case 1: return 'Thanh toán tại quầy';
             case 2: return 'Thanh toán online';
             case 3: return 'Đã hủy';
+            case 5: return 'Đơn hàng online';
             default: return 'Không xác định';
         }
     };

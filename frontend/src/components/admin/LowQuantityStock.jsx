@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, List, Avatar, Tag, Modal } from 'antd';
+import { API_URL } from '../../services/config';
 
 const LowQuantityStock = ({lowQuantityStock}) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -21,7 +22,7 @@ const LowQuantityStock = ({lowQuantityStock}) => {
           renderItem={(item) => (
             <List.Item extra={<Tag color="red">Sắp hết</Tag>}>
               <List.Item.Meta
-                avatar={<Avatar src={item.avatar} />}
+                avatar={<Avatar src={`${API_URL}${item.avatar}`} />}
                 title={item.title}
                 description={item.description}
               />

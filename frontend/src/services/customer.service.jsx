@@ -24,5 +24,8 @@ class CustomerService {
     async getInfoBuy(id) {
         return (await this.api.get(`/${id}/info-buy`)).data;
     }
+    async getHistoryRedeemPoint(id) {
+        return (await this.api.get(`/${id}/history-redeem-point`)).data;
+    }
 }
 export default new CustomerService();

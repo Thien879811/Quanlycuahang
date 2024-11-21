@@ -21,7 +21,7 @@ const PromoGrid = ({activePromotion}) => {
                             }
                         }}>
                             <ListItemIcon>
-                                <img src={promo.product.image} alt={promo.product.product_name} 
+                                <img src={`${API_URL}${promo.product.image}`} alt={promo.product.product_name} 
                                     style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '6px' }} 
                                 />
                             </ListItemIcon>
@@ -35,7 +35,7 @@ const PromoGrid = ({activePromotion}) => {
                                 <>
                                     <Typography variant="h5" color="primary" sx={{mx: 2}}>+</Typography>
                                     <ListItemIcon>
-                                        <img src={promo.present.product_image} alt={promo.present.product_name} 
+                                        <img src={`${API_URL}${promo.present.product_image}`} alt={promo.present.product_name} 
                                             style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '6px' }} 
                                         />
                                     </ListItemIcon>

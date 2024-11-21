@@ -292,11 +292,10 @@ class DashBoardController extends Controller
             return response()->json([]);
         }
     }
-
     public function getLowQuantityStock($type) {
         try {
-            $lowQuantityProducts = Product::orderBy('quantity', 'asc')
-                ->limit(10)
+            $lowQuantityProducts = Product::where('quantity', '<', 15)
+                ->orderBy('quantity', 'asc')
                 ->get()
                 ->map(function ($product) {
                     return [
@@ -348,9 +347,16 @@ class DashBoardController extends Controller
                     }
             }
 
+            // Tính tổng tiền nhập hàng
+            $totalPurchaseCost = $query->sum(\DB::raw('quantity * price'));
+            
+            // Tính tổng tiền trả hàng
+            $totalRefundAmount = $query->whereNotNull('return_quantity')
+                ->sum(\DB::raw('return_quantity * price'));
+
             $purchaseData = [
                 'purchaseOrders' => $goodsReceiptsQuery->count(),
-                'purchaseCost' => $query->sum(\DB::raw('quantity * price')),
+                'purchaseCost' => $totalPurchaseCost - $totalRefundAmount,
                 'canceledOrders' => $goodsReceiptsQuery->where('status', 4)->count(),
                 'refundedOrders' => $query->whereNotNull('return_quantity')->sum('return_quantity')
             ];

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, message, Space, Popconfirm, Typography, Tag, Descriptions, List } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Table, Button, Modal, Form, Input, message, Space, Popconfirm, Typography, Tag, Descriptions, List, Statistic, Card, Row, Col, Divider } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined, DownloadOutlined, ShopOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined } from '@ant-design/icons';
 import factoryService from '../../services/factory.service';
 import { handleResponse } from '../../functions';
 import * as XLSX from 'xlsx';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const SupplierAdmin = () => {
     const [suppliers, setSuppliers] = useState([]);
@@ -14,6 +14,14 @@ const SupplierAdmin = () => {
     const [selectedSupplier, setSelectedSupplier] = useState(null);
     const [form] = Form.useForm();
     const [editingSupplier, setEditingSupplier] = useState(null);
+    const [historyReceive, setHistoryReceive] = useState({
+        total_receipts: 0,
+        total_returned_quantity: 0,
+        total_amount: 0,
+        total_returned_amount: 0,
+        net_amount: 0,
+        products: []
+    });
 
     useEffect(() => {
         fetchSuppliers();
@@ -27,6 +35,17 @@ const SupplierAdmin = () => {
         } catch (error) {
             console.error('Error fetching suppliers:', error);
             message.error('Không thể tải danh sách nhà cung cấp');
+        }
+    };
+
+    const fetchHistoryReceive = async (id) => {
+        try {
+            const response = await factoryService.getHistoryReceive(id);
+            const data = handleResponse(response);
+            console.log(data);
+            setHistoryReceive(data);
+        } catch (error) {
+            console.error('Error fetching history receive:', error);
         }
     };
 
@@ -78,8 +97,9 @@ const SupplierAdmin = () => {
         }
     };
 
-    const showDetailModal = (supplier) => {
+    const showDetailModal = async (supplier) => {
         setSelectedSupplier(supplier);
+        await fetchHistoryReceive(supplier.id);
         setIsDetailModalVisible(true);
     };
 
@@ -94,28 +114,35 @@ const SupplierAdmin = () => {
         XLSX.writeFile(workbook, "suppliers.xlsx");
     };
 
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+    };
+
     const columns = [
         {
             title: 'Tên nhà cung cấp',
             dataIndex: 'factory_name',
             key: 'factory_name',
+            render: (text) => <Text strong>{text}</Text>
         },
         {
             title: 'Số điện thoại',
             dataIndex: 'phone',
             key: 'phone',
+            render: (text) => <Space><PhoneOutlined />{text}</Space>
         },
         {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
+            render: (text) => <Space><MailOutlined />{text}</Space>
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
             render: (status) => (
-                <Tag color={status === 'Đang trả hàng' ? 'green' : 'red'}>
+                <Tag color={status === 'Đang trả hàng' ? 'success' : 'error'} style={{borderRadius: '15px', padding: '0 15px'}}>
                     {status}
                 </Tag>
             ),
@@ -124,84 +151,87 @@ const SupplierAdmin = () => {
             title: 'Đang giao',
             dataIndex: 'onTheWay',
             key: 'onTheWay',
-        },
-        {
-            title: 'Thao tác',
-            key: 'action',
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button icon={<EditOutlined />} onClick={() => showModal(record)}>
-                        Sửa
-                    </Button>
-                    <Popconfirm
-                        title="Bạn có chắc chắn muốn xóa nhà cung cấp này?"
-                        onConfirm={() => handleDelete(record.id)}
-                        okText="Có"
-                        cancelText="Không"
-                    >
-                        <Button icon={<DeleteOutlined />} danger>
-                            Xóa
-                        </Button>
-                    </Popconfirm>
-                </Space>
-            ),
-        },
+            render: (value) => <Text type="warning" strong>{value}</Text>
+        }
     ];
 
     return (
-        <div style={{ padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <Title level={3}>Nhà cung cấp</Title>
-                <Space>
-                    <Button icon={<PlusOutlined />} type="primary" onClick={() => showModal()}>
+        <Card className="supplier-admin-container" style={{ margin: '24px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <Title level={3} style={{margin: 0}}><ShopOutlined /> Nhà cung cấp</Title>
+                <Space size="middle">
+                    <Button icon={<PlusOutlined />} type="primary" onClick={() => showModal()} style={{borderRadius: '6px'}}>
                         Thêm nhà cung cấp
                     </Button>
-                    <Button>Bộ lọc</Button>
-                    <Button icon={<DownloadOutlined />} onClick={handleDownloadExcel}>Tải xuống Excel</Button>
+                    <Button icon={<DownloadOutlined />} onClick={handleDownloadExcel} style={{borderRadius: '6px'}}>
+                        Xuất Excel
+                    </Button>
                 </Space>
             </div>
+
             <Table 
                 columns={columns} 
                 dataSource={suppliers} 
-                rowKey="id" 
+                rowKey="id"
+                style={{backgroundColor: 'white', borderRadius: '8px'}}
                 pagination={{ 
                     total: suppliers.length,
-                    showSizeChanger: false,
-                    showQuickJumper: false,
-                    showTotal: (total, range) => `Trang ${range[0]}-${range[1]} của ${total}`,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} nhà cung cấp`,
+                    style: {marginTop: '16px'}
                 }}
                 onRow={(record) => ({
                     onClick: () => showDetailModal(record),
+                    style: { cursor: 'pointer' }
                 })}
             />
+
             <Modal
-                title={editingSupplier ? "Sửa nhà cung cấp" : "Thêm nhà cung cấp"}
+                title={
+                    <Space>
+                        {editingSupplier ? <EditOutlined /> : <PlusOutlined />}
+                        <span>{editingSupplier ? "Sửa nhà cung cấp" : "Thêm nhà cung cấp"}</span>
+                    </Space>
+                }
                 visible={isModalVisible}
                 onCancel={handleCancel}
                 footer={null}
+                width={600}
+                style={{top: 20}}
+                bodyStyle={{padding: '24px'}}
             >
                 <Form form={form} onFinish={handleSubmit} layout="vertical">
                     <Form.Item name="factory_name" label="Tên nhà cung cấp" rules={[{ required: true, message: 'Vui lòng nhập tên nhà cung cấp' }]}>
-                        <Input />
+                        <Input prefix={<ShopOutlined />} placeholder="Nhập tên nhà cung cấp" />
                     </Form.Item>
-                    <Form.Item name="email" label="Email" rules={[{ required: true, message: 'Vui lòng nhập email hợp lệ' }]}>
-                        <Input />
+                    <Form.Item name="email" label="Email" rules={[{ required: true, message: 'Vui lòng nhập email hợp lệ', type: 'email' }]}>
+                        <Input prefix={<MailOutlined />} placeholder="Nhập email" />
                     </Form.Item>
-                    <Form.Item name="phone" label="Số điện thoại liên hệ" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}>
-                        <Input />
+                    <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}>
+                        <Input prefix={<PhoneOutlined />} placeholder="Nhập số điện thoại" />
                     </Form.Item>
                     <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}>
-                        <Input />
+                        <Input prefix={<EnvironmentOutlined />} placeholder="Nhập địa chỉ" />
                     </Form.Item>
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit">
-                            {editingSupplier ? "Cập nhật" : "Thêm nhà cung cấp"}
-                        </Button>
+                    <Form.Item style={{marginBottom: 0, textAlign: 'right'}}>
+                        <Space>
+                            <Button onClick={handleCancel}>Hủy</Button>
+                            <Button type="primary" htmlType="submit">
+                                {editingSupplier ? "Cập nhật" : "Thêm mới"}
+                            </Button>
+                        </Space>
                     </Form.Item>
                 </Form>
             </Modal>
+
             <Modal
-                title="Chi tiết nhà cung cấp"
+                title={
+                    <Space>
+                        <ShopOutlined />
+                        <span>Chi tiết nhà cung cấp</span>
+                    </Space>
+                }
                 visible={isDetailModalVisible}
                 onCancel={closeDetailModal}
                 footer={[
@@ -220,54 +250,77 @@ const SupplierAdmin = () => {
                 bodyStyle={{ padding: '24px' }}
             >
                 {selectedSupplier && (
-                    <div style={{ background: '#f0f2f5', padding: '24px', borderRadius: '8px' }}>
-                        <Descriptions
-                            bordered
-                            column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}
-                            labelStyle={{ fontWeight: 'bold', backgroundColor: '#fafafa' }}
-                            contentStyle={{ backgroundColor: '#fff' }}
-                        >
-                            <Descriptions.Item label="Tên nhà cung cấp" span={2}>
-                                <Typography.Text strong>{selectedSupplier.factory_name}</Typography.Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Email">
-                                <Typography.Text copyable>{selectedSupplier.email}</Typography.Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Số điện thoại">
-                                <Typography.Text copyable>{selectedSupplier.phone}</Typography.Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Địa chỉ" span={2}>
-                                {selectedSupplier.address}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Danh mục">
-                                <Tag color="blue">{selectedSupplier.category}</Tag>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Trạng thái">
-                                <Tag color={selectedSupplier.status === 'Đang trả hàng' ? 'green' : 'red'}>
-                                    {selectedSupplier.status}
-                                </Tag>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Đang giao" span={2}>
-                                <Typography.Text type="warning" strong>{selectedSupplier.onTheWay}</Typography.Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Sản phẩm" span={2}>
-                                <List
-                                    dataSource={selectedSupplier.products}
-                                    renderItem={product => (
-                                        <List.Item>
-                                            <Typography.Text strong>{product.product_name}</Typography.Text>
-                                            <Typography.Text type="secondary"> - Số lượng: {product.quantity}</Typography.Text>
-                                        </List.Item>
-                                    )}
-                                    bordered
-                                    style={{ maxHeight: '200px', overflowY: 'auto' }}
-                                />
-                            </Descriptions.Item>
-                        </Descriptions>
-                    </div>
+                    <Card bordered={false} className="supplier-detail-card">
+                        <Row gutter={[24, 24]}>
+                            <Col span={24}>
+                                <Card type="inner" title="Thông tin cơ bản">
+                                    <Descriptions column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
+                                        <Descriptions.Item label={<><ShopOutlined /> Tên nhà cung cấp</>}>
+                                            <Text strong>{selectedSupplier.factory_name}</Text>
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label={<><MailOutlined /> Email</>}>
+                                            <Text copyable>{selectedSupplier.email}</Text>
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label={<><PhoneOutlined /> Số điện thoại</>}>
+                                            <Text copyable>{selectedSupplier.phone}</Text>
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label={<><EnvironmentOutlined /> Địa chỉ</>}>
+                                            {selectedSupplier.address}
+                                        </Descriptions.Item>
+                                    </Descriptions>
+                                </Card>
+                            </Col>
+
+                            <Col span={24}>
+                                <Card type="inner" title="Thống kê giao dịch">
+                                    <Row gutter={[16, 16]}>
+                                        <Col span={8}>
+                                            <Statistic 
+                                                title="Tổng đơn nhập" 
+                                                value={historyReceive.total_receipts}
+                                                valueStyle={{color: '#1890ff'}}
+                                            />
+                                        </Col>
+                                        <Col span={8}>
+                                            <Statistic 
+                                                title="Số lượng sản phẩm đã trả" 
+                                                value={historyReceive.total_returned_quantity}
+                                                valueStyle={{color: '#ff4d4f'}}
+                                            />
+                                        </Col>
+                                        <Col span={8}>
+                                            <Statistic 
+                                                title="Tổng tiền thực tế"
+                                                value={historyReceive.net_amount}
+                                                formatter={(value) => formatCurrency(value)}
+                                                valueStyle={{color: '#52c41a'}}
+                                            />
+                                        </Col>
+                                    </Row>
+                                </Card>
+                            </Col>
+
+                            <Col span={24}>
+                                <Card type="inner" title="Danh sách sản phẩm">
+                                    <List
+                                        dataSource={historyReceive.products}
+                                        renderItem={products => (
+                                            <List.Item>
+                                                <List.Item.Meta
+                                                    title={products.product.product_name}
+                                                    description={`Mã sản phẩm: ${products.product.id}`}
+                                                />
+                                            </List.Item>
+                                        )}
+                                        style={{ maxHeight: '300px', overflowY: 'auto' }}
+                                    />
+                                </Card>
+                            </Col>
+                        </Row>
+                    </Card>
                 )}
             </Modal>
-        </div>
+        </Card>
     );
 }
 

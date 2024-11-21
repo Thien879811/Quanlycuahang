@@ -34,6 +34,9 @@ const ProductForm = ({ product, onSuccess, onCancel }) => {
   const [success, setSuccess] = useState(null);
   const { options } = useCatalogs();
   const { f_options } = useFactory();
+  const { catalogs, fetchCatalogs } = useCatalogs(); 
+  const { factories, fetchFactories } = useFactory();
+  const { products, fetchProducts } = useProducts();
 
   useEffect(() => {
     if (product) {
@@ -119,20 +122,6 @@ const ProductForm = ({ product, onSuccess, onCancel }) => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Nhà cung cấp</InputLabel>
-              <Select
-                name="factory_id"
-                value={productData.factory_id}
-                onChange={handleChange}
-              >
-                {f_options.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -162,16 +151,6 @@ const ProductForm = ({ product, onSuccess, onCancel }) => {
               value={productData.expiration_date}
               onChange={handleChange}
               InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              fullWidth
-              label="Số lượng"
-              type="number"
-              name="quantity"
-              value={productData.quantity}
-              onChange={handleChange}
             />
           </Grid>
           <Grid item xs={12} sm={4}>

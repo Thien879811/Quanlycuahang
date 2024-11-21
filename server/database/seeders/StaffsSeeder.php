@@ -16,18 +16,7 @@ class StaffsSeeder extends Seeder
     public function run()
     {
         Staff::create([
-            'names' => 'Nguyen Van A',
-            'age' => 20,
-            'address' => 'Ha Noi',
-            'phone' => '0987654321',
-            'gioitinh' => 'Nam',
-            'position' => 'Nhan vien',
-            'user_id' => 1,
-            'salary' => '',
-        ]);
-
-        Staff::create([
-            'names' => 'Nguyen Van B',
+            'names' => 'Nhân viên 1',
             'age' => 20,
             'address' => 'Ha Noi',
             'phone' => '0987654321',
@@ -37,7 +26,7 @@ class StaffsSeeder extends Seeder
             'salary' => 4700000,
         ]);
         Staff::create([
-            'names' => 'Nguyen Van C',
+            'names' => 'Nhân viên 2',
             'age' => 20,
             'address' => 'Ha Noi',
             'phone' => '0987654321',

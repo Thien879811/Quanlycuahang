@@ -3,17 +3,18 @@ import { Modal, Form, Input, DatePicker, InputNumber, Select, Upload, Button, Ro
 import { BarcodeOutlined, CalendarOutlined, ShoppingOutlined, TagOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import useProducts from '../../../utils/productUtils';
+import { API_URL } from '../../../services/config';
 
 const { Option } = Select;
 const { Title } = Typography;
 
-const ProductForm = ({ visible, onCancel, catalogs, factories, initialValues = null, onSuccess }) => {
+const ProductForm = ({ visible, onCancel, catalogs, initialValues = null, onSuccess, loadData, setIsModalVisible , fetchProducts}) => {
     const [form] = Form.useForm();
     const [imageUrl, setImageUrl] = useState('');
     const [fileList, setFileList] = useState([]);
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
-    const { createProduct, updateProduct , fetchProducts} = useProducts();
+    const { createProduct, updateProduct , products} = useProducts();
 
     useEffect(() => {
         if (initialValues) {
@@ -23,11 +24,20 @@ const ProductForm = ({ visible, onCancel, catalogs, factories, initialValues = n
                 expiration_date: initialValues.expiration_date ? moment(initialValues.expiration_date) : null,
             });
             setImageUrl(initialValues.image || '');
-            setFileList(initialValues.image ? [{ uid: '-1', name: 'image.png', status: 'done', url: initialValues.image }] : []);
+            if (initialValues.image) {
+                setImagePreview(`${API_URL}${initialValues.image}`);
+                setFileList([{ 
+                    uid: '-1', 
+                    name: 'image.png', 
+                    status: 'done', 
+                    url: `${API_URL}${initialValues.image}` 
+                }]);
+            }
         } else {
             form.resetFields();
             setImageUrl('');
             setFileList([]);
+            setImagePreview(null);
         }
     }, [initialValues, form]);
 
@@ -52,24 +62,33 @@ const ProductForm = ({ visible, onCancel, catalogs, factories, initialValues = n
                 // If there's an existing image URL but no new image uploaded
                 formData.append('image', imageUrl);
             }
-            
+
             let response;
-            if (initialValues) {
-                response = await updateProduct(initialValues.id, formData);
-            } else {
-                response = await createProduct(formData);
+            try {
+                if (initialValues) {
+                    response = await updateProduct(initialValues.id, formData);
+                    fetchProducts();
+                } else {
+                    response = await createProduct(formData);
+                    fetchProducts();
+                }
+                if (response.success) {
+                    message.success(initialValues ? 'Sản phẩm đã được cập nhật thành công.' : 'Sản phẩm đã được thêm thành công.');
+                    form.resetFields();
+                    setIsModalVisible(false);
+                    if (onSuccess) onSuccess(response.data);
+                    onCancel();
+                } else {
+                    message.error(response.message || 'Đã xảy ra lỗi.');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                message.error('Có lỗi xảy ra khi lưu sản phẩm');
             }
-            
-            if (response.success) {
-                message.success(initialValues ? 'Sản phẩm đã được cập nhật thành công.' : 'Sản phẩm đã được thêm thành công.');
-                fetchProducts();
-                if (onSuccess) onSuccess(response.data);
-                onCancel();
-            } else {
-                message.error(response.message || 'Đã xảy ra lỗi.');
-            }
-        } catch (error) {
-            console.error(error);
+
+        } catch (validationError) {
+            console.error('Validation Error:', validationError);
+            message.error('Vui lòng kiểm tra lại thông tin nhập vào');
         }
     };
 
@@ -124,8 +143,9 @@ const ProductForm = ({ visible, onCancel, catalogs, factories, initialValues = n
                             name="product_name"
                             label="Tên sản phẩm"
                             rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}
+                            validateStatus={initialValues ? 'success' : 'validating'}
                         >
-                            <Input prefix={<TagOutlined />} placeholder="Nhập tên sản phẩm" />
+                            <Input value={initialValues?.product_name} prefix={<TagOutlined />} placeholder="Nhập tên sản phẩm" />
                         </Form.Item>
                     </Col>
                     <Col span={12}>
@@ -134,7 +154,7 @@ const ProductForm = ({ visible, onCancel, catalogs, factories, initialValues = n
                             label="Mã vạch"
                             rules={[{ required: true, message: 'Vui lòng nhập mã vạch' }]}
                         >
-                            <Input prefix={<BarcodeOutlined />} placeholder="Nhập mã vạch" />
+                            <Input value={initialValues?.barcode} prefix={<BarcodeOutlined />} placeholder="Nhập mã vạch" />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -146,7 +166,7 @@ const ProductForm = ({ visible, onCancel, catalogs, factories, initialValues = n
                             label="Ngày sản xuất"
                             rules={[{ required: true, message: 'Vui lòng chọn ngày sản xuất' }]}
                         >
-                            <DatePicker style={{ width: '100%' }} prefix={<CalendarOutlined />} format="DD/MM/YYYY" />
+                            <DatePicker value={initialValues?.production_date ? moment(initialValues.production_date) : null} style={{ width: '100%' }} prefix={<CalendarOutlined />} format="DD/MM/YYYY" />
                         </Form.Item>
                     </Col>
                     <Col span={12}>
@@ -155,37 +175,28 @@ const ProductForm = ({ visible, onCancel, catalogs, factories, initialValues = n
                             label="Ngày hết hạn"
                             rules={[{ required: true, message: 'Vui lòng chọn ngày hết hạn' }]}
                         >
-                            <DatePicker style={{ width: '100%' }} prefix={<CalendarOutlined />} format="DD/MM/YYYY" />
+                            <DatePicker value={initialValues?.expiration_date ? moment(initialValues.expiration_date) : null} style={{ width: '100%' }} prefix={<CalendarOutlined />} format="DD/MM/YYYY" />
                         </Form.Item>
                     </Col>
                 </Row>
 
                 <Row gutter={16}>
-                    <Col span={8}>
-                        <Form.Item
-                            name="quantity"
-                            label="Số lượng"
-                            rules={[{ required: true, message: 'Vui lòng nhập số lượng' }]}
-                        >
-                            <InputNumber style={{ width: '100%' }} min={0} prefix={<ShoppingOutlined />} />
-                        </Form.Item>
-                    </Col>
-                    <Col span={8}>
+                    <Col span={12}>
                         <Form.Item
                             name="selling_price"
                             label="Giá bán"
                             rules={[{ required: true, message: 'Vui lòng nhập giá bán' }]}
                         >
-                            <InputNumber style={{ width: '100%' }} min={0} />
+                            <InputNumber value={initialValues?.selling_price} style={{ width: '100%' }} min={0} />
                         </Form.Item>
                     </Col>
-                    <Col span={8}>
+                    <Col span={12}>
                         <Form.Item
                             name="purchase_price"
                             label="Giá mua vào"
                             rules={[{ required: true, message: 'Vui lòng nhập giá mua vào' }]}
                         >
-                            <InputNumber style={{ width: '100%' }} min={0}  />
+                            <InputNumber value={initialValues?.purchase_price} style={{ width: '100%' }} min={0} />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -197,22 +208,9 @@ const ProductForm = ({ visible, onCancel, catalogs, factories, initialValues = n
                             label="Danh mục"
                             rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
                         >
-                            <Select placeholder="Chọn danh mục">
+                            <Select value={initialValues?.catalogy_id} placeholder="Chọn danh mục">
                                 {catalogs.map(catalog => (
                                     <Option key={catalog.id} value={catalog.id}>{catalog.catalogy_name}</Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                        <Form.Item
-                            name="factory_id"
-                            label="Nhà máy sản xuất"
-                            rules={[{ required: true, message: 'Vui lòng chọn nhà máy sản xuất' }]}
-                        >
-                            <Select placeholder="Chọn nhà máy sản xuất">
-                                {factories.map(factory => (
-                                    <Option key={factory.id} value={factory.id}>{factory.factory_name}</Option>
                                 ))}
                             </Select>
                         </Form.Item>

@@ -22,10 +22,8 @@ class ProductRequest extends FormRequest
             'barcode' => 'required|string',
             'catalogy_id' => 'required|integer',
             'product_name' => 'required|string|max:255',
-            'quantity' => 'required|integer|min:0',
             'production_date' => 'required|date',
             'expiration_date' => 'required|date',
-            'factory_id' => 'required|integer',
             'selling_price' => 'required|numeric|min:0',
             'purchase_price' => 'required|numeric|min:0',
         ];
@@ -57,18 +55,11 @@ class ProductRequest extends FormRequest
             'purchase_price.numeric' => 'Giá mua phải là một số.',
             'purchase_price.min' => 'Giá mua phải lớn hơn 0.',
 
-            'quantity.required' => 'Vui lòng nhập số lượng.',
-            'quantity.integer' => 'Số lượng phải là một số nguyên.',
-            'quantity.min' => 'Số lượng phải lớn hơn 0.',
-
             'production_date.required' => 'Vui lòng nhập ngày sản xuất.',
             'production_date.date' => 'Ngày sản xuất phải là một ngày.',
 
             'expiration_date.required' => 'Vui lòng nhập ngày hết hạng.',
             'expiration_date.date' => 'Ngày hết hạng phải là một ngày.',
-
-            'factory_id.required' => 'Vui lòng chọn nhà sản xuất.',
-            'factory_id.integer' => 'Nhà sản xuất phải là một số nguyên.',
         ];
     }
 }

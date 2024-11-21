@@ -101,6 +101,41 @@ function CreateDiscountPromotion({ products, onFinish }) {
             </Row>
 
             <Row gutter={24}>
+              <Col span={12}>
+                <Form.Item 
+                  name="max_value" 
+                  label="Giá trị giảm tối đa"
+                  rules={[{ required: true, message: 'Vui lòng nhập giá trị giảm tối đa' }]}
+                >
+                  <InputNumber
+                    min={0}
+                    size="large" 
+                    style={{ width: '100%' }}
+                    placeholder="Nhập giá trị giảm tối đa"
+                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item 
+                  name="min_value" 
+                  label="Giá trị đơn hàng tối thiểu"
+                  rules={[{ required: true, message: 'Vui lòng nhập giá trị đơn hàng tối thiểu' }]}
+                >
+                  <InputNumber
+                    min={0}
+                    size="large"
+                    style={{ width: '100%' }}
+                    placeholder="Nhập giá trị đơn hàng tối thiểu"
+                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={24}>
               <Col span={24}>
                 <Form.Item 
                   name="quantity" 

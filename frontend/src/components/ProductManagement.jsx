@@ -31,7 +31,7 @@ const ProductManagement = () => {
       key: 'image',
       render: (image) => (
         <Image
-          src={image}
+          src={`${API_URL}${image}`}
           alt="Product"
           width={50}
           height={50}

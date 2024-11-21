@@ -17,11 +17,10 @@ return new class extends Migration
             $table->id();
             $table->string('product_name');
             $table->foreignId('catalogy_id')->constrained('catalogy');
-            $table->foreignId('factory_id')->constrained('factory');
             $table->date('production_date');  
             $table->date('expiration_date')->nullable();
             $table->string('image');
-            $table->integer('quantity');
+            $table->integer('quantity')->default(0);
             $table->integer('selling_price');
             $table->integer('purchase_price');
             $table->string('barcode');

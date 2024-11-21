@@ -132,14 +132,14 @@ const router = createBrowserRouter ([
                 path: '/admin/sales',
                 element: <SalesAdmin />
             },
-            // {
-            //     path: '/admin/import-product',
-            //     element: <ImportAdmin />
-            // },
             {
                 path: '/admin/import-product',
-                element: <ImportProduct />
+                element: <ImportAdmin />
             },
+            // {
+            //     path: '/admin/import-product',
+            //     element: <ImportProduct />
+            // },
             {
                 path: '/admin/import-history',
                 element: <HistoryReceipt />

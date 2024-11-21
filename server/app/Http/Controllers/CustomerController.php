@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+use App\Models\Promotion;
 class CustomerController extends Controller
 {
     public function get($id){
@@ -140,5 +140,10 @@ class CustomerController extends Controller
     public function getInfo($id){
         $customer = Customer::find($id);
         return response()->json($customer);
+    }
+
+    public function getHistoryRedeemPoint($id){
+        $promotions = Promotion::where('customer_id', $id)->get();
+        return response()->json($promotions);
     }
 }

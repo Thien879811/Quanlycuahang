@@ -26,10 +26,10 @@ class DatabaseSeeder extends Seeder
         $this->call(LichLamViecSeeder::class);
         $this->call(PromotionSeeder::class);
         $this->call(ChamCongSeeder::class);
-        // $this->call(GoodsReceipt::class);
-        // $this->call(GoodsReceiptDetail::class);
-        // $this->call(OrderSeeder::class);
-        // $this->call(DetailOrderSeeder::class);
+        $this->call(GoodsReceipt::class);
+        $this->call(GoodsReceiptDetail::class);
+        $this->call(OrderSeeder::class);
+        $this->call(DetailOrderSeeder::class);
 
         
         

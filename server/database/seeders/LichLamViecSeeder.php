@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\LichLamViec;
 use App\Models\Staff;
+use Carbon\Carbon;
 
 class LichLamViecSeeder extends Seeder
 {
@@ -26,13 +27,16 @@ class LichLamViecSeeder extends Seeder
                 for ($day = 1; $day <= $days_in_month; $day++) {
                     $date = sprintf('2024-%02d-%02d', $month, $day);
                     
-                    LichLamViec::create([
-                        'staff_id' => $staff_id,
-                        'date' => $date,
-                        'time_start' => '07:00',
-                        'time_end' => '15:00',
-                        'reason' => ''
-                    ]);
+                    // Skip if it's Sunday (day of week = 0)
+                    if (Carbon::parse($date)->dayOfWeek !== Carbon::SUNDAY) {
+                        LichLamViec::create([
+                            'staff_id' => $staff_id,
+                            'date' => $date,
+                            'time_start' => '07:00',
+                            'time_end' => '15:00',
+                            'reason' => ''
+                        ]);
+                    }
                 }
             }
         }

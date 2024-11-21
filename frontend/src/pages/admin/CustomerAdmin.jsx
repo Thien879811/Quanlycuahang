@@ -1,8 +1,9 @@
-import { Layout, Typography, Table, Card, Space, Statistic, Row, Col, Modal, List, Tag } from 'antd';
+import { Layout, Typography, Table, Card, Space, Statistic, Row, Col, Modal, List, Tag, Spin, Button } from 'antd';
 import customerService from '../../services/customer.service';
 import { useEffect, useState } from 'react';
 import { handleResponse } from '../../functions';
-import { UserOutlined, StarOutlined, PhoneOutlined, ShoppingOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { UserOutlined, StarOutlined, PhoneOutlined, ShoppingOutlined, CheckCircleOutlined, HistoryOutlined } from '@ant-design/icons';
+import { API_URL } from '../../services/config';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -13,13 +14,14 @@ export default function CustomerAdmin() {
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [infoBuy, setInfoBuy] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [historyRedeemPoint, setHistoryRedeemPoint] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
 
     const fetchInfoBuy = async (id) => {
-        
         try {
             const response = await customerService.getInfoBuy(id);
             const data = handleResponse(response);
-            console.log(data);
             setInfoBuy(data);
         } catch (error) {
             console.error(error);
@@ -40,10 +42,21 @@ export default function CustomerAdmin() {
         fetchCustomers();
     }, []);
 
-    const handleRowClick = (record) => {
+    const handleRowClick = async (record) => {
+        setIsLoading(true);
         setSelectedCustomer(record);
-        fetchInfoBuy(record.id);
         setIsModalVisible(true);
+        setShowHistory(false);
+        try {
+            await Promise.all([
+                fetchInfoBuy(record.id),
+                fetchHistoryRedeemPoint(record.id)
+            ]);
+        } catch (error) {
+            console.error('Error loading data:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const formatPhoneNumber = (phone) => {
@@ -53,6 +66,17 @@ export default function CustomerAdmin() {
             return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
         }
         return phone;
+    };
+
+    const fetchHistoryRedeemPoint = async (id) => {
+        try {
+            const response = await customerService.getHistoryRedeemPoint(id);
+            const data = handleResponse(response);
+            console.log(data);
+            setHistoryRedeemPoint(data);
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const columns = [
@@ -170,71 +194,115 @@ export default function CustomerAdmin() {
                     width={800}
                     footer={null}
                 >
-                    {selectedCustomer && infoBuy && (
-                        <>
-                            <Card style={{ marginBottom: 16 }}>
-                                <Row gutter={16}>
-                                    <Col span={8}>
-                                        <Statistic 
-                                            title="Tên khách hàng"
-                                            value={selectedCustomer.name}
-                                            prefix={<UserOutlined />}
-                                        />
-                                    </Col>
-                                    <Col span={8}>
-                                        <Statistic 
-                                            title="Số điện thoại"
-                                            value={formatPhoneNumber(selectedCustomer.phone)}
-                                            prefix={<PhoneOutlined />}
-                                        />
-                                    </Col>
-                                    <Col span={8}>
-                                        <Statistic 
-                                            title="Tổng số đơn hàng"
-                                            value={infoBuy.total_orders}
-                                            prefix={<ShoppingOutlined />}
-                                        />
-                                    </Col>
-                                </Row>
-                            </Card>
+                    {isLoading ? (
+                        <div style={{ textAlign: 'center', padding: '20px' }}>
+                            <Spin size="large" />
+                        </div>
+                    ) : (
+                        selectedCustomer && infoBuy && (
+                            <>
+                                <Card style={{ marginBottom: 16 }}>
+                                    <Row gutter={16}>
+                                        <Col span={8}>
+                                            <Statistic 
+                                                title="Tên khách hàng"
+                                                value={selectedCustomer.name}
+                                                prefix={<UserOutlined />}
+                                            />
+                                        </Col>
+                                        <Col span={8}>
+                                            <Statistic 
+                                                title="Số điện thoại"
+                                                value={formatPhoneNumber(selectedCustomer.phone)}
+                                                prefix={<PhoneOutlined />}
+                                            />
+                                        </Col>
+                                        <Col span={8}>
+                                            <Statistic 
+                                                title="Tổng số đơn hàng"
+                                                value={infoBuy.total_orders}
+                                                prefix={<ShoppingOutlined />}
+                                            />
+                                        </Col>
+                                    </Row>
+                                </Card>
 
-                            <Card title="Top 5 sản phẩm mua nhiều nhất">
-                                <List
-                                    dataSource={infoBuy.top_products}
-                                    renderItem={item => (
-                                        <List.Item>
-                                            <Row style={{ width: '100%' }} align="middle">
-                                                <Col span={4}>
-                                                    <img 
-                                                        src={item.image} 
-                                                        alt={item.name}
-                                                        style={{ 
-                                                            width: '100%',
-                                                            height: '60px',
-                                                            objectFit: 'cover'
-                                                        }}
-                                                    />
-                                                </Col>
-                                                <Col span={12}>
-                                                    <Space direction="vertical" size="small">
-                                                        <span style={{ fontWeight: 'bold' }}>{item.name}</span>
-                                                        <span style={{ color: '#666' }}>Mã: {item.barcode}</span>
-                                                    </Space>
-                                                </Col>
-                                                <Col span={8} style={{ textAlign: 'right' }}>
-                                                    <Space>
-                                                        <Tag color="blue">Số lượng: {item.quantity}</Tag>
-                                                        <Tag color="green">
-                                                            {(item.selling_price || 0).toLocaleString('vi-VN')}đ
-                                                        </Tag>
-                                                    </Space>
-                                                </Col>
-                                            </Row>
-                                        </List.Item>
-                                    )}
-                                />
-                            </Card>
-                        </>
+                                <Button 
+                                    type="primary" 
+                                    icon={<HistoryOutlined />}
+                                    onClick={() => setShowHistory(!showHistory)}
+                                    style={{ marginBottom: 16 }}
+                                >
+                                    Xem lịch sử đổi điểm
+                                </Button>
+
+                                {showHistory && (
+                                    <Card title="Lịch sử đổi điểm" style={{ marginBottom: 16 }}>
+                                        <List
+                                            dataSource={historyRedeemPoint}
+                                            renderItem={item => (
+                                                <List.Item>
+                                                    <Row style={{ width: '100%' }}>
+                                                        <Col span={16}>
+                                                            <Space direction="vertical">
+                                                                <span style={{ fontWeight: 'bold' }}>{item.name}</span>
+                                                                <span>Mã: {item.code}</span>
+                                                                <span style={{ color: '#666' }}>
+                                                                    {new Date(item.created_at).toLocaleDateString('vi-VN')}
+                                                                </span>
+                                                            </Space>
+                                                        </Col>
+                                                        <Col span={8} style={{ textAlign: 'right' }}>
+                                                            <Space direction="vertical" align="end">
+                                                                <Tag color="blue">Giảm {item.discount_percentage}%</Tag>
+                                                            </Space>
+                                                        </Col>
+                                                    </Row>
+                                                </List.Item>
+                                            )}
+                                            locale={{ emptyText: 'Không có lịch sử đổi điểm' }}
+                                        />
+                                    </Card>
+                                )}
+
+                                <Card title="Top 5 sản phẩm mua nhiều nhất">
+                                    <List
+                                        dataSource={infoBuy.top_products}
+                                        renderItem={item => (
+                                            <List.Item>
+                                                <Row style={{ width: '100%' }} align="middle">
+                                                    <Col span={4}>
+                                                        <img 
+                                                            src={`${API_URL}${item.image}`} 
+                                                            alt={item.name}
+                                                            style={{ 
+                                                                width: '100%',
+                                                                height: '60px',
+                                                                objectFit: 'cover'
+                                                            }}
+                                                        />
+                                                    </Col>
+                                                    <Col span={12}>
+                                                        <Space direction="vertical" size="small">
+                                                            <span style={{ fontWeight: 'bold' }}>{item.name}</span>
+                                                            <span style={{ color: '#666' }}>Mã: {item.barcode}</span>
+                                                        </Space>
+                                                    </Col>
+                                                    <Col span={8} style={{ textAlign: 'right' }}>
+                                                        <Space>
+                                                            <Tag color="blue">Số lượng: {item.quantity}</Tag>
+                                                            <Tag color="green">
+                                                                {(item.selling_price || 0).toLocaleString('vi-VN')}đ
+                                                            </Tag>
+                                                        </Space>
+                                                    </Col>
+                                                </Row>
+                                            </List.Item>
+                                        )}
+                                    />
+                                </Card>
+                            </>
+                        )
                     )}
                 </Modal>
             </Content>

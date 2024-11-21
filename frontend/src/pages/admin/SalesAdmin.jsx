@@ -27,7 +27,9 @@ function SalesAdmin() {
         setLoading(true);
         const res = await promotionService.getPromotion();
         const data = handleResponse(res);
-        setPromotions(data);
+        // Filter out promotions with customer_id
+        const filteredPromotions = data.filter(promotion => !promotion.customer_id);
+        setPromotions(filteredPromotions);
     } catch (error) {
         setError(error.message);
         console.error(error);
@@ -63,6 +65,8 @@ function SalesAdmin() {
         quantity: values.quantity || null,
         start_date: values.start_date ? values.start_date.format('YYYY-MM-DD') : null,
         end_date: values.end_date ? values.end_date.format('YYYY-MM-DD') : null,
+        max_value: values.max_value || null,
+        min_value: values.min_value || null,
       };
       console.log(data);
       const res = await promotionService.create(data);

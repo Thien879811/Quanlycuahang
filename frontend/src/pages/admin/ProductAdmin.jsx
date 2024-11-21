@@ -12,7 +12,7 @@ const { Content } = Layout;
 const { Title } = Typography;
 
 const ProductAdmin = () => {
-  const { products, createProduct } = useProducts();
+  const { products, createProduct , fetchProducts} = useProducts();
   const { catalogs } = useCatalogs();
   const { factories } = useFactories();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -20,34 +20,22 @@ const ProductAdmin = () => {
   const [form] = Form.useForm();
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        // Wait for data to load
-        await Promise.all([products, catalogs, factories]);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([products, catalogs, factories]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const showModal = () => {
     setIsModalVisible(true);
   };
 
-  const handleOk = () => {
-    form.validateFields().then((values) => {
-      const result = createProduct(values);
-      if (result.success) {
-        setIsModalVisible(false);
-        form.resetFields();
-        message.success(result.message);
-      } else {
-        message.error(result.message);
-      }
-    });
-  };
 
   const handleCancel = () => {
     setIsModalVisible(false);
@@ -69,7 +57,7 @@ const ProductAdmin = () => {
             </Col>
             <Col span={24}>
               <Card>
-                <OverallInventory />
+                <OverallInventory products={products} />
               </Card>
             </Col>
             <Col span={24}>
@@ -82,7 +70,7 @@ const ProductAdmin = () => {
                     Tải xuống tất cả
                   </Button>
                 </Space>
-                <ProductsTable />
+                <ProductsTable products={products} fetchProducts={fetchProducts}/>
               </Card>
             </Col>
           </Row>
@@ -94,9 +82,11 @@ const ProductAdmin = () => {
         form={form} 
         catalogs={catalogs} 
         factories={factories} 
-        onOk={handleOk} 
+        setIsModalVisible={setIsModalVisible}
         onCancel={handleCancel}
         initialValues={null}
+        loadData={loadData}
+        fetchProducts={fetchProducts}
       />
     </Layout>
   );

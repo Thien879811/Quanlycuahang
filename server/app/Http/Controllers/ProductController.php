@@ -67,15 +67,10 @@ class ProductController extends Controller
         $productData['image'] = $imageResult['imageUrl'];
 
         // Create the new product
-        $product = Product::create($productData);
-
-        HangSuDung::create([
-            'product_id' => $product->id,
-            'hang_su_dung' => $productData['expiration_date'],
-            'quantity' => $productData['quantity'],
-            'status' => 'active'
+        $product = Product::create([
+            ...$productData,
+            'quantity' => $productData['quantity'] ?? 0
         ]);
-
         return response()->json([
             'success' => true,
             'product' => $product,
@@ -87,32 +82,11 @@ class ProductController extends Controller
     {
         $existingProduct = Product::where('barcode', $productData['barcode'])->first();
         if ($existingProduct) {
-            $existingProduct->quantity += $productData['quantity'];
+            $existingProduct->quantity += isset($productData['quantity']) ? $productData['quantity'] : 0;
             $existingProduct->save();
-            
-            $hsd = HangSuDung::where('product_id', $existingProduct->id)
-                            ->where('hang_su_dung', $productData['expiration_date'])
-                            ->first();
-                            
-            if ($hsd) {
-                $hsd->quantity += $productData['quantity'];
-                $hsd->save();
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Sản phẩm đã được cập nhật số lượng.'
-                ]);
-            }
-
-            HangSuDung::create([
-                'product_id' => $existingProduct->id,
-                'hang_su_dung' => $productData['expiration_date'],
-                'quantity' => $productData['quantity'],
-                'status' => 'active'
-            ]);
-
             return response()->json([
-                'success' => true,
-                'message' => 'Sản phẩm đã được thêm hạn sử dụng mới.'
+                'success' => false,
+                'message' => 'Đã tồn tại sản phẩm với mã vạch này'
             ]);
         }
 
@@ -125,7 +99,7 @@ class ProductController extends Controller
             $file = $request->file('image');
             $imageName = time() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('images'), $imageName);
-            $imageUrl = asset('images/' . $imageName);
+            $imageUrl = '/images/' . $imageName;
 
             return [
                 'success' => true,
@@ -171,26 +145,9 @@ class ProductController extends Controller
             }
         }
 
-        $product->update($data);
-
-        // Update HangSuDung if expiration_date is provided
-        if (isset($data['expiration_date'])) {
-            $hangSuDung = HangSuDung::where('product_id', $product->id)
-                                    ->where('hang_su_dung', $data['expiration_date'])
-                                    ->first();
-
-            if ($hangSuDung) {
-                $hangSuDung->quantity = $data['quantity'] ?? $hangSuDung->quantity;
-                $hangSuDung->save();
-            } else {
-                HangSuDung::create([
-                    'product_id' => $product->id,
-                    'hang_su_dung' => $data['expiration_date'],
-                    'quantity' => $data['quantity'] ?? 0,
-                    'status' => 'active'
-                ]);
-            }
-        }
+        $product->update([
+            ...$data,
+        ]);
 
         return response()->json([
             'success' => true,
