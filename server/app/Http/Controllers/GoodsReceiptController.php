@@ -182,11 +182,21 @@ class GoodsReceiptController extends Controller
                           ->whereMonth('created_at', Carbon::now()->month);
                     break;
                 case 'custom':
-                    $date = $request->get('date');
+                    $date = $request->input('date');
                     if (!$date) {
                         return response()->json(['error' => 'Date is required for custom type'], 400);
                     }
-                    $query->whereDate('created_at', Carbon::parse($date));
+                    $query->whereDate('created_at', $date);
+                    break;
+                    
+                case 'custom_month':
+                    $month = $request->input('date.month');
+                    $year = $request->input('date.year');
+                    if (!$month || !$year) {
+                        return response()->json(['error' => 'Month and year are required for custom month type'], 400);
+                    }
+                    $query->whereYear('created_at', $year)
+                          ->whereMonth('created_at', $month);
                     break;
                 default:
                     return response()->json(['error' => 'Invalid time range'], 400);

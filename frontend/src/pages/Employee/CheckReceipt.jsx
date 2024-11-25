@@ -26,7 +26,9 @@ import {
     TablePagination,
     IconButton,
     Tooltip,
-    Divider
+    Divider,
+    TextField,
+    InputAdornment
 } from '@mui/material';
 import ReceiptService from '../../services/receipt.service';
 import { handleResponse } from '../../functions';
@@ -35,9 +37,12 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import { styled } from '@mui/material/styles';
+import CheckDialog from './Receipt/CheckDialog';
+import ReceiptTable from './Receipt/ReceiptTable';
 
 dayjs.locale('vi');
 
@@ -47,30 +52,68 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     color: theme.palette.common.white,
 }));
 
-const StyledButton = styled(Button)(({ theme }) => ({
-    borderRadius: '8px',
-    textTransform: 'none',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+const StyledCard = styled(Card)(({ theme }) => ({
+    borderRadius: '16px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+    marginBottom: theme.spacing(4),
+    background: '#ffffff',
+    transition: 'all 0.3s ease-in-out',
     '&:hover': {
-        boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+        boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+        transform: 'translateY(-2px)'
     }
 }));
 
-const StyledCard = styled(Card)(({ theme }) => ({
+const StyledButton = styled(Button)(({ theme }) => ({
     borderRadius: '12px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-    marginBottom: theme.spacing(3)
+    textTransform: 'none',
+    padding: '10px 24px',
+    fontWeight: 600,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    transition: 'all 0.2s ease-in-out',
+    '&:hover': {
+        boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+        transform: 'translateY(-1px)'
+    }
 }));
 
 const StyledInput = styled('input')(({ theme }) => ({
-    padding: '12px',
-    border: '1px solid #e0e0e0',
-    borderRadius: '8px',
+    padding: '14px',
+    border: '2px solid #e0e0e0',
+    borderRadius: '12px',
     width: '100%',
+    fontSize: '16px',
+    transition: 'all 0.2s ease',
     '&:focus': {
         outline: 'none',
         borderColor: theme.palette.primary.main,
-        boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+        boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.15)',
+    },
+    '&:hover': {
+        borderColor: theme.palette.primary.light
+    }
+}));
+
+const SearchTextField = styled(TextField)(({ theme }) => ({
+    '& .MuiOutlinedInput-root': {
+        borderRadius: '12px',
+        backgroundColor: '#fff',
+        transition: 'all 0.2s ease',
+        '& fieldset': {
+            borderWidth: '2px',
+            borderColor: '#e0e0e0',
+        },
+        '&:hover fieldset': {
+            borderColor: theme.palette.primary.light,
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: theme.palette.primary.main,
+            boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.15)',
+        },
+    },
+    '& .MuiInputBase-input': {
+        padding: '14px',
+        fontSize: '16px'
     }
 }));
 
@@ -78,6 +121,8 @@ const ReceiptCheck = () => {
     const navigate = useNavigate();
     const [timeRange, setTimeRange] = useState('today');
     const [customDate, setCustomDate] = useState('');
+    const [customMonth, setCustomMonth] = useState('');
+    const [customYear, setCustomYear] = useState(new Date().getFullYear().toString());
     const [error, setError] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(50);
@@ -93,8 +138,14 @@ const ReceiptCheck = () => {
     const [validationErrors, setValidationErrors] = useState({});
 
     useEffect(() => {
+        if (timeRange === 'custom' && !customDate) {
+            setCustomDate(dayjs().format('YYYY-MM-DD'));
+        }
+        if (timeRange === 'custom_month' && !customMonth) {
+            setCustomMonth((new Date().getMonth() + 1).toString());
+        }
         fetchAllReceipts();
-    }, []);
+    }, [timeRange, customDate, customMonth, customYear]);
 
     useEffect(() => {
         const startIndex = page * rowsPerPage;
@@ -109,11 +160,28 @@ const ReceiptCheck = () => {
     }, [page, rowsPerPage, filteredReceipts, showDisposed]);
 
     const handleTimeRangeChange = (event) => {
-        setTimeRange(event.target.value);
+        const newTimeRange = event.target.value;
+        setTimeRange(newTimeRange);
+        
+        // Reset custom values when changing time range
+        if (newTimeRange !== 'custom') {
+            setCustomDate('');
+        }
+        if (newTimeRange !== 'custom_month') {
+            setCustomMonth('');
+        }
     };
 
     const handleCustomDateChange = (event) => {
         setCustomDate(event.target.value);
+    };
+
+    const handleCustomMonthChange = (event) => {
+        setCustomMonth(event.target.value);
+    };
+
+    const handleCustomYearChange = (event) => {
+        setCustomYear(event.target.value);
     };
 
     const handleChangePage = (event, newPage) => {
@@ -126,7 +194,19 @@ const ReceiptCheck = () => {
 
     const fetchAllReceipts = async () => {
         try {
-            const response = await ReceiptService.getReceipt(timeRange, customDate);
+            let params = {};
+            if (timeRange === 'custom' && customDate) {
+                params.date = customDate;
+            } else if (timeRange === 'custom_month') {
+                if (!customMonth || !customYear) {
+                    setError('Vui lòng chọn tháng và năm');
+                    return;
+                }
+                params.month = customMonth;
+                params.year = customYear;
+            }
+
+            const response = await ReceiptService.getReceipt(timeRange, params);
             const data = handleResponse(response);
             console.log(data);
             if (data.success) {
@@ -163,17 +243,26 @@ const ReceiptCheck = () => {
         }
     };
 
-    const handleSearch = () => {
-        const filtered = receipts.filter(receipt => 
-            receipt.id.toString().includes(searchTerm) ||
-            receipt.supplier?.factory_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            receipt.status.toLowerCase().includes(searchTerm.toLowerCase())
+    const handleSearch = (event) => {
+        const searchValue = event.target.value;
+        setSearchTerm(searchValue);
+        
+        if (searchValue.trim() === '') {
+            setFilteredReceipts(receipts);
+            return;
+        }
+
+        const filtered = receipts.filter(receipt =>
+            receipt.id.toString().includes(searchValue) ||
+            receipt.supplier?.factory_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+            receipt.status.toLowerCase().includes(searchValue.toLowerCase()) ||
+            (receipt.check_date && dayjs(receipt.check_date).format('DD/MM/YYYY').includes(searchValue))
         );
         setFilteredReceipts(filtered);
+        setPage(0);
     };
 
     const handleOpenCheckDialog = (receipt) => {
-        // Filter out products with status '4' (Đã hủy)
         const filteredDetails = receipt.details.filter(detail => detail.status !== 'Đã hủy');
         const filteredReceipt = {...receipt, details: filteredDetails};
         
@@ -268,7 +357,6 @@ const ReceiptCheck = () => {
     };
 
     const handleSubmitCheck = async () => {
-        // Validate all entries before submitting
         let hasErrors = false;
         const allErrors = {};
 
@@ -285,7 +373,6 @@ const ReceiptCheck = () => {
                     allErrors[detail.id] = detailErrors;
                 }
 
-                // Check if required fields are filled
                 const currentResults = checkResults[detail.id] || {};
                 if (!currentResults.quantity_receipt) {
                     hasErrors = true;
@@ -339,315 +426,148 @@ const ReceiptCheck = () => {
         }
     };
 
+    const handleGoBack = () => {
+        navigate(-1);
+    };
+
     return (
-        <Box sx={{ padding: 4, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+        <Box sx={{ 
+            padding: { xs: 2, sm: 3, md: 4 }, 
+            backgroundColor: '#f8fafc', 
+            minHeight: '100vh'
+        }}>
             <StyledCard>
-                <CardContent>
-                    <Grid container spacing={3} alignItems="center" mb={2}>
+                <CardContent sx={{ padding: { xs: 2, sm: 3, md: 4 } }}>
+                    <Grid container spacing={4} alignItems="center" mb={3}>
                         <Grid item xs={12} md={4}>
-                            <Typography variant="h4" fontWeight="bold" color="primary">
-                                Kiểm Tra Phiếu Nhập Hàng
+                            <IconButton onClick={handleGoBack} sx={{ mr: 2, marginBottom: '12px', fontSize: '24px' }}>
+                                <ArrowBackIcon fontSize="large" />
+                            </IconButton>
+                            <Typography variant="h4" component="h1" display="inline">
+                                Kiểm tra phiếu nhập hàng
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} md={3}>
-                            <FormControl fullWidth variant="outlined">
-                                <InputLabel>Thời gian</InputLabel>
+                        <Grid item xs={12} md={4}>
+                            <FormControl fullWidth>
+                                <InputLabel sx={{ fontWeight: 500 }}>Thời gian</InputLabel>
                                 <Select
                                     value={timeRange}
                                     onChange={handleTimeRangeChange}
                                     label="Thời gian"
-                                    sx={{ borderRadius: '8px' }}
+                                    sx={{ 
+                                        borderRadius: '12px',
+                                        height: '48px',
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderWidth: '2px'
+                                        }
+                                    }}
                                 >
                                     <MenuItem value="today">Hôm nay</MenuItem>
                                     <MenuItem value="yesterday">Hôm qua</MenuItem>
                                     <MenuItem value="week">Tuần này</MenuItem>
                                     <MenuItem value="month">Tháng này</MenuItem>
-                                    <MenuItem value="custom">Tùy chọn</MenuItem>
+                                    <MenuItem value="custom">Tùy chọn ngày</MenuItem>
+                                    <MenuItem value="custom_month">Tùy chọn tháng</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
                         {timeRange === 'custom' && (
-                            <Grid item xs={12} md={3}>
+                            <Grid item xs={12} md={4}>
                                 <StyledInput
                                     type="date"
                                     value={customDate}
                                     onChange={handleCustomDateChange}
+                                    sx={{ height: '48px' }}
                                 />
                             </Grid>
                         )}
-                        <Grid item xs={12} md={timeRange === 'custom' ? 2 : 5} container justifyContent="flex-end" spacing={2}>
-                            <Grid item>
-                                <StyledButton
-                                    startIcon={<DeleteIcon />}
-                                    onClick={toggleShowDisposed}
-                                    variant="contained"
-                                    color={showDisposed ? "error" : "primary"}
-                                    size="large"
-                                >
-                                    {showDisposed ? "Ẩn sản phẩm đã hủy" : "Hiện sản phẩm đã hủy"}
-                                </StyledButton>
-                            </Grid>
-                            <Grid item>
-                                <StyledButton 
-                                    startIcon={<ArrowBackIcon />}
-                                    onClick={() => navigate(-1)}
-                                    variant="contained"
-                                    size="large"
-                                >
-                                    Quay lại
-                                </StyledButton>
-                            </Grid>
+                        {timeRange === 'custom_month' && (
+                            <>
+                                <Grid item xs={12} md={2}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Tháng</InputLabel>
+                                        <Select
+                                            value={customMonth}
+                                            onChange={handleCustomMonthChange}
+                                            label="Tháng"
+                                            sx={{ 
+                                                height: '48px',
+                                                borderRadius: '12px'
+                                            }}
+                                        >
+                                            {[...Array(12)].map((_, i) => (
+                                                <MenuItem key={i + 1} value={(i + 1).toString()}>
+                                                    Tháng {i + 1}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} md={2}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Năm</InputLabel>
+                                        <Select
+                                            value={customYear}
+                                            onChange={handleCustomYearChange}
+                                            label="Năm"
+                                            sx={{ 
+                                                height: '48px',
+                                                borderRadius: '12px'
+                                            }}
+                                        >
+                                            {[...Array(5)].map((_, i) => {
+                                                const year = new Date().getFullYear() - i;
+                                                return (
+                                                    <MenuItem key={year} value={year.toString()}>
+                                                        {year}
+                                                    </MenuItem>
+                                                );
+                                            })}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                            </>
+                        )}
+                        <Grid item xs={12}>
+                            <SearchTextField
+                                fullWidth
+                                variant="outlined"
+                                placeholder="Tìm kiếm theo mã phiếu, nhà cung cấp, trạng thái hoặc ngày kiểm tra..."
+                                value={searchTerm}
+                                onChange={handleSearch}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon color="action" sx={{ fontSize: 24 }} />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
                         </Grid>
                     </Grid>
 
-                    {error && (
-                        <Typography color="error" sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: '8px' }}>
-                            {error}
-                        </Typography>
-                    )}
+                    <ReceiptTable
+                        displayedReceipts={displayedReceipts}
+                        handleOpenCheckDialog={handleOpenCheckDialog}
+                        page={page}
+                        handleChangePage={handleChangePage}
+                        rowsPerPage={rowsPerPage}
+                        filteredReceipts={filteredReceipts}
+                    />
 
-                    <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <StyledTableCell>Mã phiếu</StyledTableCell>
-                                    <StyledTableCell>Ngày nhập</StyledTableCell>
-                                    <StyledTableCell>Nhà cung cấp</StyledTableCell>
-                                    <StyledTableCell>Thời gian kiểm tra</StyledTableCell>
-                                    <StyledTableCell>Trạng thái</StyledTableCell>
-                                    <StyledTableCell align="center">Thao tác</StyledTableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {displayedReceipts.map((receipt) => (
-                                    <TableRow 
-                                        key={receipt.id}
-                                        hover
-                                        sx={{ 
-                                            '&:hover': { backgroundColor: '#f5f5f5' },
-                                            backgroundColor: receipt.details.some(detail => detail.status === 'Hư hỏng') ? '#ffebee' : 'inherit'
-                                        }}
-                                    >
-                                        <TableCell>
-                                            <Typography variant="subtitle2" fontWeight="bold">
-                                                #{receipt.id}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>{new Date(receipt.import_date).toLocaleDateString('vi-VN')}</TableCell>
-                                        <TableCell>{receipt.supplier?.factory_name || 'N/A'}</TableCell>
-                                        <TableCell>
-                                            {receipt.check_date ? 
-                                                dayjs(receipt.check_date).format('DD/MM/YYYY HH:mm:ss') : 
-                                                <Typography color="text.secondary">Chưa kiểm tra</Typography>
-                                            }
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip
-                                                icon={receipt.status === 'Đã kiểm tra' ? <CheckCircleIcon /> : <WarningIcon />}
-                                                label={receipt.status}
-                                                color={receipt.status === 'Đã kiểm tra' ? 'success' : 'warning'}
-                                                sx={{ borderRadius: '8px' }}
-                                            />
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <StyledButton
-                                                variant="contained"
-                                                color="primary"
-                                                onClick={() => handleOpenCheckDialog(receipt)}
-                                                size="small"
-                                            >
-                                                Kiểm tra hàng
-                                            </StyledButton>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                        <TablePagination
-                            component="div"
-                            count={filteredReceipts.length}
-                            page={page}
-                            onPageChange={handleChangePage}
-                            rowsPerPage={rowsPerPage}
-                            rowsPerPageOptions={[50]}
-                            sx={{ borderTop: '1px solid #e0e0e0' }}
-                        />
-                    </TableContainer>
                 </CardContent>
             </StyledCard>
-
-            <Dialog
-                open={openDialog}
-                onClose={handleCloseCheckDialog}
-                maxWidth="xl"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: '12px',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-                    }
-                }}
-            >
-                <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            <Typography variant="h5" fontWeight="bold" color="primary">
-                                Kiểm tra hàng - Phiếu nhập #{selectedReceipt?.id}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12}>
-                            <Typography variant="body1" color="text.secondary">
-                                Thời gian kiểm tra: {checkTime}
-                            </Typography>
-                        </Grid>
-                    </Grid>
-                </DialogTitle>
-                <DialogContent sx={{ mt: 2 }}>
-                    <TableContainer component={Paper} sx={{ borderRadius: '8px' }}>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <StyledTableCell>Sản phẩm</StyledTableCell>
-                                    <StyledTableCell align="center">Số lượng nhập</StyledTableCell>
-                                    <StyledTableCell align="center">Số lượng nhận được</StyledTableCell>
-                                    <StyledTableCell align="center">Số lượng lỗi hoặc thiếu</StyledTableCell>
-                                    <StyledTableCell align="center">Trạng thái</StyledTableCell>
-                                    <StyledTableCell align="center">Ngày sản xuất</StyledTableCell>
-                                    <StyledTableCell align="center">Hạn sử dụng</StyledTableCell>
-                                    <StyledTableCell align="center">Ghi chú</StyledTableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {selectedReceipt?.details?.map((detail) => (
-                                    detail.status !== 'Đã hủy' && (
-                                        <TableRow key={detail.id}>
-                                            <TableCell>{detail.product?.product_name || 'N/A'}</TableCell>
-                                            <TableCell align="center">{detail.quantity}</TableCell>
-                                            <TableCell>
-                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
-                                                    <Box>
-                                                        <StyledInput
-                                                            type="number"
-                                                            value={checkResults[detail.id]?.quantity_receipt || ''}
-                                                            onChange={(e) => handleCheckResultChange(detail.id, 'quantity_receipt', e.target.value)}
-                                                            min={0}
-                                                            max={detail.quantity}
-                                                            required
-                                                            style={{ 
-                                                                textAlign: 'center',
-                                                                borderColor: validationErrors[detail.id]?.quantity_receipt ? 'red' : undefined 
-                                                            }}
-                                                        />
-                                                        {validationErrors[detail.id]?.quantity_receipt && (
-                                                            <Typography color="error" variant="caption" display="block">
-                                                                {validationErrors[detail.id].quantity_receipt}
-                                                            </Typography>
-                                                        )}
-                                                        {validationErrors[detail.id]?.required && (
-                                                            <Typography color="error" variant="caption" display="block">
-                                                                {validationErrors[detail.id].required}
-                                                            </Typography>
-                                                        )}
-                                                    </Box>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && 
-                                                 (checkResults[detail.id]?.status === '2' || checkResults[detail.id]?.status === '3') && (
-                                                    <Box>
-                                                        <StyledInput
-                                                            type="number"
-                                                            value={checkResults[detail.id]?.quantity_defective || ''}
-                                                            onChange={(e) => handleCheckResultChange(detail.id, 'quantity_defective', e.target.value)}
-                                                            min={0}
-                                                            max={detail.quantity}
-                                                            style={{ 
-                                                                textAlign: 'center',
-                                                                borderColor: validationErrors[detail.id]?.quantity_defective ? 'red' : undefined 
-                                                            }}
-                                                        />
-                                                        {validationErrors[detail.id]?.quantity_defective && (
-                                                            <Typography color="error" variant="caption" display="block">
-                                                                {validationErrors[detail.id].quantity_defective}
-                                                            </Typography>
-                                                        )}
-                                                        {validationErrors[detail.id]?.total && (
-                                                            <Typography color="error" variant="caption" display="block">
-                                                                {validationErrors[detail.id].total}
-                                                            </Typography>
-                                                        )}
-                                                    </Box>
-                                                )}
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') ? (
-                                                    <Select
-                                                        fullWidth
-                                                        size="small"
-                                                        value={checkResults[detail.id]?.status || ''}
-                                                        onChange={(e) => handleCheckResultChange(detail.id, 'status', e.target.value)}
-                                                        sx={{ borderRadius: '8px' }}
-                                                    >
-                                                        <MenuItem value="1">Đủ hàng hóa</MenuItem>
-                                                        <MenuItem value="2">Hư hỏng</MenuItem>
-                                                        <MenuItem value="3">Thiếu</MenuItem>
-                                                    </Select>
-                                                ) : (
-                                                    <Chip
-                                                        label={detail.status}
-                                                        color={
-                                                            detail.status === 'Đủ hàng hóa' ? 'success' :
-                                                            detail.status === 'Hư hỏng' ? 'error' :
-                                                            'warning'
-                                                        }
-                                                        variant="outlined"
-                                                    />
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
-                                                    <StyledInput
-                                                        type="date"
-                                                        value={checkResults[detail.id]?.production_date || ''}
-                                                        onChange={(e) => handleCheckResultChange(detail.id, 'production_date', e.target.value)}
-                                                    />
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
-                                                    <StyledInput
-                                                        type="date"
-                                                        value={checkResults[detail.id]?.expiration_date || ''}
-                                                        onChange={(e) => handleCheckResultChange(detail.id, 'expiration_date', e.target.value)}
-                                                    />
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
-                                                    <StyledInput
-                                                        type="text"
-                                                        value={checkResults[detail.id]?.note || ''}
-                                                        onChange={(e) => handleCheckResultChange(detail.id, 'note', e.target.value)}
-                                                        placeholder="Ghi chú"
-                                                    />
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </DialogContent>
-                <DialogActions sx={{ p: 3, borderTop: '1px solid #e0e0e0' }}>
-                    <StyledButton onClick={handleCloseCheckDialog} variant="outlined">
-                        Hủy
-                    </StyledButton>
-                    <StyledButton onClick={handleSubmitCheck} variant="contained" color="primary">
-                        Lưu kết quả kiểm tra
-                    </StyledButton>
-                </DialogActions>
-            </Dialog>
+            <CheckDialog
+                openDialog={openDialog}
+                handleCloseCheckDialog={handleCloseCheckDialog}
+                selectedReceipt={selectedReceipt}
+                checkResults={checkResults}
+                handleCheckResultChange={handleCheckResultChange}
+                handleSubmitCheck={handleSubmitCheck}
+                checkTime={checkTime}
+                validationErrors={validationErrors}
+            />
+            
         </Box>
     );
 };

@@ -29,6 +29,18 @@ use Illuminate\Support\Facades\Route;
 |
 */ 
 
+Route::get('/product',[ProductController::class,'getAll']);
+Route::post('/product',[ProductController::class,'create']);
+Route::post('/product/{id}',[ProductController::class,'update']);
+Route::get('/product/inventory',[HangSuDungController::class,'getAll']);
+Route::get('/product/destroy',[ProductController::class,'getAllDestroyProduct']);
+Route::post('/product/destroy/create',[ProductController::class,'createDestroyProduct']);
+Route::delete('/product/{id}',[ProductController::class,'delete']);
+Route::get('/product/destroy',[ProductController::class,'getDestroyProduct']);
+Route::put('/product/destroy/{id}',[ProductController::class,'updateDestroyProductStatus']);
+Route::put('/product/update-quantity/{id}',[ProductController::class,'updateQuantity']);
+Route::get('/product/customer',[ProductController::class,'getProduct']);
+
 Route::post('/orders/customer', [OrdersController::class, 'createOrderCustomer']);
 Route::get('/orders', [OrdersController::class, 'getAll']   );
 Route::post('/orders', [OrdersController::class, 'create']);
@@ -67,6 +79,7 @@ Route::get('/check-inventory', [CheckInventoryController::class, 'getAllCheckInv
 Route::post('/check-inventory', [CheckInventoryController::class, 'createCheckInventory']);
 Route::delete('/check-inventory/{id}', [CheckInventoryController::class, 'deleteCheckInventory']);
 Route::put('/check-inventory/{id}', [CheckInventoryController::class, 'updateCheckInventory']);
+Route::put('/check-inventory/accept/{id}', [CheckInventoryController::class, 'acceptCheckInventory']);
 //goods receipt api
 Route::post('/goods-receipt', [GoodsReceiptController::class, 'createGoodsReceipt'] );
 Route::get('/goods-receipt', [GoodsReceiptController::class, 'getAll']);
@@ -122,18 +135,6 @@ Route::post('login-customer',[AuthController::class,'loginCustomer']);
 Route::post('register',[AuthController::class,'register']);
 Route::post('register-customer',[AuthController::class,'registerCustomer']);
 Route::post('/logout',[AuthController::class,'logout']);
-
-Route::get('/product',[ProductController::class,'getAll']);
-Route::post('/product',[ProductController::class,'create']);
-Route::post('/product/{id}',[ProductController::class,'update']);
-Route::get('/product/inventory',[HangSuDungController::class,'getAll']);
-Route::get('/product/destroy',[ProductController::class,'getAllDestroyProduct']);
-Route::post('/product/destroy/create',[ProductController::class,'createDestroyProduct']);
-Route::delete('/product/{id}',[ProductController::class,'delete']);
-Route::get('/product/destroy',[ProductController::class,'getDestroyProduct']);
-Route::put('/product/destroy/{id}',[ProductController::class,'updateDestroyProductStatus']);
-Route::put('/product/update-quantity/{id}',[ProductController::class,'updateQuantity']);
-Route::get('/product/customer',[ProductController::class,'getProduct']);
 
 Route::controller(UserController::class)->group(function () {
     Route::get('/users/{id}', 'getUserById');

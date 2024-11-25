@@ -10,15 +10,26 @@ import {
   Input,
   Space,
   message,
-  DatePicker
+  DatePicker,
+  Card,
+  Typography,
+  Row,
+  Col,
+  Select,
+  Tag,
+  Tooltip,
+  Divider
 } from 'antd';
-import { EditOutlined, PlusOutlined, SearchOutlined, EyeOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { EditOutlined, PlusOutlined, SearchOutlined, EyeOutlined, DeleteOutlined, ArrowLeftOutlined, FilterOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
+
+const { Title } = Typography;
 
 const InventoryReport = () => {
   const navigate = useNavigate();
   const [reports, setReports] = useState([]);
+  const [allReports, setAllReports] = useState([]); // Store all reports for filtering
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingReport, setEditingReport] = useState(null);
@@ -28,6 +39,7 @@ const InventoryReport = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [searchId, setSearchId] = useState('');
 
   useEffect(() => {
     getReports();
@@ -45,13 +57,27 @@ const InventoryReport = () => {
     }
   }, [searchText, products]);
 
+  // New effect for filtering reports
+  useEffect(() => {
+    let filteredReports = [...allReports];
+
+    // Filter by ID
+    if (searchId) {
+      filteredReports = filteredReports.filter(report => 
+        report.id.toString().includes(searchId)
+      );
+    }
+
+    setReports(filteredReports);
+  }, [searchId, allReports]);
+
   const getReports = async () => {
     setLoading(true);
     try {
       const response = await CheckInventoryService.getAll();
       const data = handleResponse(response);
-      console.log(data);
       setReports(data);
+      setAllReports(data); // Store all reports for filtering
     } catch (error) {
       message.error('Không thể tải báo cáo kiểm kê');
     }
@@ -71,9 +97,21 @@ const InventoryReport = () => {
   };
 
   const handleView = (report) => {
-    console.log(report);
     setSelectedReport(report);
     setIsViewModalVisible(true);
+  };
+
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
+  const handleSearch = (value) => {
+    setSearchId(value);
+  };
+
+  const handleReset = () => {
+    setSearchId('');
+    setReports(allReports);
   };
 
   const columns = [
@@ -81,38 +119,62 @@ const InventoryReport = () => {
       title: 'Mã phiếu',
       dataIndex: 'id',
       key: 'id',
+      width: '10%',
     },
     {
       title: 'Ngày kiểm kê',
       dataIndex: 'check_date',
       key: 'check_date',
+      width: '15%',
       render: (date) => moment(date).format('DD/MM/YYYY'),
     },
     {
       title: 'Ghi chú',
       dataIndex: 'note',
       key: 'note',
+      width: '55%',
+      ellipsis: true,
     },
     {
       title: 'Thao tác',
       key: 'actions',
+      width: '20%',
       render: (_, record) => (
         <Space>
-          <Button 
-            icon={<EditOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEdit(record);
-            }}
-          >
-            Sửa
-          </Button>
+          <Tooltip title="Xem chi tiết">
+            <Button 
+              type="primary"
+              ghost
+              icon={<EyeOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleView(record);
+              }}
+            />
+          </Tooltip>
+          {record.status !== 1 && (
+            <Tooltip title="Chỉnh sửa">
+              <Button 
+                type="default"
+                icon={<EditOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEdit(record);
+                }}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
   ];
 
   const handleEdit = (report) => {
+    if (report.status === 1) {
+      message.error('Không thể chỉnh sửa phiếu đã được duyệt');
+      return;
+    }
+
     setEditingReport(report);
     
     const formattedProducts = report.check_inventory_details?.map(detail => ({
@@ -150,10 +212,15 @@ const InventoryReport = () => {
       setLoading(true);
       
       if (editingReport) {
+        if (editingReport.status === 1) {
+          message.error('Không thể cập nhật phiếu đã được duyệt');
+          return;
+        }
         try {
           await CheckInventoryService.update(editingReport.id, payload);
           message.success('Cập nhật phiếu kiểm kê thành công');
         } catch (error) {
+          console.log(error);
           message.error('Không thể cập nhật phiếu kiểm kê');
           return;
         }
@@ -162,6 +229,7 @@ const InventoryReport = () => {
           await CheckInventoryService.create(payload);
           message.success('Tạo phiếu kiểm kê thành công');
         } catch (error) {
+          console.log(error);
           message.error('Không thể tạo phiếu kiểm kê');
           return;
         }
@@ -211,38 +279,70 @@ const InventoryReport = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Button
-        icon={<ArrowLeftOutlined />}
-        onClick={() => navigate(-1)}
-        style={{ marginBottom: 16 }}
-      >
-        Quay lại
-      </Button>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <h1>Báo cáo kiểm kho</h1>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />}
-          onClick={showCreateModal}
-        >
-          Tạo báo cáo mới
-        </Button>
-      </div>
-      
-      <Table
-        columns={columns}
-        dataSource={reports}
-        loading={loading}
-        rowKey="id"
-        onRow={(record) => ({
-          onClick: () => handleView(record),
-          style: { cursor: 'pointer' }
-        })}
-      />
+    <div style={{ padding: '24px', background: '#f0f2f5', minHeight: '100vh' }}>
+      <Card bordered={false} className="shadow-sm">
+        <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 24 }}>
+          <Col flex="none">
+            <Button 
+              icon={<ArrowLeftOutlined />} 
+              onClick={handleGoBack}
+              style={{ marginRight: 16, border: 'none' }}
+              size="large"
+            />
+            <Title level={3} style={{ margin: 0, display: 'inline' }}>
+              Báo cáo kiểm kho
+            </Title>
+          </Col>
+          <Col flex="auto" style={{ textAlign: 'right' }}>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={showCreateModal}
+              size="large"
+              style={{ borderRadius: '6px', height: '40px' }}
+            >
+              Tạo báo cáo mới
+            </Button>
+          </Col>
+        </Row>
+
+        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+          <Col span={20}>
+            <Input
+              placeholder="Tìm kiếm theo mã phiếu"
+              prefix={<SearchOutlined />}
+              value={searchId}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </Col>
+          <Col span={4}>
+            <Button onClick={handleReset} style={{ width: '100%' }}>
+              Đặt lại
+            </Button>
+          </Col>
+        </Row>
+
+        <Table
+          columns={columns}
+          dataSource={reports}
+          loading={loading}
+          rowKey="id"
+          onRow={(record) => ({
+            onClick: () => handleView(record),
+            style: { cursor: 'pointer' }
+          })}
+          bordered
+          scroll={{ x: 800, y: 'calc(100vh - 300px)' }}
+          className="custom-table"
+        />
+      </Card>
 
       <Modal
-        title={editingReport ? "Sửa phiếu kiểm kê" : "Thêm mới phiếu kiểm kê"}
+        title={
+          <Title level={4} style={{ margin: 0 }}>
+            {editingReport ? "Sửa phiếu kiểm kê" : "Thêm mới phiếu kiểm kê"}
+          </Title>
+        }
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
@@ -251,183 +351,240 @@ const InventoryReport = () => {
         destroyOnClose
         maskClosable={false}
         confirmLoading={loading}
+        okText="Lưu"
+        cancelText="Hủy"
       >
         <Form
           form={form}
           layout="vertical"
-          style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '20px 0' }}
         >
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="check_date"
-              label="Ngày kiểm kê"
-              rules={[{ required: true, message: 'Vui lòng chọn ngày kiểm kê' }]}
-              style={{ flex: 1 }}
-            >
-              <DatePicker style={{ width: '100%' }} />
-            </Form.Item>
-          </div>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="check_date"
+                label="Ngày kiểm kê"
+                rules={[{ required: true, message: 'Vui lòng chọn ngày kiểm kê' }]}
+              >
+                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <div style={{ marginTop: '24px' }}>
-            <h3>Thông tin mặt hàng, nguyên liệu</h3>
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-              <div style={{ flex: 1, position: 'relative' }}>
-                <Input
-                  placeholder="Tìm mặt hàng / nguyên liệu"
-                  prefix={<SearchOutlined />}
-                  value={searchText}
-                  onChange={e => setSearchText(e.target.value)}
-                />
-                {filteredProducts.length > 0 && searchText && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    background: 'white',
-                    border: '1px solid #d9d9d9',
-                    borderRadius: '4px',
-                    zIndex: 1000,
-                    maxHeight: '200px',
-                    overflowY: 'auto'
-                  }}>
-                    {filteredProducts.map(product => (
-                      <div
-                        key={product.id}
-                        style={{
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid #f0f0f0'
-                        }}
-                        onClick={() => handleAddProduct(product)}
-                        onMouseEnter={e => e.target.style.backgroundColor = '#f5f5f5'}
-                        onMouseLeave={e => e.target.style.backgroundColor = 'white'}
-                      >
-                        {product.product_name}
-                      </div>
-                    ))}
+          <Divider orientation="left">Thông tin mặt hàng, nguyên liệu</Divider>
+          
+          <div style={{ marginBottom: '20px' }}>
+            <Input
+              placeholder="Tìm mặt hàng / nguyên liệu"
+              prefix={<SearchOutlined style={{ color: '#1890ff' }} />}
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              style={{ width: '100%', marginBottom: '10px' }}
+            />
+            {filteredProducts.length > 0 && searchText && (
+              <Card 
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  zIndex: 1000,
+                  maxHeight: '200px',
+                  overflowY: 'auto'
+                }}
+                bodyStyle={{ padding: '0' }}
+              >
+                {filteredProducts.map(product => (
+                  <div
+                    key={product.id}
+                    style={{
+                      padding: '12px 16px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s',
+                      borderBottom: '1px solid #f0f0f0'
+                    }}
+                    onClick={() => handleAddProduct(product)}
+                    onMouseEnter={e => e.target.style.backgroundColor = '#f5f5f5'}
+                    onMouseLeave={e => e.target.style.backgroundColor = 'white'}
+                  >
+                    {product.product_name}
                   </div>
-                )}
-              </div>
-            </div>
-
-            <Form.List name="products">
-              {(fields, { add, remove }) => (
-                <Table
-                  dataSource={fields}
-                  columns={[
-                    {
-                      title: 'Tên mặt hàng',
-                      dataIndex: 'product_name',
-                      key: 'product_name',
-                      render: (_, record) => form.getFieldValue(['products', record.name, 'product_name'])
-                    },
-                    {
-                      title: 'Số lượng trên hệ thống',
-                      dataIndex: 'quantity',
-                      key: 'quantity',
-                      render: (_, record) => form.getFieldValue(['products', record.name, 'quantity'])
-                    },
-                    {
-                      title: 'Số lượng thực tế',
-                      dataIndex: 'actual_quantity',
-                      key: 'actual_quantity',
-                      render: (_, record) => (
-                        <Form.Item
-                          name={[record.name, 'actual_quantity']}
-                          rules={[{ required: true, message: 'Bắt buộc' }]}
-                          style={{ marginBottom: 0 }}
-                        >
-                          <Input type="number" placeholder="Nhập số lượng" />
-                        </Form.Item>
-                      ),
-                    },
-                    {
-                      title: 'Lý do chênh lệch',
-                      dataIndex: 'note',
-                      key: 'note',
-                      render: (_, record) => (
-                        <Form.Item
-                          name={[record.name, 'note']}
-                          style={{ marginBottom: 0 }}
-                        >
-                          <Input placeholder="Nhập ghi chú" />
-                        </Form.Item>
-                      ),
-                    },
-                    {
-                      title: 'Thao tác',
-                      key: 'actions',
-                      render: (_, record) => (
-                        <Button 
-                          type="link" 
-                          danger 
-                          onClick={() => remove(record.name)}
-                          icon={<DeleteOutlined />}
-                        >
-                          Xóa
-                        </Button>
-                      ),
-                    }
-                  ]}
-                  pagination={false}
-                  scroll={{ y: 300 }}
-                />
-              )}
-            </Form.List>
+                ))}
+              </Card>
+            )}
           </div>
+
+          <Form.List name="products">
+            {(fields, { add, remove }) => (
+              <Table
+                dataSource={fields}
+                columns={[
+                  {
+                    title: 'Tên mặt hàng',
+                    dataIndex: 'product_name',
+                    key: 'product_name',
+                    width: '25%',
+                    render: (_, record) => (
+                      <span style={{ fontWeight: 500 }}>
+                        {form.getFieldValue(['products', record.name, 'product_name'])}
+                      </span>
+                    )
+                  },
+                  {
+                    title: 'Số lượng hệ thống',
+                    dataIndex: 'quantity',
+                    key: 'quantity',
+                    width: '15%',
+                    render: (_, record) => (
+                      <Tag color="blue">
+                        {form.getFieldValue(['products', record.name, 'quantity'])}
+                      </Tag>
+                    )
+                  },
+                  {
+                    title: 'Số lượng thực tế',
+                    dataIndex: 'actual_quantity',
+                    key: 'actual_quantity',
+                    width: '20%',
+                    render: (_, record) => (
+                      <Form.Item
+                        name={[record.name, 'actual_quantity']}
+                        rules={[{ required: true, message: 'Bắt buộc' }]}
+                        style={{ marginBottom: 0 }}
+                      >
+                        <Input type="number" placeholder="Nhập số lượng" />
+                      </Form.Item>
+                    ),
+                  },
+                  {
+                    title: 'Lý do chênh lệch',
+                    dataIndex: 'note',
+                    key: 'note',
+                    width: '30%',
+                    render: (_, record) => (
+                      <Form.Item
+                        name={[record.name, 'note']}
+                        style={{ marginBottom: 0 }}
+                      >
+                        <Input placeholder="Nhập ghi chú" />
+                      </Form.Item>
+                    ),
+                  },
+                  {
+                    title: '',
+                    key: 'actions',
+                    width: '10%',
+                    render: (_, record) => (
+                      <Button 
+                        type="text" 
+                        danger 
+                        onClick={() => remove(record.name)}
+                        icon={<DeleteOutlined />}
+                      />
+                    ),
+                  }
+                ]}
+                pagination={false}
+                scroll={{ y: 300 }}
+                bordered
+              />
+            )}
+          </Form.List>
 
           <Form.Item
             name="note"
             label="Ghi chú"
             style={{ marginTop: '24px' }}
           >
-            <Input.TextArea rows={4} placeholder="Nhập ghi chú" />
+            <Input.TextArea rows={4} placeholder="Nhập ghi chú chung cho phiếu kiểm kê" />
           </Form.Item>
         </Form>
       </Modal>
 
       <Modal
-        title="Chi tiết phiếu kiểm kê"
+        title={
+          <Title level={4} style={{ margin: 0 }}>
+            Chi tiết phiếu kiểm kê
+          </Title>
+        }
         open={isViewModalVisible}
         onCancel={() => setIsViewModalVisible(false)}
-        footer={null}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setIsViewModalVisible(false)}>
+            Đóng
+          </Button>
+        ]}
         width={1000}
       >
         {selectedReport && (
           <div>
-            <p><strong>Ngày kiểm kê:</strong> {moment(selectedReport.check_date).format('DD/MM/YYYY')}</p>
-            <p><strong>Ghi chú:</strong> {selectedReport.note}</p>
+            <Row gutter={16} style={{ marginBottom: 24 }}>
+              <Col span={12}>
+                <Card bordered={false} style={{ background: '#f5f5f5' }}>
+                  <p style={{ margin: 0 }}><strong>Ngày kiểm kê:</strong></p>
+                  <p style={{ fontSize: '16px', margin: '8px 0 0' }}>
+                    {moment(selectedReport.check_date).format('DD/MM/YYYY')}
+                  </p>
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card bordered={false} style={{ background: '#f5f5f5' }}>
+                  <p style={{ margin: 0 }}><strong>Ghi chú:</strong></p>
+                  <p style={{ fontSize: '16px', margin: '8px 0 0' }}>
+                    {selectedReport.note || 'Không có ghi chú'}
+                  </p>
+                </Card>
+              </Col>
+            </Row>
+            
             <Table
               dataSource={selectedReport.check_inventory_details}
               columns={[
                 {
                   title: 'Tên mặt hàng',
                   key: 'product_name',
-                  render: (_, record) => record.product?.product_name
+                  render: (_, record) => record.product?.product_name,
+                  width: '30%'
                 },
                 {
-                  title: 'Số lượng trên hệ thống',
+                  title: 'Số lượng hệ thống',
                   dataIndex: 'quantity',
                   key: 'quantity',
+                  width: '15%',
+                  render: (quantity) => (
+                    <Tag color="blue">{quantity}</Tag>
+                  )
                 },
                 {
                   title: 'Số lượng thực tế',
                   dataIndex: 'actual_quantity',
                   key: 'actual_quantity',
+                  width: '15%',
+                  render: (quantity) => (
+                    <Tag color="green">{quantity}</Tag>
+                  )
                 },
                 {
                   title: 'Chênh lệch',
                   key: 'difference',
-                  render: (_, record) => record.actual_quantity - record.quantity,
+                  width: '15%',
+                  render: (_, record) => {
+                    const diff = record.actual_quantity - record.quantity;
+                    return (
+                      <Tag color={diff < 0 ? 'red' : diff > 0 ? 'green' : 'default'}>
+                        {diff > 0 ? `+${diff}` : diff}
+                      </Tag>
+                    );
+                  }
                 },
                 {
                   title: 'Ghi chú',
                   dataIndex: 'note',
                   key: 'note',
+                  width: '25%'
                 }
               ]}
               pagination={false}
+              bordered
+              scroll={{ y: 400 }}
             />
           </div>
         )}

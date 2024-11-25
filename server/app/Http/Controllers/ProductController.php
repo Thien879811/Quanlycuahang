@@ -16,8 +16,7 @@ class ProductController extends Controller
 {
     public function getProduct()
     {
-        $products = Product::with(['catalory', 'factory', 'promotion' => function($query) {
-        }])->get();
+        $products = Product::with(['catalory', 'promotion'])->get();
 
         $products = $products->map(function ($product) {
             if ($product->promotion->isNotEmpty() && $product->promotion[0]->present) {

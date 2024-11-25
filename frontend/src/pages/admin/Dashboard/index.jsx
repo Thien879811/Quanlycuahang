@@ -227,14 +227,14 @@ const Dashboard = () => {
             <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
               <Col span={24}>
                 <Card hoverable>
-                  <SalesAndPurchaseChart data={salesAndPurchaseChartData} />
+                  <TopSellingStock topSellingStock={topSellingStock} />
                 </Card>
               </Col>
             </Row>
             <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
               <Col span={24}>
                 <Card hoverable>
-                  <TopSellingStock topSellingStock={topSellingStock} />
+                  <SalesAndPurchaseChart data={salesAndPurchaseChartData} />
                 </Card>
               </Col>
             </Row>
@@ -253,13 +253,13 @@ const Dashboard = () => {
               </Col>
               <Col span={24}>
                 <Card hoverable>
+                  <LowQuantityStock lowQuantityStock={lowQuantityStock} />
+                </Card>
+                <Col span={24}>
+                <Card hoverable>
                   <OrderSummaryChart orderSummary={orderSummary} />
                 </Card>
               </Col>
-              <Col span={24}>
-                <Card hoverable>
-                  <LowQuantityStock lowQuantityStock={lowQuantityStock} />
-                </Card>
               </Col>
             </Row>
           </Col>

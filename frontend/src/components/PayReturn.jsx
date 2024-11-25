@@ -13,7 +13,7 @@ const PaymentReturn = () => {
   const responseCode = queryParams.get('vnp_ResponseCode');
   const txnRef = queryParams.get('vnp_TxnRef');
   const amount = queryParams.get('vnp_Amount');
-  const {orders, updateOrderProducts} = useOrder();
+  const {orders, updateOrder} = useOrder();
   const {updatePointCustomer} = useCustomer();
 
   const getResponseMessage = (code) => {
@@ -32,30 +32,44 @@ const PaymentReturn = () => {
       '79': 'Giao dịch không thành công do: KH nhập sai mật khẩu thanh toán quá số lần quy định.',
       '99': 'Các lỗi khác'
     };
+
     return messages[code] || 'Lỗi không xác định';
   };
 
   const handleCloseModal = async () => {
     setIsModalVisible(false);
-    navigate('/');
-  };
-
-  const handleSuccess = async () => {
-    if (responseCode === '00') {
+    if (responseCode == '00') {
       const data = {
+        ...orders,
         status: '2',
         pays_id: '2',
         products: orders.details
       }
-      try {
-        const res = await OrderService.update(txnRef, data);
-        console.log(res);
-        updatePointCustomer(amount);
-        localStorage.removeItem('customer');
-        setIsModalVisible(false);
-      } catch (error) {
-        console.log(error);
+      updateOrder(txnRef, data);
+      updatePointCustomer(amount);
+      localStorage.removeItem('customer');
+      localStorage.removeItem('order_id');
+      localStorage.removeItem('order');
+      setIsModalVisible(false);
+    }
+    navigate('/');
+  };
+
+  const handleSuccess = async () => {
+    const orders = JSON.parse(localStorage.getItem('order'));
+    if (responseCode === '00') {
+      const data = {
+        ...orders,
+        status: '2',
+        pays_id: '2',
+        products: orders.details
       }
+      updateOrder(txnRef, data);
+      updatePointCustomer(amount);
+      localStorage.removeItem('customer');
+      localStorage.removeItem('order_id');
+      localStorage.removeItem('order');
+      setIsModalVisible(false);
     }
   }
 

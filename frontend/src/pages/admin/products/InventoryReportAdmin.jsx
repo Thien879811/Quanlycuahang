@@ -11,11 +11,21 @@ import {
   Space,
   Popconfirm,
   message,
-  DatePicker
+  DatePicker,
+  Card,
+  Typography,
+  Tag,
+  Divider,
+  Row,
+  Col
 } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, EyeOutlined, FileSearchOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
+import InventoryTable from './Inventory/InventoryTable';
+import IventoryModal from './Inventory/IventoryModal';
+
+const { Title, Text } = Typography;
 
 const InventoryReportAdmin = () => {
   const navigate = useNavigate();
@@ -75,60 +85,25 @@ const InventoryReportAdmin = () => {
     setIsViewModalVisible(true);
   };
 
-  const columns = [
-    {
-      title: 'Mã phiếu',
-      dataIndex: 'id',
-      key: 'id',
-    },
-    {
-      title: 'Ngày kiểm kê',
-      dataIndex: 'check_date',
-      key: 'check_date',
-      render: (date) => moment(date).format('DD/MM/YYYY'),
-    },
-    {
-      title: 'Ghi chú',
-      dataIndex: 'note',
-      key: 'note',
-    },
-    {
-      title: 'Thao tác',
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
-          <Button 
-            icon={<EditOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEdit(record);
-            }}
-          >
-            Sửa
-          </Button>
-          <Popconfirm
-            title="Bạn có chắc chắn muốn xóa phiếu kiểm kê này?"
-            onConfirm={(e) => {
-              e.stopPropagation();
-              handleDelete(record.id);
-            }}
-            okText="Đồng ý"
-            cancelText="Hủy"
-          >
-            <Button 
-              danger 
-              icon={<DeleteOutlined />}
-              onClick={e => e.stopPropagation()}
-            >
-              Xóa
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  const handleAccept = async (id) => {
+    try { 
+      console.log(id);
+      const response = await CheckInventoryService.accept(id);
+      const data = handleResponse(response);
+      console.log(data);
+      message.success('Phiếu kiểm kê đã được chấp nhận');
+      getReports();
+    } catch (error) {
+      message.error('Không thể chấp nhận phiếu kiểm kê');
+    }
+  };
 
   const handleEdit = (report) => {
+    if (report.is_accepted) {
+      message.error('Không thể chỉnh sửa phiếu đã được chấp nhận');
+      return;
+    }
+    
     setEditingReport(report);
     
     const formattedProducts = report.check_inventory_details?.map(detail => ({
@@ -149,6 +124,12 @@ const InventoryReportAdmin = () => {
   };
 
   const handleDelete = async (id) => {
+    const report = reports.find(r => r.id === id);
+    if (report.is_accepted) {
+      message.error('Không thể xóa phiếu đã được chấp nhận');
+      return;
+    }
+
     try {
       await CheckInventoryService.delete(id);
       message.success('Xóa phiếu kiểm kê thành công');
@@ -236,234 +217,170 @@ const InventoryReportAdmin = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <h1>Báo cáo Kiểm kho</h1>
+    <Card 
+      className="inventory-report-card" 
+      style={{ 
+        margin: '24px', 
+        borderRadius: '12px', 
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+      }}
+    >
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '32px',
+        padding: '0 8px'
+      }}>
+        <Title level={2} style={{ margin: 0, color: '#1890ff' }}>Báo cáo Kiểm kho</Title>
         <Button 
           type="primary" 
           icon={<PlusOutlined />}
           onClick={showCreateModal}
+          size="large"
+          style={{ 
+            borderRadius: '8px',
+            height: '48px',
+            padding: '0 24px',
+            fontSize: '16px',
+            boxShadow: '0 2px 8px rgba(24,144,255,0.35)'
+          }}
         >
           Tạo phiếu kiểm kê
         </Button>
       </div>
       
-      <Table
-        columns={columns}
-        dataSource={reports}
+      <InventoryTable 
+        reports={reports}
         loading={loading}
-        rowKey="id"
-        onRow={(record) => ({
-          onClick: () => handleView(record),
-          style: { cursor: 'pointer' }
-        })}
+        handleView={handleView}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+        handleAccept={handleAccept}
       />
-
+      <IventoryModal
+        editingReport={editingReport}
+        isModalVisible={isModalVisible}
+        handleModalOk={handleModalOk}
+        handleModalCancel={handleModalCancel}
+        filteredProducts={filteredProducts}
+        handleAddProduct={handleAddProduct}
+        loading={loading}
+        form={form}
+        searchText={searchText}
+        setSearchText={setSearchText}
+      />
       <Modal
-        title={editingReport ? "Sửa phiếu kiểm kê" : "Thêm mới phiếu kiểm kê"}
-        open={isModalVisible}
-        onOk={handleModalOk}
-        onCancel={handleModalCancel}
-        width={1200}
-        centered
-        destroyOnClose
-        maskClosable={false}
-        confirmLoading={loading}
-        okText={editingReport ? "Cập nhật" : "Tạo mới"}
-        cancelText="Hủy"
+        title={
+          <Space>
+            <FileSearchOutlined style={{color: '#1890ff'}} />
+            <span style={{color: '#1890ff', fontWeight: 'bold'}}>Chi tiết phiếu kiểm kê</span>
+          </Space>
+        }
+        open={isViewModalVisible}
+        onCancel={() => {
+          setIsViewModalVisible(false);
+          setSelectedReport(null);
+        }}
+        footer={[
+          <Button 
+            key="back" 
+            type="primary" 
+            onClick={() => {
+              setIsViewModalVisible(false);
+              setSelectedReport(null);
+            }}
+            style={{borderRadius: '6px'}}
+          >
+            Đóng
+          </Button>
+        ]}
+        width={1000}
+        style={{top: 80}}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}
-        >
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="check_date"
-              label="Ngày kiểm kê"
-              rules={[{ required: true, message: 'Vui lòng chọn ngày kiểm kê' }]}
-              style={{ flex: 1 }}
-            >
-              <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
-            </Form.Item>
-          </div>
-
-          <div style={{ marginTop: '24px' }}>
-            <h3>Thông tin mặt hàng, nguyên liệu</h3>
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-              <div style={{ flex: 1, position: 'relative' }}>
-                <Input
-                  placeholder="Tìm mặt hàng / nguyên liệu"
-                  prefix={<SearchOutlined />}
-                  value={searchText}
-                  onChange={e => setSearchText(e.target.value)}
-                />
-                {filteredProducts.length > 0 && searchText && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    background: 'white',
-                    border: '1px solid #d9d9d9',
-                    borderRadius: '4px',
-                    zIndex: 1000,
-                    maxHeight: '200px',
-                    overflowY: 'auto'
-                  }}>
-                    {filteredProducts.map(product => (
-                      <div
-                        key={product.id}
-                        style={{
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid #f0f0f0'
-                        }}
-                        onClick={() => handleAddProduct(product)}
-                        onMouseEnter={e => e.target.style.backgroundColor = '#f5f5f5'}
-                        onMouseLeave={e => e.target.style.backgroundColor = 'white'}
-                      >
-                        {product.product_name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <Form.List name="products">
-              {(fields, { add, remove }) => (
+        {selectedReport && (
+          <div style={{ padding: '24px' }}>
+            <Card style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'}}>
+              <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                <Row gutter={24}>
+                  <Col span={12}>
+                    <Text type="secondary">Ngày kiểm kê:</Text>
+                    <Text strong style={{ marginLeft: 8, color: '#1890ff' }}>
+                      {moment(selectedReport.check_date).format('DD/MM/YYYY')}
+                    </Text>
+                  </Col>
+                  <Col span={12}>
+                    <Text type="secondary">Ghi chú:</Text>
+                    <Text style={{ marginLeft: 8 }}>
+                      {selectedReport.note || 'Không có ghi chú'}
+                    </Text>
+                  </Col>
+                </Row>
                 <Table
-                  dataSource={fields.map(field => {
-                    const product = form.getFieldValue(['products', field.name]);
-                    return {
-                      ...field,
-                      ...product
-                    };
-                  })}
+                  dataSource={selectedReport.check_inventory_details}
                   columns={[
                     {
                       title: 'Tên mặt hàng',
-                      dataIndex: 'product_name',
+                      dataIndex: ['product', 'product_name'],
                       key: 'product_name',
-                      render: (_, record) => form.getFieldValue(['products', record.name, 'product_name'])
+                      render: name => <Text strong style={{color: '#1890ff'}}>{name}</Text>
                     },
                     {
                       title: 'Số lượng trên hệ thống',
                       dataIndex: 'quantity',
                       key: 'quantity',
-                      render: (_, record) => form.getFieldValue(['products', record.name, 'quantity'])
+                      render: qty => (
+                        <Tag color="blue" style={{padding: '4px 12px', borderRadius: '4px'}}>
+                          {qty}
+                        </Tag>
+                      )
                     },
                     {
                       title: 'Số lượng thực tế',
                       dataIndex: 'actual_quantity',
                       key: 'actual_quantity',
-                      render: (_, record, index) => (
-                        <Form.Item
-                          name={[index, 'actual_quantity']}
-                          rules={[{ required: true, message: 'Bắt buộc nhập' }]}
-                          style={{ marginBottom: 0 }}
-                        >
-                          <Input type="number" placeholder="Nhập số lượng" />
-                        </Form.Item>
-                      ),
+                      render: qty => (
+                        <Tag color="green" style={{padding: '4px 12px', borderRadius: '4px'}}>
+                          {qty}
+                        </Tag>
+                      )
                     },
                     {
-                      title: 'Lý do chênh lệch',
+                      title: 'Chênh lệch',
+                      key: 'difference',
+                      render: (_, record) => {
+                        const diff = record.actual_quantity - record.quantity;
+                        return (
+                          <Tag 
+                            color={diff < 0 ? 'red' : diff > 0 ? 'green' : 'default'}
+                            style={{padding: '4px 12px', borderRadius: '4px'}}
+                          >
+                            {diff}
+                          </Tag>
+                        );
+                      }
+                    },
+                    {
+                      title: 'Ghi chú',
                       dataIndex: 'note',
                       key: 'note',
-                      render: (_, record, index) => (
-                        <Form.Item
-                          name={[index, 'note']}
-                          style={{ marginBottom: 0 }}
-                        >
-                          <Input placeholder="Nhập ghi chú" />
-                        </Form.Item>
-                      ),
-                    },
-                    {
-                      title: 'Thao tác',
-                      key: 'actions',
-                      render: (_, record, index) => (
-                        <Button 
-                          type="link" 
-                          danger 
-                          onClick={() => remove(index)}
-                          icon={<DeleteOutlined />}
-                        >
-                          Xóa
-                        </Button>
-                      ),
+                      render: note => <Text>{note || 'Không có ghi chú'}</Text>
                     }
                   ]}
                   pagination={false}
-                  scroll={{ y: 300 }}
+                  bordered
+                  style={{
+                    marginTop: '16px',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}
                 />
-              )}
-            </Form.List>
-          </div>
-
-          <Form.Item
-            name="note"
-            label="Ghi chú"
-            style={{ marginTop: '24px' }}
-          >
-            <Input.TextArea rows={4} placeholder="Nhập ghi chú" />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title="Chi tiết phiếu kiểm kê"
-        open={isViewModalVisible}
-        onCancel={() => setIsViewModalVisible(false)}
-        footer={[
-          <Button key="back" onClick={() => setIsViewModalVisible(false)}>
-            Đóng
-          </Button>
-        ]}
-        width={1000}
-      >
-        {selectedReport && (
-          <div>
-            <p><strong>Ngày kiểm kê:</strong> {moment(selectedReport.check_date).format('DD/MM/YYYY')}</p>
-            <p><strong>Ghi chú:</strong> {selectedReport.note || 'Không có ghi chú'}</p>
-            <Table
-              dataSource={selectedReport.check_inventory_details}
-              columns={[
-                {
-                  title: 'Tên mặt hàng',
-                  dataIndex: ['product', 'product_name'],
-                  key: 'product_name',
-                },
-                {
-                  title: 'Số lượng trên hệ thống',
-                  dataIndex: 'quantity',
-                  key: 'quantity',
-                },
-                {
-                  title: 'Số lượng thực tế',
-                  dataIndex: 'actual_quantity',
-                  key: 'actual_quantity',
-                },
-                {
-                  title: 'Chênh lệch',
-                  key: 'difference',
-                  render: (_, record) => record.actual_quantity - record.quantity,
-                },
-                {
-                  title: 'Ghi chú',
-                  dataIndex: 'note',
-                  key: 'note',
-                  render: (note) => note || 'Không có ghi chú'
-                }
-              ]}
-              pagination={false}
-            />
+              </Space>
+            </Card>
           </div>
         )}
       </Modal>
-    </div>
+    </Card>
   );
 };
 

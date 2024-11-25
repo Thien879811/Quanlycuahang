@@ -21,5 +21,8 @@ class CheckInventoryService {
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
     }
+    async accept(id) {
+        return (await this.api.put(`/accept/${id}`)).data;
+    }
 }
 export default new CheckInventoryService();

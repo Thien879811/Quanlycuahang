@@ -18,16 +18,7 @@ class CheckInventoryController extends Controller
 
     public function createCheckInventory(Request $request)
     {
-        $data = $request->validate([
-            'check_date' => 'required|date',
-            'note' => 'nullable|string',
-            'user_id' => 'nullable|exists:users,id',
-            'products' => 'required|array',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.quantity' => 'required|integer',
-            'products.*.actual_quantity' => 'required|integer',
-            'products.*.note' => 'nullable|string'
-        ]);
+        $data = $request->all();
 
         $checkInventory = CheckInventory::create([
             'check_date' => $data['check_date'],
@@ -43,10 +34,6 @@ class CheckInventoryController extends Controller
                 'actual_quantity' => $productData['actual_quantity'],
                 'note' => $productData['note'] ?? null
             ]);
-
-            $product = Product::findOrFail($productData['product_id']);
-            $product->quantity = $productData['actual_quantity'];
-            $product->save();
         }
 
         return response()->json($checkInventory->load(['user', 'checkInventoryDetails.product']));
@@ -102,13 +89,6 @@ class CheckInventoryController extends Controller
             'user_id' => $data['user_id'] ?? Auth::id()
         ]);
 
-        // Restore previous quantities before updating
-        foreach ($checkInventory->checkInventoryDetails as $detail) {
-            $product = Product::findOrFail($detail->product_id);
-            $product->quantity = $detail->quantity;
-            $product->save();
-        }
-
         $checkInventory->checkInventoryDetails()->delete();
 
         foreach ($data['products'] as $productData) {
@@ -119,12 +99,25 @@ class CheckInventoryController extends Controller
                 'actual_quantity' => $productData['actual_quantity'],
                 'note' => $productData['note'] ?? null
             ]);
-
-            $product = Product::findOrFail($productData['product_id']);
-            $product->quantity = $productData['actual_quantity'];
-            $product->save();
         }
 
         return response()->json($checkInventory->load(['user', 'checkInventoryDetails.product']));
+    }
+
+    public function acceptCheckInventory($id)
+    {
+        $checkInventory = CheckInventory::findOrFail($id);
+        $checkInventory->status = '1';
+        $checkInventory->save();
+
+        foreach ($checkInventory->checkInventoryDetails as $detail) {
+            $product = Product::find($detail->product_id);
+            if ($product) {
+                $product->quantity = $detail->actual_quantity;
+                $product->save();
+            }
+        }
+
+        return response()->json($checkInventory);
     }
 }

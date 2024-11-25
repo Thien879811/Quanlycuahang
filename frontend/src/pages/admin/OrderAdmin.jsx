@@ -228,6 +228,7 @@ const OrderAdmin = () => {
                                 <MenuItem value={2}>Đã thanh toán online</MenuItem>
                                 <MenuItem value={3}>Đã hủy</MenuItem>
                                 <MenuItem value={-1}>Đang yêu cầu hủy</MenuItem>
+                                <MenuItem value={5}>Đơn hàng online</MenuItem>
                             </Select>
                         </FormControl>
                         <FormControl sx={{ minWidth: 200 }}>

@@ -1,9 +1,10 @@
-import { Layout, Typography, Table, Card, Space, Statistic, Row, Col, Modal, List, Tag, Spin, Button } from 'antd';
+import { Layout, Typography, Table, Card, Space, Statistic, Row, Col, Modal, List, Tag, Spin, Button, DatePicker } from 'antd';
 import customerService from '../../services/customer.service';
 import { useEffect, useState } from 'react';
 import { handleResponse } from '../../functions';
-import { UserOutlined, StarOutlined, PhoneOutlined, ShoppingOutlined, CheckCircleOutlined, HistoryOutlined } from '@ant-design/icons';
+import { UserOutlined, StarOutlined, PhoneOutlined, ShoppingOutlined, CheckCircleOutlined, HistoryOutlined, CalendarOutlined } from '@ant-design/icons';
 import { API_URL } from '../../services/config';
+import dayjs from 'dayjs';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -17,6 +18,9 @@ export default function CustomerAdmin() {
     const [historyRedeemPoint, setHistoryRedeemPoint] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [dateFilter, setDateFilter] = useState(null);
+    const [monthFilter, setMonthFilter] = useState(null);
+    const [yearFilter, setYearFilter] = useState(null);
 
     const fetchInfoBuy = async (id) => {
         try {
@@ -30,7 +34,12 @@ export default function CustomerAdmin() {
 
     const fetchCustomers = async () => {
         try {
-            const response = await customerService.getAll();
+            const params = {};
+            if (dateFilter) params.date = dateFilter;
+            if (monthFilter) params.month = monthFilter;
+            if (yearFilter) params.year = yearFilter;
+
+            const response = await customerService.getAll(params);
             const data = handleResponse(response);
             setCustomers(data);
         } catch (error) {
@@ -40,7 +49,7 @@ export default function CustomerAdmin() {
 
     useEffect(() => {
         fetchCustomers();
-    }, []);
+    }, [dateFilter, monthFilter, yearFilter]);
 
     const handleRowClick = async (record) => {
         setIsLoading(true);
@@ -76,6 +85,36 @@ export default function CustomerAdmin() {
             setHistoryRedeemPoint(data);
         } catch (error) {
             console.error(error);
+        }
+    };
+
+    const handleDateChange = (date) => {
+        if (date) {
+            setDateFilter(date.format('YYYY-MM-DD'));
+            setMonthFilter(null);
+            setYearFilter(null);
+        } else {
+            setDateFilter(null);
+        }
+    };
+
+    const handleMonthChange = (date) => {
+        if (date) {
+            setMonthFilter(date.format('M'));
+            setDateFilter(null);
+            setYearFilter(null);
+        } else {
+            setMonthFilter(null);
+        }
+    };
+
+    const handleYearChange = (date) => {
+        if (date) {
+            setYearFilter(date.format('YYYY'));
+            setDateFilter(null);
+            setMonthFilter(null);
+        } else {
+            setYearFilter(null);
         }
     };
 
@@ -152,24 +191,45 @@ export default function CustomerAdmin() {
                     <Col span={8}>
                         <Card>
                             <Statistic 
-                                title="Tổng điểm tích lũy"
-                                value={totalPoints}
-                                prefix={<StarOutlined />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col span={8}>
-                        <Card>
-                            <Statistic 
-                                title="Điểm trung bình"
-                                value={avgPoints}
-                                prefix={<StarOutlined />}
+                                title="Khách hàng đã đăng ký tài khoản"
+                                value={customers.filter(customer => customer.password).length}
+                                prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                                valueStyle={{ color: '#52c41a' }}
                             />
                         </Card>
                     </Col>
                 </Row>
 
                 <Card>
+                    <Space style={{ marginBottom: 16 }}>
+                        <DatePicker
+                            placeholder="Chọn ngày"
+                            onChange={handleDateChange}
+                            format="DD/MM/YYYY"
+                            value={dateFilter ? dayjs(dateFilter) : null}
+                            style={{ width: 200 }}
+                        />
+                        <DatePicker
+                            picker="month"
+                            placeholder="Chọn tháng"
+                            onChange={handleMonthChange}
+                            format="MM/YYYY"
+                            value={monthFilter ? dayjs().month(monthFilter - 1) : null}
+                            style={{ width: 200 }}
+                        />
+                        {(dateFilter || monthFilter || yearFilter) && (
+                            <Button 
+                                onClick={() => {
+                                    setDateFilter(null);
+                                    setMonthFilter(null);
+                                    setYearFilter(null);
+                                }}
+                            >
+                                Xóa bộ lọc
+                            </Button>
+                        )}
+                    </Space>
+
                     <Table 
                         columns={columns} 
                         dataSource={customers}
@@ -265,7 +325,7 @@ export default function CustomerAdmin() {
                                     </Card>
                                 )}
 
-                                <Card title="Top 5 sản phẩm mua nhiều nhất">
+                                <Card title="Sản phẩm được mua nhiều gần đây">
                                     <List
                                         dataSource={infoBuy.top_products}
                                         renderItem={item => (

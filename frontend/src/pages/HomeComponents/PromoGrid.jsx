@@ -1,4 +1,5 @@
 import { Paper, Typography, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { API_URL } from '../../services/config';
 
 const PromoGrid = ({activePromotion}) => {
     return (

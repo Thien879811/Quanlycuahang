@@ -172,12 +172,12 @@ const Home = () => {
 		}
 		if(type === 2){
 			if(order_id){
-				updateOrder(order_id,data);
+				updateOrder(order_id);
+				const finalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * (getTotalAmount -getTotalDiscount) : 0);
+				return navigate(`/vnpay/${order_id}/${finalAmount}`);
 			}else{
 				createOrder();
 			}
-			const finalAmount = getTotalAmount - getTotalDiscount - (getTotalAmount - getTotalDiscount) * (orders.discount || 0) / 100;
-			return navigate(`/vnpay/${order_id}/${finalAmount}`);
 		}
 		if(type === 3){
 			setOpenVoucherDialog(true);

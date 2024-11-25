@@ -22,6 +22,7 @@ return new class extends Migration
                 ->references('id')
                 ->on('users')
                 ->onDelete('set null');
+            $table->integer('status')->default(0);
             $table->timestamps();
         });
     }

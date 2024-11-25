@@ -50,8 +50,30 @@ class CustomerController extends Controller
         return response()->json($customer);
     }
 
-    public function getAll(){
-        $customers = Customer::all();
+    public function getAll(Request $request){
+        $query = Customer::query();
+        
+        if ($request->has('date')) {
+            $date = $request->date;
+            $query->where(function($q) use ($date) {
+                $q->whereDate('created_at', $date)
+                  ->orWhereHas('orders', function($q) use ($date) {
+                      $q->whereDate('created_at', $date);
+                  });
+            });
+        }
+        
+        if ($request->has('month')) {
+            $month = $request->month;
+            $query->where(function($q) use ($month) {
+                $q->whereMonth('created_at', $month)
+                  ->orWhereHas('orders', function($q) use ($month) {
+                      $q->whereMonth('created_at', $month);
+                  });
+            });
+        }
+
+        $customers = $query->get();
         return response()->json($customers);
     }
 
@@ -62,14 +84,19 @@ class CustomerController extends Controller
             return response()->json(['error' => 'Không tìm thấy khách hàng'], 404);
         }
 
-        // Get total number of orders and total spent
-        $totalOrders = $customer->orders->count();
+        // Get orders from last month only
+        $lastMonth = now()->subMonth();
+        $orders = $customer->orders->filter(function($order) use ($lastMonth) {
+            return $order->created_at >= $lastMonth;
+        });
 
-        $totalSpent = $customer->orders->sum('total_amount');
+        // Get total number of orders and total spent for last month
+        $totalOrders = $orders->count();
+        $totalSpent = $orders->sum('total_amount');
 
-        // Get top 5 most purchased products with details
+        // Get top 5 most purchased products with details from last month
         $topProducts = collect();
-        foreach ($customer->orders as $order) {
+        foreach ($orders as $order) {
             foreach ($order->details as $detail) {
                 $product = $detail->product;
                 if (!$product) continue;

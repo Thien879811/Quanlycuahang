@@ -209,11 +209,6 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek, load
                                         <CalendarOutlined style={{ marginRight: 4 }} />
                                         {`${attendance.time_start} - ${attendance.time_end}`}
                                     </Text>
-                                    {attendance.reason && (
-                                        <Text type="secondary" style={{ fontSize: '11px' }}>
-                                            {attendance.reason}
-                                        </Text>
-                                    )}
                                     <Space size="small">
                                         <Button 
                                             type="primary"
@@ -280,14 +275,6 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek, load
                                 size="middle"
                             >
                                 Xuất Excel Tuần
-                            </Button>
-                            <Button 
-                                type="primary"
-                                icon={<FileExcelOutlined />}
-                                onClick={() => handleExportExcel('month')}
-                                size="middle"
-                            >
-                                Xuất Excel Tháng
                             </Button>
                             <Button 
                                 type="primary"
