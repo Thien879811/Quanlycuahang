@@ -8,9 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\HangSuDung;
 use App\Http\Requests\ProductRequest;
-use App\Models\CheckInventory;
-use App\Models\CheckInventoryDetail;
 use App\Models\DestroyProduct;
+use Carbon\Carbon;
 
 class ProductController extends Controller
 {
@@ -155,10 +154,55 @@ class ProductController extends Controller
         ]);
     }
 
-    public function getAllDestroyProduct()
+    public function getAllDestroyProduct($type = null, Request $request)
     {
-        $destroyProducts = DestroyProduct::with('product')->get();
-        return response()->json($destroyProducts);
+        try {
+            $query = DestroyProduct::with('product')
+                    ->orderBy('created_at', 'desc');
+
+            switch($type) {
+                case 'today':
+                    $query->whereDate('created_at', Carbon::today());
+                    break;
+                case 'yesterday':
+                    $query->whereDate('created_at', Carbon::yesterday());
+                    break;
+                case 'week':
+                    $query->whereBetween('created_at', [
+                        Carbon::now()->startOfWeek(),
+                        Carbon::now()->endOfWeek()
+                    ]);
+                    break;
+                case 'month':
+                    $query->whereYear('created_at', Carbon::now()->year)
+                          ->whereMonth('created_at', Carbon::now()->month);
+                    break;
+                case 'custom':
+                    $date = Carbon::parse($request->input('date'));
+                    if (!$date) {
+                        return response()->json(['error' => 'Date is required for custom type'], 400);
+                    }
+                    $query->whereDate('created_at', $date);
+                    break;
+                case 'custom_month':
+                    $date = Carbon::parse($request->input('date'));
+                    if (!$date) {
+                        return response()->json(['error' => 'Date is required for custom month type'], 400);
+                    }
+                    $query->whereYear('created_at', $date->year)
+                          ->whereMonth('created_at', $date->month);
+                    break;
+            }
+
+            $destroyProducts = $query->get();
+            return response()->json([
+                'success' => true,
+                'data' => $destroyProducts
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function createDestroyProduct(Request $request)

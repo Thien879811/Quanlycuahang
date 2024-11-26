@@ -11,11 +11,11 @@ const PurchaseOverview = ({ purchaseData }) => {
   };
 
   return (
-    <Card title="Tổng quan mua hàng">
+    <Card title="Tổng quan nhập hàng">
       <Row gutter={[16, 16]}>
         <Col span={6}>
           <Statistic
-            title="Đơn mua"
+            title="Đơn nhập"
             value={purchaseData.purchaseOrders}
             prefix={<ShoppingOutlined style={{ color: '#1890ff' }} />}
             valueStyle={{ color: '#1890ff' }}

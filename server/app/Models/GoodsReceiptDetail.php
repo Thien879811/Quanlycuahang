@@ -22,6 +22,7 @@ class GoodsReceiptDetail extends Model
         'production_date',
         'expiration_date',
         'return_quantity',
+        'return_date',
         'is_added',
     ];
     public function product()

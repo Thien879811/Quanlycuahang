@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [salesOverview, setSalesOverview] = useState({ sales: 0, revenue: 0, profit: 0, cost: 0 });
   const [timeRange, setTimeRange] = useState('today');
   const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(null);
   const [inventorySummary, setInventorySummary] = useState({ quantityInHand: 0, quantityToBeReceived: 0 });
   const [productSummary, setProductSummary] = useState({ numberOfSuppliers: 0, numberOfCategories: 0 });
   const [orderSummary, setOrderSummary] = useState({ jan: 0, feb: 0, mar: 0, apr: 0, may: 0, jun: 0, jul: 0, aug: 0, sep: 0, oct: 0, nov: 0, dec: 0 });
@@ -34,12 +35,19 @@ const Dashboard = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [timeRange, selectedDate]);
+  }, [timeRange, selectedDate, selectedMonth]);
 
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const timeParam = timeRange === 'custom' && selectedDate ? selectedDate.format('YYYY-MM-DD') : timeRange;
+      let timeParam;
+      if (timeRange === 'custom' && selectedDate) {
+        timeParam = selectedDate.format('YYYY-MM-DD');
+      } else if (timeRange === 'customMonth' && selectedMonth) {
+        timeParam = selectedMonth.format('YYYY-MM');
+      } else {
+        timeParam = timeRange;
+      }
       
       await Promise.all([
         getSalesOverview(timeParam),
@@ -164,6 +172,9 @@ const Dashboard = () => {
     if (value !== 'custom') {
       setSelectedDate(null);
     }
+    if (value !== 'customMonth') {
+      setSelectedMonth(null);
+    }
   };
 
   return (
@@ -194,13 +205,23 @@ const Dashboard = () => {
                     <Option value="week">Tuần này</Option>
                     <Option value="month">Tháng này</Option>
                     <Option value="year">Năm nay</Option>
-                    <Option value="custom">Tùy chọn</Option>
+                    <Option value="custom">Tùy chọn ngày</Option>
+                    <Option value="customMonth">Tùy chọn tháng</Option>
                   </Select>
                   {timeRange === 'custom' && (
                     <DatePicker 
                       style={{ marginLeft: 16 }}
                       onChange={setSelectedDate}
                       value={selectedDate}
+                      bordered={false}
+                    />
+                  )}
+                  {timeRange === 'customMonth' && (
+                    <DatePicker 
+                      picker="month"
+                      style={{ marginLeft: 16 }}
+                      onChange={setSelectedMonth}
+                      value={selectedMonth}
                       bordered={false}
                     />
                   )}
@@ -255,11 +276,11 @@ const Dashboard = () => {
                 <Card hoverable>
                   <LowQuantityStock lowQuantityStock={lowQuantityStock} />
                 </Card>
-                <Col span={24}>
+              </Col>
+              <Col span={24}>
                 <Card hoverable>
                   <OrderSummaryChart orderSummary={orderSummary} />
                 </Card>
-              </Col>
               </Col>
             </Row>
           </Col>

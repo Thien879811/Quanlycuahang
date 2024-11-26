@@ -64,8 +64,11 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }));
 
 const StyledInput = styled('input')(({ theme }) => ({
-    padding: '12px',
+    padding: '12px 16px',
+    fontSize: '14px',
+    marginTop: '13px',
     border: '1px solid #e0e0e0',
+    height: '56px',
     borderRadius: '8px',
     width: '100%',
     '&:focus': {
@@ -74,11 +77,11 @@ const StyledInput = styled('input')(({ theme }) => ({
         boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
     }
 }));
-
 const HistoryReceipt = () => {
     const navigate = useNavigate();
     const [timeRange, setTimeRange] = useState('today');
     const [customDate, setCustomDate] = useState('');
+    const [customMonth, setCustomMonth] = useState('');
     const [error, setError] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(50);
@@ -87,11 +90,10 @@ const HistoryReceipt = () => {
     const [displayedReceipts, setDisplayedReceipts] = useState([]);
     const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
     const [selectedReceipt, setSelectedReceipt] = useState(null);
-    const [returnStatus, setReturnStatus] = useState('returned');
 
     useEffect(() => {
         fetchAllReceipts();
-    }, [timeRange, customDate]);
+    }, [timeRange, customDate, customMonth]);
 
     useEffect(() => {
         const startIndex = page * rowsPerPage;
@@ -109,30 +111,23 @@ const HistoryReceipt = () => {
         setPage(0);
     };
 
+    const handleCustomMonthChange = (event) => {
+        setCustomMonth(event.target.value);
+        setPage(0);
+    };
+
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
 
-    const handleReturnStatusChange = (event) => {
-        setReturnStatus(event.target.value);
-        filterReceipts(event.target.value);
-    };
-
-    const filterReceipts = (status) => {
-        let filtered = [...receipts];
-        if (status === 'returned') {
-            filtered = receipts.filter(receipt => {
-                const hasReturnedItems = receipt.details.some(detail => detail.status === 'Đã trả hàng');
-                return hasReturnedItems;
-            });
-        }
-        setFilteredReceipts(filtered);
-        setPage(0);
-    };
-
     const fetchAllReceipts = async () => {
         try {
-            const response = await ReceiptService.getReceiptReturn(timeRange, customDate);
+            let response;
+            if (timeRange === 'custom_month') {
+                response = await ReceiptService.getReceiptReturn(timeRange, customMonth);
+            } else {
+                response = await ReceiptService.getReceiptReturn(timeRange, customDate);
+            }
             const data = handleResponse(response);
             if (data.success) {
                 const processedReceipts = data.goods_receipts.map(receipt => ({
@@ -150,7 +145,7 @@ const HistoryReceipt = () => {
                 }));
 
                 setReceipts(processedReceipts);
-                filterReceipts('returned');
+                setFilteredReceipts(processedReceipts);
                 setError('');
             } else {
                 setError('Không thể tải danh sách phiếu nhập hàng');
@@ -176,9 +171,16 @@ const HistoryReceipt = () => {
                 <CardContent>
                     <Grid container spacing={3} alignItems="center" mb={2}>
                         <Grid item xs={12} md={4}>
-                            <Typography variant="h4" fontWeight="bold" color="primary">
-                                Chi Tiết Phiếu Nhập Hàng
-                            </Typography>
+                            <StyledButton 
+                                startIcon={<ArrowBackIcon />}
+                                onClick={handleGoBack}
+                                size="large"
+                                sx={{ borderRadius: 'none' , border: 'none', boxShadow: 'none'}}
+                                >
+                                <Typography variant="h4" fontWeight="bold" color="primary">
+                                    Lịch sử trả hàng
+                                </Typography>
+                            </StyledButton>
                         </Grid>
                         <Grid item xs={12} md={2}>
                             <FormControl fullWidth variant="outlined">
@@ -193,7 +195,8 @@ const HistoryReceipt = () => {
                                     <MenuItem value="yesterday">Hôm qua</MenuItem>
                                     <MenuItem value="week">Tuần này</MenuItem>
                                     <MenuItem value="month">Tháng này</MenuItem>
-                                    <MenuItem value="custom">Tùy chọn</MenuItem>
+                                    <MenuItem value="custom">Tùy chọn ngày</MenuItem>
+                                    <MenuItem value="custom_month">Tùy chọn tháng</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -206,24 +209,16 @@ const HistoryReceipt = () => {
                                 />
                             </Grid>
                         )}
-                        <Grid item xs={12} md={timeRange === 'custom' ? 2 : 4} container justifyContent="flex-end">
-                            <StyledButton 
-                                startIcon={<ArrowBackIcon />}
-                                onClick={handleGoBack}
-                                variant="contained"
-                                size="large"
-                            >
-                                Quay lại
-                            </StyledButton>
-                        </Grid>
+                        {timeRange === 'custom_month' && (
+                            <Grid item xs={12} md={2}>
+                                <StyledInput
+                                    type="month"
+                                    value={customMonth}
+                                    onChange={handleCustomMonthChange}
+                                />
+                            </Grid>
+                        )}
                     </Grid>
-
-                    {error && (
-                        <Typography color="error" sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: '8px' }}>
-                            {error}
-                        </Typography>
-                    )}
-
                     <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
                         <Table>
                             <TableHead>

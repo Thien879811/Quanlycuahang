@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useStateContext } from "../context/contextprovider";
-import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Divider, Typography, AppBar, Toolbar, IconButton, CssBaseline, useTheme, TextField, Badge, Menu, MenuItem, Collapse } from '@mui/material';
+import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Divider, Typography, AppBar, Toolbar, IconButton, CssBaseline, useTheme, TextField, Badge, Menu, MenuItem, Collapse, Snackbar } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -23,6 +23,7 @@ import FactCheckIcon from '@mui/icons-material/FactCheck';
 import HistoryIcon from '@mui/icons-material/History';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import Pusher from 'pusher-js';
 
 const drawerWidth = 240;
 
@@ -33,11 +34,35 @@ export default function AdminLayout() {
     const navigate = useNavigate();
     const theme = useTheme();
     const [openProducts, setOpenProducts] = useState(false);
+    const [openNotification, setOpenNotification] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState('');
+    const [pusherClient, setPusherClient] = useState(null);
 
     useEffect(() => {
         if (localStorage.getItem('admin')) {
             setAdmin(JSON.parse(localStorage.getItem('admin')));
         }
+        
+        // Initialize Pusher
+        const pusher = new Pusher('6019c42b39af742e2bf2', {
+            cluster: 'ap1',
+        });
+        setPusherClient(pusher);
+
+        const channel = pusher.subscribe('employee-leave');
+        channel.bind('leave-request', function(data) {
+            console.log(data);
+            const { staff_id, date, reason } = data;
+            setNotificationMessage(`Nhân viên ${staff_id} xin nghỉ phép ngày ${date}. Lý do: ${reason}`);
+            setOpenNotification(true);
+        });
+
+        return () => {
+            if (pusherClient) {
+                pusherClient.unsubscribe('employee-leave');
+                pusherClient.disconnect();
+            }
+        };
     }, []);
 
     if (!token) {
@@ -53,6 +78,10 @@ export default function AdminLayout() {
     };
 
     const handleLogout = () => {
+        if (pusherClient) {
+            pusherClient.unsubscribe('employee-leave');
+            pusherClient.disconnect();
+        }
         localStorage.removeItem('ACCESS_TOKEN');
         localStorage.removeItem('user');
         localStorage.removeItem('admin');
@@ -63,6 +92,10 @@ export default function AdminLayout() {
 
     const handleProductsClick = () => {
         setOpenProducts(!openProducts);
+    };
+
+    const handleCloseNotification = () => {
+        setOpenNotification(false);
     };
 
     const menuItems = [
@@ -116,6 +149,12 @@ export default function AdminLayout() {
                         </Menu>
                     </Box>
                 </Toolbar>
+                <Snackbar
+                open={openNotification}
+                autoHideDuration={6000}
+                onClose={handleCloseNotification}
+                message={notificationMessage}
+            />
             </AppBar>
             <Drawer
                 variant="permanent"

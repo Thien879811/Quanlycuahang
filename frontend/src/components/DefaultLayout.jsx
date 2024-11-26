@@ -95,7 +95,7 @@ export default function DefaultLayout() {
                                 color: white;
                                 cursor: pointer;
                                 font-size: 13px;
-                            ">Chi tiết</button>
+                            " onclick="window.location.href='/orders'">Chi tiết</button>
                         </div>
                     </div>
                 `;
@@ -265,6 +265,25 @@ export default function DefaultLayout() {
                                             </div>
                                         </MenuItem>
                                     ))}
+                                    <MenuItem 
+                                        onClick={() => {
+                                            handleNotificationClose();
+                                            navigate('/orders');
+                                        }}
+                                        sx={{
+                                            justifyContent: 'center',
+                                            borderTop: '1px solid #eee',
+                                            padding: '12px'
+                                        }}
+                                    >
+                                        <Typography sx={{ 
+                                            color: '#1976d2',
+                                            fontWeight: '500',
+                                            fontSize: '14px'
+                                        }}>
+                                            Xem tất cả đơn hàng
+                                        </Typography>
+                                    </MenuItem>
                                     <MenuItem 
                                         onClick={clearNotifications}
                                         sx={{

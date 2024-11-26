@@ -5,11 +5,26 @@ import orderService from '../../services/order.service';
 import { handleResponse } from '../../functions';
 import { styled } from '@mui/material/styles';
 import { ReceiptLong, AccessTime, FilterList, Close } from '@mui/icons-material';
+import dayjs from 'dayjs';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     fontWeight: 'bold',
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.common.white,
+}));
+
+const StyledInput = styled('input')(({ theme }) => ({
+    padding: '12px 16px',
+    fontSize: '14px',
+    border: '1px solid #e0e0e0',
+    height: '56px',
+    borderRadius: '4px',
+    width: '100%',
+    '&:focus': {
+        outline: 'none',
+        borderColor: theme.palette.primary.main,
+        boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+    }
 }));
 
 const OrderAdmin = () => {
@@ -21,21 +36,24 @@ const OrderAdmin = () => {
     const [orderStatus, setOrderStatus] = useState('all');
     const [timeRange, setTimeRange] = useState('today');
     const [customDate, setCustomDate] = useState('');
+    const [customMonth, setCustomMonth] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(50);
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchOrders();
-    }, [orderStatus, timeRange, customDate]);
+    }, [orderStatus, timeRange, customDate, customMonth]);
 
     const fetchOrders = async () => {
         try {
             let type = timeRange;
             if (timeRange === 'custom' && customDate) {
                 type = 'custom';
+            } else if (timeRange === 'customMonth' && customMonth) {
+                type = 'customMonth';
             }
-            const response = await orderService.getOrder(type, customDate);
+            const response = await orderService.getOrder(type, customDate || customMonth);
             const data = handleResponse(response);
             const ordersWithTotal = data.map(order => ({
                 ...order,
@@ -70,10 +88,6 @@ const OrderAdmin = () => {
         } catch (error) {
             console.error('Lỗi khi lấy danh sách đơn hàng:', error);
         }
-    };
-
-    const handleClose = () => {
-        navigate('/admin');
     };
 
     const handleOpenDialog = (order) => {
@@ -158,11 +172,22 @@ const OrderAdmin = () => {
 
     const handleTimeRangeChange = (event) => {
         setTimeRange(event.target.value);
+        if (event.target.value !== 'custom') {
+            setCustomDate('');
+        }
+        if (event.target.value !== 'customMonth') {
+            setCustomMonth('');
+        }
         setPage(0);
     };
 
     const handleCustomDateChange = (event) => {
         setCustomDate(event.target.value);
+        setPage(0);
+    };
+
+    const handleCustomMonthChange = (event) => {
+        setCustomMonth(event.target.value);
         setPage(0);
     };
 
@@ -243,12 +268,13 @@ const OrderAdmin = () => {
                                 <MenuItem value="yesterday">Hôm qua</MenuItem>
                                 <MenuItem value="week">Tuần này</MenuItem>
                                 <MenuItem value="month">Tháng này</MenuItem>
-                                <MenuItem value="custom">Tùy chọn</MenuItem>
+                                <MenuItem value="custom">Tùy chọn ngày</MenuItem>
+                                <MenuItem value="customMonth">Tùy chọn tháng</MenuItem>
                             </Select>
                         </FormControl>
                         {timeRange === 'custom' && (
                             <FormControl sx={{ minWidth: 200 }}>
-                                <input
+                                <StyledInput
                                     type="date"
                                     value={customDate}
                                     onChange={handleCustomDateChange}
@@ -261,18 +287,32 @@ const OrderAdmin = () => {
                                 />
                             </FormControl>
                         )}
-                        <Button 
-                            variant="contained" 
-                            onClick={handleClose}
-                            startIcon={<Close />}
-                            sx={{
-                                borderRadius: '8px',
-                                textTransform: 'none',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                            }}
-                        >
-                            Đóng
-                        </Button>
+                        {timeRange === 'customMonth' && (
+                            <FormControl sx={{ minWidth: 200 }}>
+                                <StyledInput
+                                    type="month"
+                                    value={customMonth}
+                                    onChange={handleCustomMonthChange}
+                                    style={{
+                                        padding: '14px',
+                                        border: '1px solid #ccc',
+                                        borderRadius: '8px',
+                                        width: '100%'
+                                    }}
+                                />
+                            </FormControl>
+                        )}
+                        {((timeRange === 'custom' && customDate) || (timeRange === 'customMonth' && customMonth)) && (
+                            <Button 
+                                onClick={() => {
+                                    setCustomDate('');
+                                    setCustomMonth('');
+                                    setTimeRange('today');
+                                }}
+                            >
+                                Xóa bộ lọc
+                            </Button>
+                        )}
                     </Box>
                 </Box>
             </Box>

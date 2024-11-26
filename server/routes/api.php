@@ -33,13 +33,14 @@ Route::get('/product',[ProductController::class,'getAll']);
 Route::post('/product',[ProductController::class,'create']);
 Route::post('/product/{id}',[ProductController::class,'update']);
 Route::get('/product/inventory',[HangSuDungController::class,'getAll']);
-Route::get('/product/destroy',[ProductController::class,'getAllDestroyProduct']);
+Route::get('/product/destroy/{type?}',[ProductController::class,'getAllDestroyProduct']);
 Route::post('/product/destroy/create',[ProductController::class,'createDestroyProduct']);
 Route::delete('/product/{id}',[ProductController::class,'delete']);
 Route::get('/product/destroy',[ProductController::class,'getDestroyProduct']);
 Route::put('/product/destroy/{id}',[ProductController::class,'updateDestroyProductStatus']);
 Route::put('/product/update-quantity/{id}',[ProductController::class,'updateQuantity']);
 Route::get('/product/customer',[ProductController::class,'getProduct']);
+
 
 Route::post('/orders/customer', [OrdersController::class, 'createOrderCustomer']);
 Route::get('/orders', [OrdersController::class, 'getAll']   );
@@ -72,10 +73,11 @@ Route::controller(PromotionController::class)->group(function () {
     Route::get('/promotions/customer/{id}', 'getPromotionDetail');
     Route::post('/promotions/redeem-point', 'createRedeemPoint');
     Route::get('/promotions/customer/{id}', 'getPromotionByCustomerId');
+    Route::get('/promotions/code', 'getPromotionCode');
 });
 
 //check inventory api
-Route::get('/check-inventory', [CheckInventoryController::class, 'getAllCheckInventories']);
+Route::get('/check-inventory/{timeRange?}', [CheckInventoryController::class, 'getAllCheckInventories']);
 Route::post('/check-inventory', [CheckInventoryController::class, 'createCheckInventory']);
 Route::delete('/check-inventory/{id}', [CheckInventoryController::class, 'deleteCheckInventory']);
 Route::put('/check-inventory/{id}', [CheckInventoryController::class, 'updateCheckInventory']);

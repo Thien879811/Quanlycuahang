@@ -351,9 +351,6 @@ export default function CustomerAdmin() {
                                                     <Col span={8} style={{ textAlign: 'right' }}>
                                                         <Space>
                                                             <Tag color="blue">Số lượng: {item.quantity}</Tag>
-                                                            <Tag color="green">
-                                                                {(item.selling_price || 0).toLocaleString('vi-VN')}đ
-                                                            </Tag>
                                                         </Space>
                                                     </Col>
                                                 </Row>

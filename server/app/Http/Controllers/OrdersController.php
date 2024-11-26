@@ -379,6 +379,14 @@ class OrdersController extends Controller
                     $date = Carbon::parse($request->date);
                     $query->whereDate('created_at', $date);
                     break;
+                case 'customMonth':
+                    if (!$request->has('date')) {
+                        return response()->json(['error' => 'Date parameter is required for custom month'], 400);
+                    }
+                    $date = Carbon::parse($request->date);
+                    $query->whereYear('created_at', $date->year)
+                          ->whereMonth('created_at', $date->month);
+                    break;
                 default:
                     return response()->json(['error' => 'Invalid time range'], 400);
             }
@@ -615,6 +623,8 @@ class OrdersController extends Controller
         $order->customer_id = $validated['customer_id'];
         $order->status = $validated['status'];
         $order->pays_id = 2;
+        $order->voucher_code = $validated['voucher_code'] ?? null;
+        $order->discount = $validated['discount'] ?? 0;
         $order->save();
 
         foreach ($validated['products'] as $product) {
@@ -631,6 +641,16 @@ class OrdersController extends Controller
                 $productModel->quantity -= $product['soluong'];
                 $productModel->save();
             }
+        }
+
+        $customer = Customer::find($validated['customer_id']);
+        $customer->diem += $order->details->sum(function($detail) {
+            return $detail->dongia * $detail->soluong;
+        }) / 1000;
+        $customer->save();
+
+        if ($order->voucher_code) {
+            Promotion::where('code', $order->voucher_code)->update(['quantity' => DB::raw('quantity - 1')]);
         }
 
         broadcast(new NewNotification([

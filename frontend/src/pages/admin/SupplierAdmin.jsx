@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, message, Space, Popconfirm, Typography, Tag, Descriptions, List, Statistic, Card, Row, Col, Divider } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, DownloadOutlined, ShopOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined, DownloadOutlined, ShopOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined, SearchOutlined } from '@ant-design/icons';
 import factoryService from '../../services/factory.service';
 import { handleResponse } from '../../functions';
 import * as XLSX from 'xlsx';
@@ -9,6 +9,8 @@ const { Title, Text } = Typography;
 
 const SupplierAdmin = () => {
     const [suppliers, setSuppliers] = useState([]);
+    const [filteredSuppliers, setFilteredSuppliers] = useState([]);
+    const [searchText, setSearchText] = useState('');
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
     const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -27,15 +29,31 @@ const SupplierAdmin = () => {
         fetchSuppliers();
     }, []);
 
+    useEffect(() => {
+        handleSearch(searchText);
+    }, [suppliers, searchText]);
+
     const fetchSuppliers = async () => {
         try {
             const response = await factoryService.getAll();
             const data = handleResponse(response);
             setSuppliers(data);
+            setFilteredSuppliers(data);
         } catch (error) {
             console.error('Error fetching suppliers:', error);
             message.error('Không thể tải danh sách nhà cung cấp');
         }
+    };
+
+    const handleSearch = (value) => {
+        const searchValue = value.toLowerCase();
+        const filtered = suppliers.filter(supplier => 
+            supplier.factory_name.toLowerCase().includes(searchValue) ||
+            supplier.email.toLowerCase().includes(searchValue) ||
+            supplier.phone.toLowerCase().includes(searchValue) ||
+            supplier.address.toLowerCase().includes(searchValue)
+        );
+        setFilteredSuppliers(filtered);
     };
 
     const fetchHistoryReceive = async (id) => {
@@ -160,6 +178,12 @@ const SupplierAdmin = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <Title level={3} style={{margin: 0}}><ShopOutlined /> Nhà cung cấp</Title>
                 <Space size="middle">
+                    <Input
+                        placeholder="Tìm kiếm nhà cung cấp..."
+                        prefix={<SearchOutlined />}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        style={{ width: 300, borderRadius: '6px' }}
+                    />
                     <Button icon={<PlusOutlined />} type="primary" onClick={() => showModal()} style={{borderRadius: '6px'}}>
                         Thêm nhà cung cấp
                     </Button>
@@ -171,11 +195,11 @@ const SupplierAdmin = () => {
 
             <Table 
                 columns={columns} 
-                dataSource={suppliers} 
+                dataSource={filteredSuppliers} 
                 rowKey="id"
                 style={{backgroundColor: 'white', borderRadius: '8px'}}
                 pagination={{ 
-                    total: suppliers.length,
+                    total: filteredSuppliers.length,
                     showSizeChanger: true,
                     showQuickJumper: true,
                     showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} nhà cung cấp`,
@@ -246,6 +270,7 @@ const SupplierAdmin = () => {
                     </Button>
                 ]}
                 width={800}
+                height={700}
                 centered
                 bodyStyle={{ padding: '24px' }}
             >

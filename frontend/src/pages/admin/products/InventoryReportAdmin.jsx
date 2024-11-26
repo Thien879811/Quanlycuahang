@@ -17,15 +17,119 @@ import {
   Tag,
   Divider,
   Row,
-  Col
+  Col,
+  Select,
+  Layout
 } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, EyeOutlined, FileSearchOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, EyeOutlined, FileSearchOutlined, CheckCircleOutlined, DashboardOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
 import InventoryTable from './Inventory/InventoryTable';
 import IventoryModal from './Inventory/IventoryModal';
 
 const { Title, Text } = Typography;
+const { Option } = Select;
+const { Content } = Layout;
+
+const StyledCard = styled(Card)`
+  margin: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+
+  .ant-card-body {
+    padding: 24px;
+  }
+`;
+
+const PageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 0 8px;
+
+  .title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .anticon {
+      font-size: 24px;
+      color: #1890ff;
+    }
+  }
+`;
+
+const ActionButton = styled(Button)`
+  height: 48px;
+  padding: 0 24px;
+  font-size: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &.create-button {
+    background: #1890ff;
+    border-color: #1890ff;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.35);
+    
+    &:hover {
+      background: #40a9ff;
+      border-color: #40a9ff;
+    }
+  }
+`;
+
+const StyledSelect = styled(Select)`
+  min-width: 200px;
+  .ant-select-selector {
+    border-radius: 8px !important;
+    height: 48px !important;
+    padding: 8px 16px !important;
+    
+    .ant-select-selection-item {
+      line-height: 32px !important;
+    }
+  }
+`;
+
+const StyledDatePicker = styled(DatePicker)`
+  border-radius: 8px;
+  height: 48px;
+  padding: 8px 16px;
+  
+  input {
+    font-size: 14px;
+  }
+`;
+
+const ViewModal = styled(Modal)`
+  .ant-modal-content {
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  .ant-modal-header {
+    padding: 20px 24px;
+    background: #f8f9fa;
+  }
+  
+  .ant-modal-body {
+    padding: 24px;
+  }
+  
+  .detail-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    
+    .ant-card-body {
+      padding: 24px;
+    }
+  }
+`;
 
 const InventoryReportAdmin = () => {
   const navigate = useNavigate();
@@ -39,11 +143,13 @@ const InventoryReportAdmin = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [timeRange, setTimeRange] = useState('today');
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
     getReports();
     getProducts();
-  }, []);
+  }, [timeRange, selectedDate]);
 
   useEffect(() => {
     if (searchText) {
@@ -59,11 +165,15 @@ const InventoryReportAdmin = () => {
   const getReports = async () => {
     setLoading(true);
     try {
-      const response = await CheckInventoryService.getAll();
+      let params = timeRange;
+      if (timeRange === 'customMonth' && selectedDate) {
+        params = `${timeRange}?date=${selectedDate.format('YYYY-MM-DD')}`;
+      }
+      const response = await CheckInventoryService.getAll(params);
       const data = handleResponse(response);
       setReports(data);
     } catch (error) {
-      message.error('Không thể tải báo cáo kiểm kho');
+      console.log(error);
     }
     setLoading(false);
   };
@@ -75,7 +185,7 @@ const InventoryReportAdmin = () => {
       const data = handleResponse(response);
       setProducts(data);
     } catch (error) {
-      message.error('Không thể tải danh sách sản phẩm');
+      console.log(error);
     }
     setLoading(false);
   };
@@ -87,7 +197,6 @@ const InventoryReportAdmin = () => {
 
   const handleAccept = async (id) => {
     try { 
-      console.log(id);
       const response = await CheckInventoryService.accept(id);
       const data = handleResponse(response);
       console.log(data);
@@ -217,170 +326,187 @@ const InventoryReportAdmin = () => {
   };
 
   return (
-    <Card 
-      className="inventory-report-card" 
-      style={{ 
-        margin: '24px', 
-        borderRadius: '12px', 
-        boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
-      }}
-    >
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '32px',
-        padding: '0 8px'
-      }}>
-        <Title level={2} style={{ margin: 0, color: '#1890ff' }}>Báo cáo Kiểm kho</Title>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />}
-          onClick={showCreateModal}
-          size="large"
-          style={{ 
-            borderRadius: '8px',
-            height: '48px',
-            padding: '0 24px',
-            fontSize: '16px',
-            boxShadow: '0 2px 8px rgba(24,144,255,0.35)'
-          }}
-        >
-          Tạo phiếu kiểm kê
-        </Button>
-      </div>
-      
-      <InventoryTable 
-        reports={reports}
-        loading={loading}
-        handleView={handleView}
-        handleEdit={handleEdit}
-        handleDelete={handleDelete}
-        handleAccept={handleAccept}
-      />
-      <IventoryModal
-        editingReport={editingReport}
-        isModalVisible={isModalVisible}
-        handleModalOk={handleModalOk}
-        handleModalCancel={handleModalCancel}
-        filteredProducts={filteredProducts}
-        handleAddProduct={handleAddProduct}
-        loading={loading}
-        form={form}
-        searchText={searchText}
-        setSearchText={setSearchText}
-      />
-      <Modal
-        title={
-          <Space>
-            <FileSearchOutlined style={{color: '#1890ff'}} />
-            <span style={{color: '#1890ff', fontWeight: 'bold'}}>Chi tiết phiếu kiểm kê</span>
-          </Space>
-        }
-        open={isViewModalVisible}
-        onCancel={() => {
-          setIsViewModalVisible(false);
-          setSelectedReport(null);
-        }}
-        footer={[
-          <Button 
-            key="back" 
-            type="primary" 
-            onClick={() => {
+    <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
+      <Content>
+        <StyledCard>
+          <PageHeader>
+            <div className="title-section">
+              <DashboardOutlined />
+              <Title level={2} style={{ margin: 0, color: '#1890ff' }}>Báo cáo Kiểm kho</Title>
+            </div>
+            <Space size="large">
+              <StyledSelect
+                value={timeRange}
+                onChange={(value) => {
+                  setTimeRange(value);
+                  if (value !== 'customMonth') {
+                    setSelectedDate(null);
+                  }
+                }}
+                style={{marginBottom:'12px'}}
+              >
+                <Option value="today">Hôm nay</Option>
+                <Option value="yesterday">Hôm qua</Option>
+                <Option value="week">Tuần này</Option>
+                <Option value="month">Tháng này</Option>
+                <Option value="year">Năm nay</Option>
+                <Option value="customMonth">Tùy chọn tháng</Option>
+              </StyledSelect>
+              
+              {timeRange === 'customMonth' && (
+                <StyledDatePicker
+                  picker="month"
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  format="MM/YYYY"
+                />
+              )}
+              
+              <ActionButton 
+                type="primary"
+                className="create-button"
+                onClick={showCreateModal}
+                icon={<PlusOutlined />}
+              >
+                Tạo phiếu kiểm kê
+              </ActionButton>
+            </Space>
+          </PageHeader>
+          
+          <InventoryTable 
+            reports={reports}
+            loading={loading}
+            handleView={handleView}
+            handleEdit={handleEdit}
+            handleDelete={handleDelete}
+            handleAccept={handleAccept}
+          />
+
+          <IventoryModal
+            editingReport={editingReport}
+            isModalVisible={isModalVisible}
+            handleModalOk={handleModalOk}
+            handleModalCancel={handleModalCancel}
+            filteredProducts={filteredProducts}
+            handleAddProduct={handleAddProduct}
+            loading={loading}
+            form={form}
+            searchText={searchText}
+            setSearchText={setSearchText}
+          />
+
+          <ViewModal
+            title={
+              <Space>
+                <FileSearchOutlined style={{color: '#1890ff'}} />
+                <span style={{color: '#1890ff', fontWeight: 'bold'}}>Chi tiết phiếu kiểm kê</span>
+              </Space>
+            }
+            open={isViewModalVisible}
+            onCancel={() => {
               setIsViewModalVisible(false);
               setSelectedReport(null);
             }}
-            style={{borderRadius: '6px'}}
+            footer={[
+              <ActionButton 
+                key="back" 
+                type="primary" 
+                onClick={() => {
+                  setIsViewModalVisible(false);
+                  setSelectedReport(null);
+                }}
+              >
+                Đóng
+              </ActionButton>
+            ]}
+            width={1000}
+            style={{top: 80}}
           >
-            Đóng
-          </Button>
-        ]}
-        width={1000}
-        style={{top: 80}}
-      >
-        {selectedReport && (
-          <div style={{ padding: '24px' }}>
-            <Card style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'}}>
-              <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                <Row gutter={24}>
-                  <Col span={12}>
-                    <Text type="secondary">Ngày kiểm kê:</Text>
-                    <Text strong style={{ marginLeft: 8, color: '#1890ff' }}>
-                      {moment(selectedReport.check_date).format('DD/MM/YYYY')}
-                    </Text>
-                  </Col>
-                  <Col span={12}>
-                    <Text type="secondary">Ghi chú:</Text>
-                    <Text style={{ marginLeft: 8 }}>
-                      {selectedReport.note || 'Không có ghi chú'}
-                    </Text>
-                  </Col>
-                </Row>
-                <Table
-                  dataSource={selectedReport.check_inventory_details}
-                  columns={[
-                    {
-                      title: 'Tên mặt hàng',
-                      dataIndex: ['product', 'product_name'],
-                      key: 'product_name',
-                      render: name => <Text strong style={{color: '#1890ff'}}>{name}</Text>
-                    },
-                    {
-                      title: 'Số lượng trên hệ thống',
-                      dataIndex: 'quantity',
-                      key: 'quantity',
-                      render: qty => (
-                        <Tag color="blue" style={{padding: '4px 12px', borderRadius: '4px'}}>
-                          {qty}
-                        </Tag>
-                      )
-                    },
-                    {
-                      title: 'Số lượng thực tế',
-                      dataIndex: 'actual_quantity',
-                      key: 'actual_quantity',
-                      render: qty => (
-                        <Tag color="green" style={{padding: '4px 12px', borderRadius: '4px'}}>
-                          {qty}
-                        </Tag>
-                      )
-                    },
-                    {
-                      title: 'Chênh lệch',
-                      key: 'difference',
-                      render: (_, record) => {
-                        const diff = record.actual_quantity - record.quantity;
-                        return (
-                          <Tag 
-                            color={diff < 0 ? 'red' : diff > 0 ? 'green' : 'default'}
-                            style={{padding: '4px 12px', borderRadius: '4px'}}
-                          >
-                            {diff}
-                          </Tag>
-                        );
-                      }
-                    },
-                    {
-                      title: 'Ghi chú',
-                      dataIndex: 'note',
-                      key: 'note',
-                      render: note => <Text>{note || 'Không có ghi chú'}</Text>
-                    }
-                  ]}
-                  pagination={false}
-                  bordered
-                  style={{
-                    marginTop: '16px',
-                    borderRadius: '8px',
-                    overflow: 'hidden'
-                  }}
-                />
-              </Space>
-            </Card>
-          </div>
-        )}
-      </Modal>
-    </Card>
+            {selectedReport && (
+              <div style={{ padding: '24px' }}>
+                <Card className="detail-card">
+                  <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                    <Row gutter={24}>
+                      <Col span={12}>
+                        <Text type="secondary" style={{fontSize: '16px'}}>Ngày kiểm kê:</Text>
+                        <Text strong style={{ marginLeft: 8, color: '#1890ff', fontSize: '16px' }}>
+                          {moment(selectedReport.check_date).format('DD/MM/YYYY')}
+                        </Text>
+                      </Col>
+                      <Col span={12}>
+                        <Text type="secondary" style={{fontSize: '16px'}}>Ghi chú:</Text>
+                        <Text style={{ marginLeft: 8, fontSize: '16px' }}>
+                          {selectedReport.note || 'Không có ghi chú'}
+                        </Text>
+                      </Col>
+                    </Row>
+                    <Table
+                      dataSource={selectedReport.check_inventory_details}
+                      columns={[
+                        {
+                          title: 'Tên mặt hàng',
+                          dataIndex: ['product', 'product_name'],
+                          key: 'product_name',
+                          render: name => <Text strong style={{color: '#1890ff'}}>{name}</Text>
+                        },
+                        {
+                          title: 'Số lượng trên hệ thống',
+                          dataIndex: 'quantity',
+                          key: 'quantity',
+                          render: qty => (
+                            <Tag color="blue" style={{padding: '6px 14px', borderRadius: '6px', fontSize: '14px'}}>
+                              {qty}
+                            </Tag>
+                          )
+                        },
+                        {
+                          title: 'Số lượng thực tế',
+                          dataIndex: 'actual_quantity',
+                          key: 'actual_quantity',
+                          render: qty => (
+                            <Tag color="green" style={{padding: '6px 14px', borderRadius: '6px', fontSize: '14px'}}>
+                              {qty}
+                            </Tag>
+                          )
+                        },
+                        {
+                          title: 'Chênh lệch',
+                          key: 'difference',
+                          render: (_, record) => {
+                            const diff = record.actual_quantity - record.quantity;
+                            return (
+                              <Tag 
+                                color={diff < 0 ? 'red' : diff > 0 ? 'green' : 'default'}
+                                style={{padding: '6px 14px', borderRadius: '6px', fontSize: '14px'}}
+                              >
+                                {diff}
+                              </Tag>
+                            );
+                          }
+                        },
+                        {
+                          title: 'Ghi chú',
+                          dataIndex: 'note',
+                          key: 'note',
+                          render: note => <Text>{note || 'Không có ghi chú'}</Text>
+                        }
+                      ]}
+                      pagination={false}
+                      bordered
+                      style={{
+                        marginTop: '16px',
+                        borderRadius: '12px',
+                        overflow: 'hidden'
+                      }}
+                    />
+                  </Space>
+                </Card>
+              </div>
+            )}
+          </ViewModal>
+        </StyledCard>
+      </Content>
+    </Layout>
   );
 };
 

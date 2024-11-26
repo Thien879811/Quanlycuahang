@@ -155,7 +155,8 @@ const Order = () => {
         return order.status !== 3 && (
             filterStatus === 'all' ||
             (filterStatus === 'paid' && (order.status === 1 || order.status === 2)) ||
-            (filterStatus === 'pending' && order.status === -1)
+            (filterStatus === 'pending' && order.status === -1) ||
+            (filterStatus === 'online' && order.status === 5)
         );
     });
 
@@ -177,6 +178,7 @@ const Order = () => {
                             <MenuItem value="paid">Đã thanh toán</MenuItem>
                             <MenuItem value="cancelled">Đơn đã hủy</MenuItem>
                             <MenuItem value="pending">Đang yêu cầu hủy</MenuItem>
+                            <MenuItem value="online">Đơn hàng online</MenuItem>
                         </Select>
                     </FormControl>
                     <Button 

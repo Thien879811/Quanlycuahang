@@ -23,7 +23,7 @@ class GoodsReceipt extends Seeder
 
         $factories = Factory::all();
         
-        for ($i = 0; $i < 7000; $i++) {
+        for ($i = 0; $i < 700; $i++) {
             $randomDate = Carbon::createFromTimestamp(rand($startDate->timestamp, $endDate->timestamp));    
             GoodsReceiptModel::create([
                 'supplier_id' => $factories->random()->id,

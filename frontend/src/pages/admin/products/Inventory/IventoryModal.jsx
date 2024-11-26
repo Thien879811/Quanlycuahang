@@ -58,7 +58,7 @@ export default function IventoryModal(
               </Space>
             </Divider>
             
-            <div style={{ marginBottom: '24px' }}>
+            <div style={{ marginBottom: '24px', position: 'relative' }}>
               <Input
                 placeholder="Tìm mặt hàng / nguyên liệu"
                 prefix={<SearchOutlined style={{color: '#1890ff'}} />}
@@ -77,8 +77,8 @@ export default function IventoryModal(
                   left: 0,
                   right: 0,
                   background: 'white',
-                  border: '1px solid #f0f0f0',
-                  borderRadius: '8px',
+                  border: '1px solid #e8e8e8',
+                  borderRadius: '0 0 8px 8px',
                   zIndex: 1000,
                   maxHeight: '300px',
                   overflowY: 'auto',
@@ -90,14 +90,27 @@ export default function IventoryModal(
                       style={{
                         padding: '12px 16px',
                         cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                         borderBottom: '1px solid #f0f0f0',
-                        transition: 'all 0.3s'
+                        transition: 'all 0.2s ease'
                       }}
                       onClick={() => handleAddProduct(product)}
                       onMouseEnter={e => e.target.style.backgroundColor = '#f5f5f5'}
                       onMouseLeave={e => e.target.style.backgroundColor = 'white'}
                     >
-                      <Text strong>{product.product_name}</Text>
+                      <div>
+                        <Text strong style={{display: 'block', color: '#262626'}}>
+                          {product.product_name}
+                        </Text>
+                        <Text type="secondary" style={{fontSize: '12px'}}>
+                          Mã SP: #{product.id}
+                        </Text>
+                      </div>
+                      <Tag color="blue">
+                        SL: {product.quantity || 0}
+                      </Tag>
                     </div>
                   ))}
                 </div>

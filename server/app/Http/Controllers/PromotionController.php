@@ -211,6 +211,18 @@ class PromotionController extends Controller
         ]);
     }
 
+    public function getPromotionCode()
+    {
+        $promotions = Promotion::whereNotNull('code')
+                              ->where('end_date', '>=', now())
+                              ->where('quantity', '>', 0)
+                              ->get();
+        return response()->json([
+            'success' => true,
+            'data' => $promotions
+        ]);
+    }
+
 }
 
 

@@ -5,12 +5,16 @@ use App\Models\Staff;
 use App\Models\ChamCong;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Events\EmployeeLeave;
+use App\Models\LichLamViec;
 
 class ChamCongController extends Controller
 {
     public function createLeaveRequest(Request $request)
     {
         $leaveRequest = $request->all();
+
+
         $newLeaveRequest = ChamCong::create([
             'staff_id' => $leaveRequest['staff_id'],
             'date' => $leaveRequest['date'],
@@ -19,6 +23,15 @@ class ChamCongController extends Controller
             'reason' => $leaveRequest['reason'],
             'status' => $leaveRequest['status']
         ]);
+
+        LichLamViec::where('staff_id', $leaveRequest['staff_id'])
+            ->where('date', $leaveRequest['date'])
+            ->update(['status' => -1]);
+
+
+        broadcast(new EmployeeLeave($newLeaveRequest));
+
+
         return response()->json($newLeaveRequest);
     }
     /**
@@ -48,7 +61,7 @@ class ChamCongController extends Controller
         if ($checkIn) {
             return response()->json([
                 'success' => false,
-                'message' => 'Check in already exists'
+                'message' => 'Bạn đã chấm công'
             ], 400);
         }
 
@@ -90,7 +103,7 @@ class ChamCongController extends Controller
     public function getByStaffIdAndDay($staff_id, $day)
     {
         $chamCong = ChamCong::where('staff_id', $staff_id)
-                           ->where('date', $day)
+                           ->where('date', Carbon::parse($day)->format('Y-m-d'))
                            ->first();
                            
         return response()->json([

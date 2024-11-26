@@ -19,7 +19,7 @@ class CustomerController extends Controller
             'diem' => 'required',
         ]);
         $customer = Customer::find($id);
-        $customer->diem = $customer->diem + $validated['diem'];
+        $customer->diem = $customer->diem + $validated['diem'] / 1000;
         $customer->save();
         return response()->json($customer);
     }

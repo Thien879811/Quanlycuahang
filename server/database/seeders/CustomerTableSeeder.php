@@ -19,20 +19,20 @@ class CustomerTableSeeder extends Seeder
         DB::table('customers')->insert([
             'name' => 'Nguyễn Văn A',
             'phone' => '0987654321',
-            'diem' => 1000,
-            'password' => Hash::make('password'),
+            'diem' => 0,
+            'password' => Hash::make('12345678'),
         ]);
         DB::table('customers')->insert([
             'name' => 'Nguyễn Văn B',
             'phone' => '0987654322',
-            'diem' => 2000,
-            'password' => Hash::make('password'),
+            'diem' => 0,
+            'password' => Hash::make('12345678'),
         ]);
         DB::table('customers')->insert([
             'name' => 'Nguyễn Văn C',
             'phone' => '0987654323',
-            'diem' => 3000,
-            'password' => Hash::make('password'),
+            'diem' => 0,
+            'password' => Hash::make('12345678'),
         ]);
     }
 }

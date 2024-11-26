@@ -20,6 +20,7 @@ return new class extends Migration
             $table->time('time_start')->nullable();
             $table->time('time_end')->nullable();
             $table->string('reason')->nullable();
+            $table->string('status')->nullable();
             $table->timestamps();
         });
     }

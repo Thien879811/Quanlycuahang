@@ -22,10 +22,12 @@ export default function Users() {
         try {
             const response = await AuthService.getAllUser();
             const data = handleResponse(response);
-            setUsers(data);
+            // Filter out admin users
+            const filteredUsers = data.filter(user => user.role !== 'admin');
+            setUsers(filteredUsers);
         } catch (error) {
             console.error('Error fetching users:', error);
-            message.error('Failed to fetch users');
+            message.error('Không thể tải danh sách người dùng');
         } finally {
             setLoading(false);
         }
@@ -33,7 +35,7 @@ export default function Users() {
 
     const columns = [
         {
-            title: 'Name',
+            title: 'Tên',
             dataIndex: 'name',
             key: 'name',
         },
@@ -43,61 +45,73 @@ export default function Users() {
             key: 'email',
         },
         {
-            title: 'Role',
+            title: 'Vai trò',
             dataIndex: 'role',
             key: 'role',
         },
         {
-            title: 'Age',
+            title: 'Tuổi',
             dataIndex: 'age',
             key: 'age',
         },
         {
-            title: 'Phone',
+            title: 'Số điện thoại',
             dataIndex: 'phone',
             key: 'phone',
         },
         {
-            title: 'Gender',
+            title: 'Giới tính',
             dataIndex: 'gioitinh',
             key: 'gioitinh',
         },
         {
-            title: 'Position',
+            title: 'Chức vụ',
             dataIndex: 'position',
             key: 'position',
         },
         {
-            title: 'Actions',
+            title: 'Thao tác',
             key: 'actions',
             render: (_, record) => (
-                <Space size="middle">
-                    <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>Edit</Button>
-                    <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.id)}>Delete</Button>
-                </Space>
+                record.role !== 'admin' && (
+                    <Space size="middle">
+                        <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>Sửa</Button>
+                        <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.id)}>Xóa</Button>
+                    </Space>
+                )
             ),
         },
     ];
 
     const handleEdit = (user) => {
+        if (user.role === 'admin') {
+            message.error('Không thể chỉnh sửa tài khoản admin');
+            return;
+        }
         setEditingUser(user);
         form.setFieldsValue(user);
         setModalVisible(true);
     };
 
     const handleDelete = async (id) => {
+        const user = users.find(u => u.id === id);
+        if (user.role === 'admin') {
+            message.error('Không thể xóa tài khoản admin');
+            return;
+        }
+
         try {
             const response = await AuthService.deleteUser(id);
             const data = handleResponse(response);
             if (data) {
-                message.success('User deleted successfully');
+                message.success('Xóa người dùng thành công');
                 fetchUsers();
             } else {
                 message.error(data.error);
             }
         } catch (error) {
             console.error('Error deleting user:', error);
-            message.error('Failed to delete user');
+            message.error('Không thể xóa người dùng');
         }
     };
 
@@ -105,20 +119,24 @@ export default function Users() {
         form.validateFields().then(async (values) => {
             try {
                 if (editingUser) {
+                    if (editingUser.role === 'admin') {
+                        message.error('Không thể chỉnh sửa tài khoản admin');
+                        return;
+                    }
                     const response = await AuthService.updateUser(editingUser.id, values);
                     const data = handleResponse(response);
                     if (data) {
-                        message.success('User updated successfully');
+                        message.success('Cập nhật người dùng thành công');
                     } else {
-                        message.error('Failed to update user');
+                        message.error('Không thể cập nhật người dùng');
                     }
                 } else {
                     const response = await AuthService.createUser(values);
                     const data = handleResponse(response);
                     if (data.user) {
-                        message.success('User created successfully');
+                        message.success('Tạo người dùng thành công');
                     } else {
-                        message.error(data.error || 'Failed to create user');
+                        message.error(data.error || 'Không thể tạo người dùng');
                     }
                 }
                 setModalVisible(false);
@@ -127,7 +145,7 @@ export default function Users() {
                 setEditingUser(null);
             } catch (error) {
                 console.error('Error saving user:', error);
-                message.error('Failed to save user');
+                message.error('Không thể lưu thông tin người dùng');
             }
         });
     };
@@ -153,12 +171,12 @@ export default function Users() {
                     pagination={{ pageSize: 10 }}
                 />
                 <Modal
-                    title={editingUser ? "Edit User" : "Add New User"}
+                    title={editingUser ? "Sửa người dùng" : "Thêm người dùng mới"}
                     visible={modalVisible}
                     onOk={handleModalOk}
                     onCancel={handleModalCancel}
-                    okText={editingUser ? "Update" : "Create"}
-                    cancelText="Cancel"
+                    okText={editingUser ? "Cập nhật" : "Tạo mới"}
+                    cancelText="Hủy"
                     width={800}
                 >
                     <Form form={form} layout="vertical">
@@ -166,8 +184,8 @@ export default function Users() {
                             <Col span={12}>
                                 <Form.Item
                                     name="name"
-                                    label="Name"
-                                    rules={[{ required: true, message: 'Please input the name!' }]}
+                                    label="Tên"
+                                    rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}
                                 >
                                     <Input />
                                 </Form.Item>
@@ -177,8 +195,8 @@ export default function Users() {
                                     name="email"
                                     label="Email"
                                     rules={[
-                                        { required: true, message: 'Please input the email!' },
-                                        { type: 'email', message: 'Please enter a valid email!' }
+                                        { required: true, message: 'Vui lòng nhập email!' },
+                                        { type: 'email', message: 'Vui lòng nhập email hợp lệ!' }
                                     ]}
                                 >
                                     <Input />
@@ -189,8 +207,8 @@ export default function Users() {
                             <Col span={12}>
                                 <Form.Item
                                     name="password"
-                                    label="Password"
-                                    rules={[{ required: !editingUser, message: 'Please input the password!' }]}
+                                    label="Mật khẩu"
+                                    rules={[{ required: !editingUser, message: 'Vui lòng nhập mật khẩu!' }]}
                                 >
                                     <Input.Password />
                                 </Form.Item>
@@ -198,12 +216,11 @@ export default function Users() {
                             <Col span={12}>
                                 <Form.Item
                                     name="role"
-                                    label="Role"
-                                    rules={[{ required: true, message: 'Please select the role!' }]}
+                                    label="Vai trò"
+                                    rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
                                 >
                                     <Select>
-                                        <Select.Option value="employee">Employee</Select.Option>
-                                        <Select.Option value="admin">Admin</Select.Option>
+                                        <Select.Option value="employee">Nhân viên</Select.Option>
                                     </Select>
                                 </Form.Item>
                             </Col>
@@ -212,8 +229,8 @@ export default function Users() {
                             <Col span={8}>
                                 <Form.Item
                                     name="age"
-                                    label="Age"
-                                    rules={[{ required: true, message: 'Please input the age!' }]}
+                                    label="Tuổi"
+                                    rules={[{ required: true, message: 'Vui lòng nhập tuổi!' }]}
                                 >
                                     <Input type="number" />
                                 </Form.Item>
@@ -221,8 +238,8 @@ export default function Users() {
                             <Col span={8}>
                                 <Form.Item
                                     name="phone"
-                                    label="Phone"
-                                    rules={[{ required: true, message: 'Please input the phone number!' }]}
+                                    label="Số điện thoại"
+                                    rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}
                                 >
                                     <Input />
                                 </Form.Item>
@@ -230,38 +247,37 @@ export default function Users() {
                             <Col span={8}>
                                 <Form.Item
                                     name="gioitinh"
-                                    label="Gender"
-                                    rules={[{ required: true, message: 'Please select the gender!' }]}
+                                    label="Giới tính"
+                                    rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
                                 >
                                     <Select>
-                                        <Select.Option value="male">Male</Select.Option>
-                                        <Select.Option value="female">Female</Select.Option>
-                                        <Select.Option value="other">Other</Select.Option>
+                                        <Select.Option value="male">Nam</Select.Option>
+                                        <Select.Option value="female">Nữ</Select.Option>
+                                        <Select.Option value="other">Khác</Select.Option>
                                     </Select>
                                 </Form.Item>
                             </Col>
                         </Row>
                         <Form.Item
                             name="address"
-                            label="Address"
-                            rules={[{ required: true, message: 'Please input the address!' }]}
+                            label="Địa chỉ"
+                            rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}
                         >
                             <Input.TextArea rows={3} />
                         </Form.Item>
                         <Form.Item
                             name="position"
-                            label="Position"
-                            rules={[{ required: true, message: 'Please select the position!' }]}
+                            label="Chức vụ"
+                            rules={[{ required: true, message: 'Vui lòng chọn chức vụ!' }]}
                         >
                             <Select>
-                                <Select.Option value="manager">Manager</Select.Option>
-                                <Select.Option value="staff">Staff</Select.Option>
+                                <Select.Option value="nhanvien">Nhân viên</Select.Option>
                             </Select>
                         </Form.Item>
                         <Form.Item
                             name="salary"
-                            label="Salary"
-                            rules={[{ required: true, message: 'Please input the salary!' }]}
+                            label="Lương"
+                            rules={[{ required: true, message: 'Vui lòng nhập lương!' }]}
                         >
                             <Input type="number" />
                         </Form.Item>

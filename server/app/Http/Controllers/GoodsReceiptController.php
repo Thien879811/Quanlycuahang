@@ -125,6 +125,7 @@ class GoodsReceiptController extends Controller
             'receipt_id' => 'required',
             'products' => 'required',
             'reason' => 'required',
+            'return_date' => 'required',
         ]);
 
         $goodsReceipt = GoodsReceipt::find($validated['receipt_id']);
@@ -136,6 +137,7 @@ class GoodsReceiptController extends Controller
                 $detail->return_quantity = $product['return_quantity'];
                 $detail->status = '4';
                 $detail->note = $validated['reason'];
+                $detail->return_date = Carbon::createFromFormat('d/m/Y H:i:s', $validated['return_date'])->format('Y-m-d H:i:s');
                 $detail->save();
 
                 if ($detail->is_added) {
@@ -182,7 +184,7 @@ class GoodsReceiptController extends Controller
                           ->whereMonth('created_at', Carbon::now()->month);
                     break;
                 case 'custom':
-                    $date = $request->input('date');
+                    $date = Carbon::parse($request->input('date'));
                     if (!$date) {
                         return response()->json(['error' => 'Date is required for custom type'], 400);
                     }
@@ -190,13 +192,12 @@ class GoodsReceiptController extends Controller
                     break;
                     
                 case 'custom_month':
-                    $month = $request->input('date.month');
-                    $year = $request->input('date.year');
-                    if (!$month || !$year) {
-                        return response()->json(['error' => 'Month and year are required for custom month type'], 400);
+                    $date = Carbon::parse($request->input('date'));
+                    if (!$date) {
+                        return response()->json(['error' => 'Date is required for custom month type'], 400);
                     }
-                    $query->whereYear('created_at', $year)
-                          ->whereMonth('created_at', $month);
+                    $query->whereYear('created_at', $date->year)
+                          ->whereMonth('created_at', $date->month);
                     break;
                 default:
                     return response()->json(['error' => 'Invalid time range'], 400);
@@ -224,27 +225,47 @@ class GoodsReceiptController extends Controller
 
             switch($type) {
                 case 'today':
-                    $query->whereDate('updated_at', Carbon::today());
+                    $query->whereHas('details', function($q) {
+                        $q->whereDate('return_date', Carbon::today());
+                    });
                     break;
                 case 'yesterday': 
-                    $query->whereDate('updated_at', Carbon::yesterday());
+                    $query->whereHas('details', function($q) {
+                        $q->whereDate('return_date', Carbon::yesterday());
+                    });
                     break;
                 case 'week':
-                    $query->whereBetween('updated_at', [
-                        Carbon::now()->startOfWeek(),
-                        Carbon::now()->endOfWeek()
-                    ]);
+                    $query->whereHas('details', function($q) {
+                        $q->whereBetween('return_date', [
+                            Carbon::now()->startOfWeek(),
+                            Carbon::now()->endOfWeek()
+                        ]);
+                    });
                     break;
                 case 'month':
-                    $query->whereYear('updated_at', Carbon::now()->year)
-                          ->whereMonth('updated_at', Carbon::now()->month);
+                    $query->whereHas('details', function($q) {
+                        $q->whereYear('return_date', Carbon::now()->year)
+                          ->whereMonth('return_date', Carbon::now()->month);
+                    });
                     break;
                 case 'custom':
-                    $date = $request->get('date');
+                    $date = Carbon::parse($request->input('date'));
                     if (!$date) {
                         return response()->json(['error' => 'Date is required for custom type'], 400);
                     }
-                    $query->whereDate('updated_at', Carbon::parse($date));
+                    $query->whereHas('details', function($q) use ($date) {
+                        $q->whereDate('return_date', $date);
+                    });
+                    break;
+                case 'custom_month':
+                    $date = Carbon::parse($request->input('date'));
+                    if (!$date) {
+                        return response()->json(['error' => 'Date is required for custom month type'], 400);
+                    }
+                    $query->whereHas('details', function($q) use ($date) {
+                        $q->whereYear('return_date', $date->year)
+                          ->whereMonth('return_date', $date->month);
+                    });
                     break;
                 default:
                     return response()->json(['error' => 'Invalid time range'], 400);

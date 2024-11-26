@@ -16,5 +16,6 @@ class LichLamViec extends Model
         'time_start',
         'time_end',
         'reason',
+        'status',
     ];
 }

@@ -7,13 +7,51 @@ use App\Models\CheckInventory;
 use App\Models\CheckInventoryDetail;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Product;
-
+use Carbon\Carbon;
 class CheckInventoryController extends Controller
 {
-    public function getAllCheckInventories()
+    public function getAllCheckInventories($timeRange = null)
     {
-        $checkInventories = CheckInventory::with(['user', 'checkInventoryDetails.product'])->get();
-        return response()->json($checkInventories);
+        try {
+            $query = CheckInventory::with(['user', 'checkInventoryDetails.product']);
+
+            switch ($timeRange) {
+                case 'today':
+                    $query->whereDate('check_date', Carbon::today());
+                    break;
+                case 'yesterday':
+                    $query->whereDate('check_date', Carbon::yesterday());
+                    break;
+                case 'week':
+                    $query->where('check_date', '>=', Carbon::now()->startOfWeek());
+                    break;
+                case 'month':
+                    $query->where('check_date', '>=', Carbon::now()->startOfMonth());
+                    break;
+                case 'year':
+                    $query->where('check_date', '>=', Carbon::now()->startOfYear());
+                    break;
+                case 'customMonth':
+                    if (!request()->has('date')) {
+                        return response()->json(['error' => 'Date parameter is required for custom month'], 400);
+                    }
+                    $date = Carbon::parse(request()->date);
+                    $query->whereYear('check_date', $date->year)
+                          ->whereMonth('check_date', $date->month);
+                    break;
+                default:
+                    if ($timeRange && Carbon::hasFormat($timeRange, 'Y-m-d')) {
+                        $query->whereDate('check_date', Carbon::parse($timeRange));
+                    }
+            }
+
+            $checkInventories = $query->get();
+            return response()->json($checkInventories);
+
+        } catch (\Exception $e) {
+            \Log::error('Database error in getAllCheckInventories: ' . $e->getMessage());
+            return response()->json([]);
+        }
     }
 
     public function createCheckInventory(Request $request)

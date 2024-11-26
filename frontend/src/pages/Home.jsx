@@ -464,7 +464,7 @@ const Home = () => {
 						</Typography>
 						{customer && (
 							<Typography variant="h6" sx={{ mb: 2, color: '#4CAF50', fontWeight: 600 }}>
-								Điểm tích lũy: {customer.diem} + {formatNumber(getTotalAmount)}
+								Điểm tích lũy: {customer.diem} + {formatNumber(getTotalAmount)/1000}
 							</Typography>
 						)}
 						<Box sx={{ borderTop: '2px solid #e0e0e0', mt: 2, pt: 2 }}>

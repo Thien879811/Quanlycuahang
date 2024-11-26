@@ -12,6 +12,7 @@ use App\Models\Factory;
 use App\Models\Catalory;
 use App\Models\DetailOrder;
 use App\Models\GoodsReceiptDetail;
+use App\Models\DestroyProduct;
 
 
 class DashBoardController extends Controller
@@ -48,6 +49,14 @@ class DashBoardController extends Controller
                     }
                     $date = Carbon::parse($request->date);
                     $query->whereDate('created_at', $date);
+                    break;
+                case 'customMonth':
+                    if (!$request->has('date')) {
+                        return response()->json(['error' => 'Date parameter is required for custom month'], 400);
+                    }
+                    $date = Carbon::parse($request->date);
+                    $query->whereYear('created_at', $date->year)
+                          ->whereMonth('created_at', $date->month);
                     break;
                 default:
                     return response()->json(['error' => 'Invalid time range'], 400);
@@ -269,6 +278,16 @@ class DashBoardController extends Controller
                         ]);
                     });
                     break;
+                case 'customMonth':
+                    if (!request()->has('date')) {
+                        return response()->json(['error' => 'Date parameter is required for custom month'], 400);
+                    }
+                    $date = Carbon::parse(request()->date);
+                    $query->whereHas('order', function($q) use ($date) {
+                        $q->whereYear('created_at', $date->year)
+                          ->whereMonth('created_at', $date->month);
+                    });
+                    break;
                 default:
                     return response()->json(['error' => 'Invalid time range'], 400);
             }
@@ -316,32 +335,51 @@ class DashBoardController extends Controller
         try {
             $query = GoodsReceiptDetail::query();
             $goodsReceiptsQuery = GoodsReceipt::query();
+            $destroyQuery = DestroyProduct::query();
 
             switch ($type) {
                 case 'today':
                     $query->whereDate('created_at', Carbon::today());
                     $goodsReceiptsQuery->whereDate('created_at', Carbon::today());
+                    $destroyQuery->whereDate('created_at', Carbon::today());
                     break;
                 case 'yesterday':
                     $query->whereDate('created_at', Carbon::yesterday());
                     $goodsReceiptsQuery->whereDate('created_at', Carbon::yesterday());
+                    $destroyQuery->whereDate('created_at', Carbon::yesterday());
                     break;
                 case 'week':
                     $query->where('created_at', '>=', Carbon::now()->startOfWeek());
                     $goodsReceiptsQuery->where('created_at', '>=', Carbon::now()->startOfWeek());
+                    $destroyQuery->where('created_at', '>=', Carbon::now()->startOfWeek());
                     break;
                 case 'month':
                     $query->where('created_at', '>=', Carbon::now()->startOfMonth());
                     $goodsReceiptsQuery->where('created_at', '>=', Carbon::now()->startOfMonth());
+                    $destroyQuery->where('created_at', '>=', Carbon::now()->startOfMonth());
                     break;
                 case 'year':
                     $query->where('created_at', '>=', Carbon::now()->startOfYear());
                     $goodsReceiptsQuery->where('created_at', '>=', Carbon::now()->startOfYear());
+                    $destroyQuery->where('created_at', '>=', Carbon::now()->startOfYear());
+                    break;
+                case 'customMonth':
+                    if (!request()->has('date')) {
+                        return response()->json(['error' => 'Date parameter is required for custom month'], 400);
+                    }
+                    $date = Carbon::parse(request()->date);
+                    $query->whereYear('created_at', $date->year)
+                          ->whereMonth('created_at', $date->month);
+                    $goodsReceiptsQuery->whereYear('created_at', $date->year)
+                                     ->whereMonth('created_at', $date->month);
+                    $destroyQuery->whereYear('created_at', $date->year)
+                                ->whereMonth('created_at', $date->month);
                     break;
                 default:
                     if (Carbon::hasFormat($type, 'Y-m-d')) {
                         $query->whereDate('created_at', Carbon::parse($type));
                         $goodsReceiptsQuery->whereDate('created_at', Carbon::parse($type));
+                        $destroyQuery->whereDate('created_at', Carbon::parse($type));
                     } else {
                         return response()->json(['error' => 'Invalid date format'], 400);
                     }
@@ -354,10 +392,13 @@ class DashBoardController extends Controller
             $totalRefundAmount = $query->whereNotNull('return_quantity')
                 ->sum(\DB::raw('return_quantity * price'));
 
+            // Tính tổng số lượng sản phẩm đã hủy
+            $totalDestroyedProducts = $destroyQuery->sum('quantity');
+
             $purchaseData = [
                 'purchaseOrders' => $goodsReceiptsQuery->count(),
                 'purchaseCost' => $totalPurchaseCost - $totalRefundAmount,
-                'canceledOrders' => $goodsReceiptsQuery->where('status', 4)->count(),
+                'canceledOrders' => $totalDestroyedProducts,
                 'refundedOrders' => $query->whereNotNull('return_quantity')->sum('return_quantity')
             ];
 

@@ -15,8 +15,10 @@ import {
     InputLabel,
     Select,
     MenuItem,
-    TextField
+    TextField,
+    CircularProgress
 } from '@mui/material';
+import { DatePicker } from 'antd';
 import ReceiptService from '../../../services/receipt.service';
 import { handleResponse } from '../../../functions';
 import { useNavigate } from 'react-router-dom';
@@ -52,8 +54,11 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }));
 
 const StyledInput = styled('input')(({ theme }) => ({
-    padding: '12px',
+    padding: '12px 16px',
+    fontSize: '14px',
+    marginTop: '13px',
     border: '1px solid #e0e0e0',
+    height: '56px',
     borderRadius: '8px',
     width: '100%',
     '&:focus': {
@@ -63,10 +68,13 @@ const StyledInput = styled('input')(({ theme }) => ({
     }
 }));
 
+
+
 const ReceiptCheck = () => {
     const navigate = useNavigate();
     const [timeRange, setTimeRange] = useState('today');
     const [customDate, setCustomDate] = useState('');
+    const [customMonth, setCustomMonth] = useState('');
     const [error, setError] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(50);
@@ -85,11 +93,13 @@ const ReceiptCheck = () => {
     const [returnQuantities, setReturnQuantities] = useState({});
     const [returnReason, setReturnReason] = useState('');
     const [editedReceipt, setEditedReceipt] = useState(null);
-    const [checkStatus, setCheckStatus] = useState('unchecked'); // Add this line
+    const [checkStatus, setCheckStatus] = useState('unchecked');
+    const [loading, setLoading] = useState(false);
 
     const fetchAllReceipts = useCallback(async () => {
+        setLoading(true);
         try {
-            const response = await ReceiptService.getReceipt(timeRange, customDate);
+            const response = await ReceiptService.getReceipt(timeRange, timeRange === 'custom_month' ? customMonth : customDate);
             const data = handleResponse(response); 
             if (data.success) {
                 const processedReceipts = data.goods_receipts.map(receipt => ({
@@ -124,8 +134,10 @@ const ReceiptCheck = () => {
         } catch (error) {
             console.error('Error fetching receipts:', error);
             setError('Đã xảy ra lỗi khi tải danh sách phiếu nhập hàng');
+        } finally {
+            setLoading(false);
         }
-    }, [timeRange, customDate, checkStatus]); // Add checkStatus to dependencies
+    }, [timeRange, customDate, customMonth, checkStatus]);
 
     useEffect(() => {
         fetchAllReceipts();
@@ -144,6 +156,11 @@ const ReceiptCheck = () => {
 
     const handleCustomDateChange = (event) => {
         setCustomDate(event.target.value);
+        setPage(0);
+    };
+
+    const handleCustomMonthChange = (event) => {
+        setCustomMonth(event.target.value);
         setPage(0);
     };
 
@@ -168,7 +185,7 @@ const ReceiptCheck = () => {
         });
         setFilteredReceipts(filtered);
         setPage(0);
-    }, [searchTerm, receipts, checkStatus]); // Add checkStatus to dependencies
+    }, [searchTerm, receipts, checkStatus]);
 
     useEffect(() => {
         const debounceTimer = setTimeout(() => {
@@ -371,6 +388,7 @@ const ReceiptCheck = () => {
         try {
             const returnData = {
                 receipt_id: selectedReceipt.id,
+                return_date: dayjs().format('DD/MM/YYYY HH:mm:ss'),
                 products: selectedProducts.map(detailId => ({
                     detail_id: detailId,
                     product_id: selectedReceipt.details.find(d => d.id === detailId).product.id,
@@ -404,9 +422,16 @@ const ReceiptCheck = () => {
                 <CardContent>
                     <Grid container spacing={3} alignItems="center" mb={2}>
                         <Grid item xs={12} md={4}>
-                            <Typography variant="h4" fontWeight="bold" color="primary">
-                                Kiểm Tra Phiếu Nhập Kho
-                            </Typography>
+                            <StyledButton 
+                                startIcon={<ArrowBackIcon />}
+                                onClick={handleGoBack}
+                                size="large"
+                                sx={{ borderRadius: 'none' , border: 'none', boxShadow: 'none'}}
+                            >
+                                <Typography variant="h4" fontWeight="bold" color="primary">
+                                    Kiểm Tra Phiếu Nhập Kho
+                                </Typography>
+                            </StyledButton>
                         </Grid>
                         <Grid item xs={12} md={2}>
                             <FormControl fullWidth variant="outlined">
@@ -436,7 +461,8 @@ const ReceiptCheck = () => {
                                     <MenuItem value="yesterday">Hôm qua</MenuItem>
                                     <MenuItem value="week">Tuần này</MenuItem>
                                     <MenuItem value="month">Tháng này</MenuItem>
-                                    <MenuItem value="custom">Tùy chọn</MenuItem>
+                                    <MenuItem value="custom">Tùy chọn ngày</MenuItem>
+                                    <MenuItem value="custom_month">Tùy chọn tháng</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -449,23 +475,18 @@ const ReceiptCheck = () => {
                                 />
                             </Grid>
                         )}
-                        <Grid item xs={12} md={timeRange === 'custom' ? 2 : 4} container justifyContent="flex-end">
-                            <StyledButton 
-                                startIcon={<ArrowBackIcon />}
-                                onClick={handleGoBack}
-                                variant="contained"
-                                size="large"
-                            >
-                                Quay lại
-                            </StyledButton>
+                        {timeRange === 'custom_month' && (
+                            <Grid item xs={12} md={2}>
+                                <StyledInput
+                                    type="month"
+                                    value={customMonth}
+                                    onChange={handleCustomMonthChange}
+                                />
+                            </Grid>
+                        )}
+                        <Grid item xs={12} md={timeRange === 'custom' || timeRange === 'custom_month' ? 2 : 4} container justifyContent="flex-end">
                         </Grid>
                     </Grid>
-
-                    {error && (
-                        <Typography color="error" sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: '8px' }}>
-                            {error}
-                        </Typography>
-                    )}
                     <ReceiptTableContainer
                         displayedReceipts={displayedReceipts}
                         handleOpenCheckDialog={handleOpenCheckDialog}

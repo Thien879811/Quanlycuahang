@@ -24,7 +24,7 @@ class SatffController extends Controller
     }
     // Phương thức này lấy thông tin của một nhân viên dựa trên user_id
     public function getInfoEmployee($user_id){
-        $employee = Staff::find($user_id);
+        $employee = Staff::where('user_id', $user_id)->first();
         return response()->json($employee);
     }
 

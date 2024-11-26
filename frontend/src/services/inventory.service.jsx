@@ -3,8 +3,8 @@ class CheckInventoryService {
     constructor(baseUrl = "/api/check-inventory") {
         this.api = createApiClient(baseUrl);
     }
-    async getAll() {
-        return (await this.api.get("/")).data;
+    async getAll(timeRange = null) {
+        return (await this.api.get(`/${timeRange}`)).data;
     }
     async create(data) {
         return (await this.api.post("/", data)).data;
