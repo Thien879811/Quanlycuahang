@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Catalory;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -216,28 +215,9 @@ class ProductController extends Controller
             'expiration_date' => 'nullable|date'
         ]);
         
-        if ($request->hasFile('image')) {
-            $imageResult = $this->handleImageUpload($request);
-            if ($imageResult['success']) {
-                $data['image'] = $imageResult['imageUrl'];
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => $imageResult['message']
-                ]);
-            }
-        }
 
         try {
             DB::beginTransaction();
-
-            $product = Product::findOrFail($data['product_id']);
-            if ($product->quantity < $data['quantity']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Số lượng hủy vượt quá số lượng tồn kho'
-                ], 400);
-            }
 
             $destroyProduct = DestroyProduct::create([
                 'product_id' => $data['product_id'],
@@ -294,14 +274,6 @@ class ProductController extends Controller
                 // Get the product
                 $product = Product::findOrFail($destroyProduct->product_id);
                 
-                // Check if there's enough quantity
-                if ($product->quantity < $destroyProduct->quantity) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Số lượng sản phẩm không đủ để hủy'
-                    ], 400);
-                }
-
                 // Update product quantity
                 $product->quantity -= $destroyProduct->quantity;
                 $product->save();
@@ -344,7 +316,6 @@ class ProductController extends Controller
     public function get(){
         $product = Product::all();
         return response()->json($product);
-    }
-
-    
+    } 
 }
+ 

@@ -29,6 +29,18 @@ use Illuminate\Support\Facades\Route;
 |
 */ 
 
+Route::post('/goods-receipt', [GoodsReceiptController::class, 'createGoodsReceipt'] );
+Route::get('/goods-receipt', [GoodsReceiptController::class, 'getAll']);
+Route::get('/goods-receipt/receipt/{id}', [GoodsReceiptController::class, 'getReceiptById']);
+Route::put('/goods-receipt/{id}', [GoodsReceiptController::class, 'updateReceipt']);
+Route::post('/goods-receipt/return', [GoodsReceiptController::class, 'returnReceipt']);
+Route::get('/goods-receipt/{type}', [GoodsReceiptController::class, 'getReceipt']);
+Route::get('/goods-receipt/{type}/return', [GoodsReceiptController::class, 'getReceiptReturn']);
+Route::delete('/goods-receipt/{id}', [GoodsReceiptController::class, 'deleteReceipt']);
+Route::put('/goods-receipt/update/{id}', [GoodsReceiptController::class, 'update']);
+Route::post('/goods-receipt/create', [GoodsReceiptController::class, 'createReceipt']); 
+Route::put('/goods-receipt/chinhsua/{id}', [GoodsReceiptController::class, 'chinhsua']); 
+
 Route::get('/product',[ProductController::class,'getAll']);
 Route::post('/product',[ProductController::class,'create']);
 Route::post('/product/{id}',[ProductController::class,'update']);
@@ -82,16 +94,7 @@ Route::post('/check-inventory', [CheckInventoryController::class, 'createCheckIn
 Route::delete('/check-inventory/{id}', [CheckInventoryController::class, 'deleteCheckInventory']);
 Route::put('/check-inventory/{id}', [CheckInventoryController::class, 'updateCheckInventory']);
 Route::put('/check-inventory/accept/{id}', [CheckInventoryController::class, 'acceptCheckInventory']);
-//goods receipt api
-Route::post('/goods-receipt', [GoodsReceiptController::class, 'createGoodsReceipt'] );
-Route::get('/goods-receipt', [GoodsReceiptController::class, 'getAll']);
-Route::put('/goods-receipt/{id}', [GoodsReceiptController::class, 'updateReceipt']);
-Route::post('/goods-receipt/return', [GoodsReceiptController::class, 'returnReceipt']);
-Route::get('/goods-receipt/{type}', [GoodsReceiptController::class, 'getReceipt']);
-Route::get('/goods-receipt/{type}/return', [GoodsReceiptController::class, 'getReceiptReturn']);
-Route::delete('/goods-receipt/{id}', [GoodsReceiptController::class, 'deleteReceipt']);
-Route::put('/goods-receipt/update/{id}', [GoodsReceiptController::class, 'update']);
-Route::post('/goods-receipt/create', [GoodsReceiptController::class, 'createReceipt']); 
+
 //catalog api
 Route::get('/catalory',[CataloryController::class,'getCatalory']);
 Route::post('/catalory',[CataloryController::class,'create']);

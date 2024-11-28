@@ -6,7 +6,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import { useNavigate } from 'react-router-dom';
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     fontWeight: 'bold',
     backgroundColor: theme.palette.primary.main,
@@ -23,7 +23,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
 }));
 
 const ReceiptTableContainer = ({ displayedReceipts, handleOpenCheckDialog, handleOpenEditDialog, handleOpenReturnDialog, setSelectedReceipt, setOpenDeleteDialog, page, handleChangePage, rowsPerPage, filteredReceipts }) => {
-   
+    const navigate = useNavigate();
     return (
         <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
             <Table>
@@ -77,25 +77,29 @@ const ReceiptTableContainer = ({ displayedReceipts, handleOpenCheckDialog, handl
                                             {receipt.status === 'Đã kiểm tra' ? 'Xem kết quả' : 'Kiểm tra hàng'}
                                         </StyledButton>
                                     </Grid>
-                                    <Grid item>
-                                        <IconButton 
-                                            color="primary" 
-                                            onClick={() => handleOpenEditDialog(receipt)}
-                                        >
-                                            <EditIcon />
-                                        </IconButton>
-                                    </Grid>
-                                    <Grid item>
-                                        <IconButton 
-                                            color="error" 
-                                            onClick={() => {
-                                                setSelectedReceipt(receipt);
-                                                setOpenDeleteDialog(true);
-                                            }}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </Grid>
+                                    {receipt.status !== 'Đã kiểm tra' && (
+                                        <>
+                                            <Grid item>
+                                                <IconButton 
+                                                    color="primary" 
+                                                    onClick={() => navigate(`/admin/import-product/${receipt.id}`)}
+                                                >
+                                                    <EditIcon />
+                                                </IconButton>
+                                            </Grid>
+                                            <Grid item>
+                                                <IconButton 
+                                                    color="error" 
+                                                    onClick={() => {
+                                                        setSelectedReceipt(receipt);
+                                                        setOpenDeleteDialog(true);
+                                                    }}
+                                                >
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </Grid>
+                                        </>
+                                    )}
                                     <Grid item>
                                         <StyledButton
                                             variant="outlined"

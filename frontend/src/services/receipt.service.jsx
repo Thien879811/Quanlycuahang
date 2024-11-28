@@ -9,11 +9,11 @@ class ReceiptService {
     async create(data) {
         return (await this.api.post("/", data)).data;
     }
-    async deleteAll() {
+    async deleteAll() {       
         return (await this.api.delete("/")).data;
     }
     async get(id) {
-        return (await this.api.get(`/${id}`)).data;
+        return (await this.api.get(`/receipt/${id}`)).data;
     }
     async update(id, data) {
         return (await this.api.put(`/${id}`, data)).data;
@@ -38,6 +38,9 @@ class ReceiptService {
 
     async createReceipt(data) {
         return (await this.api.post("/create", data)).data;
+    }
+    async chinhsua(id, data) {
+        return (await this.api.put(`/chinhsua/${id}`, data)).data;
     }
 }
 export default new ReceiptService();

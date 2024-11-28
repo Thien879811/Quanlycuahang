@@ -96,7 +96,7 @@ const CheckReceiptDialog = ({
                                                 onChange={(e) => handleCheckResultChange(detail.id, 'quantity_receipt', e.target.value)}
                                                 min={0}
                                                 max={detail.quantity}
-                                                style={{ textAlign: 'center' }}
+                                                style={{ textAlign: 'center', margin: 'auto' }}
                                             />
                                         )}
                                     </TableCell>
@@ -110,7 +110,7 @@ const CheckReceiptDialog = ({
                                                 onChange={(e) => handleCheckResultChange(detail.id, 'quantity_defective', e.target.value)}
                                                 min={0}
                                                 max={detail.quantity}
-                                                style={{ textAlign: 'center' }}
+                                                style={{ textAlign: 'center', margin: 'auto' }}
                                             />
                                         )}
                                     </TableCell>
@@ -146,6 +146,7 @@ const CheckReceiptDialog = ({
                                                 type="date"
                                                 value={checkResults[detail.id]?.production_date || ''}
                                                 onChange={(e) => handleCheckResultChange(detail.id, 'production_date', e.target.value)}
+                                                style={{ textAlign: 'center', margin: 'auto' }}
                                             />
                                         )}
                                     </TableCell>
@@ -157,6 +158,7 @@ const CheckReceiptDialog = ({
                                                 type="date"
                                                 value={checkResults[detail.id]?.expiration_date || ''}
                                                 onChange={(e) => handleCheckResultChange(detail.id, 'expiration_date', e.target.value)}
+                                                style={{ textAlign: 'center', margin: 'auto' }}
                                             />
                                         )}
                                     </TableCell>
@@ -169,7 +171,7 @@ const CheckReceiptDialog = ({
                                                 value={checkResults[detail.id]?.note || ''}
                                                 onChange={(e) => handleCheckResultChange(detail.id, 'note', e.target.value)}
                                                 placeholder="Ghi chú"
-                                                style={{ width: '120px' }}
+                                                style={{ width: '120px', textAlign: 'center', margin: 'auto' }}
                                             />
                                         )}
                                     </TableCell>

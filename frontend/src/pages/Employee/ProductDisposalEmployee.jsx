@@ -43,11 +43,14 @@ const ProductDisposalEmployee = () => {
     const [reason, setReason] = useState('');
     const [destroyDate, setDestroyDate] = useState(dayjs());
     const [expirationDate, setExpirationDate] = useState(null);
+    const [timeRange, setTimeRange] = useState('today');
+    const [customDate, setCustomDate] = useState('');
+    const [customMonth, setCustomMonth] = useState('');
 
     useEffect(() => {
         loadProducts();
         loadDisposalRequests();
-    }, []);
+    }, [timeRange, customDate, customMonth]);
 
     const loadProducts = async () => {
         try {
@@ -62,11 +65,18 @@ const ProductDisposalEmployee = () => {
 
     const loadDisposalRequests = async () => {
         try {
-            const response = await productService.getDestroyProduct();
+            let params = timeRange;
+            if (timeRange === 'custom' && customDate) {
+                params = { type: 'custom', date: customDate };
+            } else if (timeRange === 'custom_month' && customMonth) {
+                params = { type: 'custom_month', date: customMonth };
+            }
+            const response = await productService.getDestroyProduct(params);
             const data = handleResponse(response);
-            setDisposalRequests(data);
+            setDisposalRequests(data.data);
         } catch (error) {
             console.error('Error loading disposal requests:', error);
+            setDisposalRequests([]);
         }
     };
 
@@ -99,12 +109,25 @@ const ProductDisposalEmployee = () => {
                 formData.append('expiration_date', expirationDate.format('YYYY-MM-DD'));
             }
 
-            await productService.createDestroyProduct(formData);
+            const response = await productService.createDestroyProduct(formData);
+            const data = handleResponse(response);
             loadDisposalRequests();
             handleCloseDialog();
         } catch (error) {
             console.error('Error creating disposal request:', error);
         }
+    };
+
+    const handleTimeRangeChange = (event) => {
+        setTimeRange(event.target.value);
+    };
+
+    const handleCustomDateChange = (event) => {
+        setCustomDate(event.target.value);
+    };
+
+    const handleCustomMonthChange = (event) => {
+        setCustomMonth(event.target.value);
     };
 
     const getStatusChip = (status) => {
@@ -145,32 +168,111 @@ const ProductDisposalEmployee = () => {
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Tooltip title="Quay lại">
-                    <IconButton 
-                        onClick={() => navigate(-1)}
-                        sx={{ mr: 2 }}
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                my: 4,
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: 2,
+                backgroundColor: '#f8fafc',
+                padding: 3,
+                borderRadius: 4,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Tooltip title="Quay lại">
+                        <IconButton 
+                            onClick={() => navigate(-1)}
+                        >
+                            <ArrowBackIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Typography variant="h4" component="h1" sx={{ 
+                        fontWeight: 700,
+                        color: '#1e40af',
+                        fontSize: { xs: '1.75rem', md: '2rem' },
+                        textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                    }}>
+                        Yêu cầu hủy sản phẩm
+                    </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <FormControl size="small" sx={{ minWidth: 200, height: '56px' }}>
+                        <InputLabel>Thời gian</InputLabel>
+                        <Select
+                            value={timeRange}
+                            onChange={handleTimeRangeChange}
+                            label="Thời gian"
+                            sx={{ 
+                                height: '56px',
+                                borderRadius: '8px',
+                                backgroundColor: 'white',
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                                }
+                            }}
+                        >
+                            <MenuItem value="today">Hôm nay</MenuItem>
+                            <MenuItem value="yesterday">Hôm qua</MenuItem>
+                            <MenuItem value="week">Tuần này</MenuItem>
+                            <MenuItem value="month">Tháng này</MenuItem>
+                            <MenuItem value="custom">Tùy chọn ngày</MenuItem>
+                            <MenuItem value="custom_month">Tùy chọn tháng</MenuItem>
+                        </Select>
+                    </FormControl>
+                    {timeRange === 'custom' && (
+                        <TextField
+                            type="date"
+                            value={customDate}
+                            onChange={handleCustomDateChange}
+                            sx={{
+                                backgroundColor: 'white',
+                                width: 200,
+                                '& .MuiOutlinedInput-root': {
+                                    height: '56px',
+                                    borderRadius: '8px',
+                                }
+                            }}
+                        />
+                    )}
+                    {timeRange === 'custom_month' && (
+                        <TextField
+                            type="month"
+                            value={customMonth}
+                            onChange={handleCustomMonthChange}
+                            sx={{
+                                backgroundColor: 'white',
+                                width: 200,
+                                '& .MuiOutlinedInput-root': {
+                                    height: '56px',
+                                    borderRadius: '8px',
+                                }
+                            }}
+                        />
+                    )}
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleOpenDialog}
+                        sx={{
+                            height: '56px',
+                            textTransform: 'none',
+                            borderRadius: 3,
+                            px: 4,
+                            py: 1.5,
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                            background: 'linear-gradient(45deg, #1e40af 30%, #3b82f6 90%)',
+                            '&:hover': {
+                                background: 'linear-gradient(45deg, #1e3a8a 30%, #2563eb 90%)',
+                                boxShadow: '0 6px 8px -2px rgba(0, 0, 0, 0.15)'
+                            }
+                        }}
                     >
-                        <ArrowBackIcon />
-                    </IconButton>
-                </Tooltip>
-                <Typography variant="h4" component="h1" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-                    Yêu cầu hủy sản phẩm
-                </Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleOpenDialog}
-                    sx={{ 
-                        textTransform: 'none',
-                        borderRadius: 2,
-                        px: 3,
-                        py: 1,
-                        boxShadow: 2
-                    }}
-                >
-                    Tạo yêu cầu mới
-                </Button>
+                        Tạo yêu cầu mới
+                    </Button>
+                </Box>
             </Box>
 
             <Paper 
@@ -178,40 +280,51 @@ const ProductDisposalEmployee = () => {
                 sx={{ 
                     width: '100%', 
                     mb: 4, 
-                    borderRadius: 3,
+                    borderRadius: 4,
                     overflow: 'hidden',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                    background: 'linear-gradient(to bottom, #ffffff, #f8fafc)'
                 }}
             >
-                <TableContainer sx={{ maxHeight: 600 }}>
+                <TableContainer sx={{ maxHeight: 440 }}>
                     <Table stickyHeader>
                         <TableHead>
                             <TableRow>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', fontSize: '1.1rem' }}>Mã yêu cầu</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', fontSize: '1.1rem' }}>Sản phẩm</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', fontSize: '1.1rem' }}>Số lượng</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', fontSize: '1.1rem' }}>Lý do</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', fontSize: '1.1rem' }}>Ngày tạo</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', fontSize: '1.1rem' }}>Trạng thái</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Mã yêu cầu</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Sản phẩm</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Số lượng</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Lý do</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Ngày tạo</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Trạng thái</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {disposalRequests.map((request) => (
+                            {disposalRequests.length > 0 && disposalRequests.map((request) => (
                                 <TableRow 
                                     key={request.id}
                                     hover
                                     sx={{ 
                                         '&:last-child td, &:last-child th': { border: 0 },
-                                        '&:hover': { backgroundColor: '#f8f9fa' }
+                                        '&:hover': { 
+                                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                                            transition: 'all 0.2s ease-in-out'
+                                        }
                                     }}
                                 >
-                                    <TableCell sx={{ fontSize: '1rem' }}>{request.id}</TableCell>
-                                    <TableCell sx={{ fontSize: '1rem' }}>{request.product?.product_name || 'N/A'}</TableCell>
-                                    <TableCell sx={{ fontSize: '1rem' }}>{request.quantity}</TableCell>
-                                    <TableCell sx={{ maxWidth: 200, whiteSpace: 'normal', wordBreak: 'break-word', fontSize: '1rem' }}>
+                                    <TableCell>{request.id}</TableCell>
+                                    <TableCell>{request.product?.product_name || 'N/A'}</TableCell>
+                                    <TableCell>{request.quantity}</TableCell>
+                                    <TableCell sx={{ 
+                                        color: '#1e293b', 
+                                        maxWidth: 200, 
+                                        whiteSpace: 'normal', 
+                                        wordBreak: 'break-word',
+                                        lineHeight: 1.6,
+                                        fontSize: '0.95rem'
+                                    }}>
                                         {request.note}
                                     </TableCell>
-                                    <TableCell sx={{ fontSize: '1rem' }}>{dayjs(request.created_at).format('DD/MM/YYYY')}</TableCell>
+                                    <TableCell>{dayjs(request.created_at).format('DD/MM/YYYY')}</TableCell>
                                     <TableCell>{getStatusChip(request.status)}</TableCell>
                                 </TableRow>
                             ))}

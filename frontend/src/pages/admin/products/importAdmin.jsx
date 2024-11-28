@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -20,6 +20,7 @@ import {
   Divider,
   useTheme
 } from '@mui/material';
+import { useParams, useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
@@ -33,16 +34,27 @@ import { Link } from 'react-router-dom';
 import { handleResponse } from '../../../functions';
 
 const ImportAdmin = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const theme = useTheme();
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [products, setProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [importDate, setImportDate] = useState('');
+  const [receipt, setReceipt] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    fetchSuppliers();
-    fetchProducts();
+    const init = async () => {
+      await fetchSuppliers();
+      await fetchProducts();
+      if (id) {
+        setIsEditing(true);
+        await fetchReceipt(id);
+      }
+    };
+    init();
   }, []);
 
   const fetchSuppliers = async () => {
@@ -90,22 +102,55 @@ const ImportAdmin = () => {
           product_id: item.product.id,
           quantity: item.quantity,
           price: item.price
-        }))
+        })),
+        status: '0'
       };
-      console.log(importData);
-      const response = await Receipt.create(importData);
+
+      let response;
+      if (isEditing) {
+        response = await Receipt.chinhsua(id, importData);
+      } else {
+        response = await Receipt.createReceipt(importData);
+      }
+
       const data = handleResponse(response);
       if(data.success){
-        alert('Phiếu nhập đã được tạo thành công!');
-      }else{
-        alert('Có lỗi xảy ra khi tạo phiếu nhập.');
+        alert(isEditing ? 'Phiếu nhập đã được cập nhật thành công!' : 'Phiếu nhập đã được tạo thành công!');
+        navigate('/admin/inventory-check');
+      } else {
+        alert('Có lỗi xảy ra.');
       }
-      setSelectedProducts([]);
-      setSelectedSupplier(null);
-      setImportDate('');
     } catch (error) {
-      console.error('Error creating import:', error);
-      alert('Có lỗi xảy ra khi tạo phiếu nhập.');
+      console.error('Error:', error);
+      alert('Có lỗi xảy ra.');
+    }
+  };
+
+  const fetchReceipt = async (id) => {
+    try {
+      const response = await Receipt.get(id);
+      const data = handleResponse(response);
+      setReceipt(data.goods_receipt);
+      
+      // Find supplier after suppliers are loaded
+      const supplier = suppliers.find(s => s.id == data.goods_receipt.supplier_id);
+      setSelectedSupplier(supplier);
+      
+      setImportDate(data.goods_receipt.import_date);
+      
+      // Map receipt details to selected products
+      const mappedProducts = data.goods_receipt.details.map(detail => ({
+        product: products.find(p => p.id === detail.product_id) || {
+          id: detail.product_id,
+          product_name: detail.product.product_name
+        },
+        quantity: detail.quantity,
+        price: detail.price
+      }));
+      
+      setSelectedProducts(mappedProducts);
+    } catch (error) {
+      console.error('Error fetching receipt:', error);
     }
   };
 
@@ -154,7 +199,7 @@ const ImportAdmin = () => {
         }}>
           <LocalShippingIcon fontSize="large" />
           <Typography variant="h4">
-            Tạo Phiếu Nhập Hàng
+            {isEditing ? 'Chỉnh Sửa Phiếu Nhập Hàng' : 'Tạo Phiếu Nhập Hàng'}
           </Typography>
         </Box>
         
@@ -163,8 +208,9 @@ const ImportAdmin = () => {
             <Grid container spacing={4}>
               <Grid item xs={12} md={6}>
                 <Autocomplete
+                  value={selectedSupplier}
                   options={suppliers}
-                  getOptionLabel={(option) => option.factory_name}
+                  getOptionLabel={(option) => option?.factory_name || ''}
                   renderInput={(params) => 
                     <TextField 
                       {...params} 
@@ -218,8 +264,13 @@ const ImportAdmin = () => {
                     <TableRow key={index} sx={{ '&:nth-of-type(odd)': { bgcolor: '#f9f9f9' } }}>
                       <TableCell>
                         <Autocomplete
-                          options={products.filter(product => !selectedProducts.some(selected => selected.product?.id === product.id))}
-                          getOptionLabel={(option) => option.product_name}
+                          value={item.product}
+                          options={products.filter(product => 
+                            !selectedProducts.some(selected => 
+                              selected.product?.id === product.id && selected !== item
+                            )
+                          )}
+                          getOptionLabel={(option) => option?.product_name || ''}
                           renderInput={(params) => 
                             <TextField 
                               {...params} 
@@ -300,7 +351,7 @@ const ImportAdmin = () => {
                   transition: 'transform 0.2s'
                 }}
               >
-                Tạo phiếu nhập
+                {isEditing ? 'Cập nhật phiếu nhập' : 'Tạo phiếu nhập'}
               </Button>
             </Box>
           </form>

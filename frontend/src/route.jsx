@@ -136,6 +136,10 @@ const router = createBrowserRouter ([
                 path: '/admin/import-product',
                 element: <ImportAdmin />
             },
+            {
+                path: '/admin/import-product/:id',
+                element: <ImportAdmin />
+            },
             // {
             //     path: '/admin/import-product',
             //     element: <ImportProduct />

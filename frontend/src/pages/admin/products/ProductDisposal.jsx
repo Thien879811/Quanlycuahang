@@ -65,14 +65,32 @@ const ProductDisposal = () => {
     const [disposalRequests, setDisposalRequests] = useState([]);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
+    const [openCreateDialog, setOpenCreateDialog] = useState(false);
     const [approvalNote, setApprovalNote] = useState('');
-    const [timeRange, setTimeRange] = useState('all');
+    const [timeRange, setTimeRange] = useState('today');
     const [customDate, setCustomDate] = useState('');
     const [customMonth, setCustomMonth] = useState('');
+    const [products, setProducts] = useState([]);
+    const [selectedProduct, setSelectedProduct] = useState('');
+    const [quantity, setQuantity] = useState('');
+    const [reason, setReason] = useState('');
+    const [destroyDate, setDestroyDate] = useState('');
+    const [expirationDate, setExpirationDate] = useState('');
 
     useEffect(() => {
         loadDisposalRequests();
+        loadProducts();
     }, [timeRange, customDate, customMonth]);
+
+    const loadProducts = async () => {
+        try {
+            const response = await productService.getAll();
+            const data = handleResponse(response);
+            setProducts(data);
+        } catch (error) {
+            console.error('Error loading products:', error);
+        }
+    };
 
     const loadDisposalRequests = async () => {
         try {
@@ -84,7 +102,7 @@ const ProductDisposal = () => {
             }
             const response = await productService.getDestroyProduct(params);
             const data = handleResponse(response);
-            setDisposalRequests(Array.isArray(data) ? data : []);
+            setDisposalRequests(data.data);
         } catch (error) {
             console.error('Error loading disposal requests:', error);
             setDisposalRequests([]);
@@ -114,6 +132,44 @@ const ProductDisposal = () => {
         setSelectedRequest(null);
         setOpenDialog(false);
         setApprovalNote('');
+    };
+
+    const handleOpenCreateDialog = () => {
+        setOpenCreateDialog(true);
+    };
+
+    const handleCloseCreateDialog = () => {
+        setOpenCreateDialog(false);
+        setSelectedProduct('');
+        setQuantity('');
+        setReason('');
+        setDestroyDate('');
+        setExpirationDate('');
+    };
+
+    const handleSubmit = async () => {
+        try {
+            // Check if selected product exists
+
+            const formData = new FormData();
+            formData.append('product_id', selectedProduct);
+            formData.append('quantity', quantity);
+            formData.append('destroy_date', destroyDate);
+            formData.append('note', reason);
+            formData.append('status', 'pending');
+            if (expirationDate) {
+                formData.append('expiration_date', expirationDate);
+            }
+
+            const response = await productService.createDestroyProduct(formData);
+            const data = handleResponse(response);
+            
+            loadDisposalRequests();
+            handleCloseCreateDialog();
+        
+        } catch (error) {
+            console.error('Error creating disposal request:', error);
+        }
     };
 
     const handleApprove = async () => {
@@ -186,66 +242,105 @@ const ProductDisposal = () => {
                 alignItems: 'center', 
                 my: 4,
                 flexDirection: { xs: 'column', md: 'row' },
-                gap: 2
+                gap: 2,
+                backgroundColor: '#f8fafc',
+                padding: 3,
+                borderRadius: 4,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
             }}>
                 <Typography variant="h4" component="h1" sx={{ 
-                    fontWeight: 600,
-                    color: '#1a365d'
+                    fontWeight: 700,
+                    color: '#1e40af',
+                    fontSize: { xs: '1.75rem', md: '2rem' },
+                    textShadow: '0 1px 2px rgba(0,0,0,0.1)'
                 }}>
                     Hủy sản phẩm
                 </Typography>
-                <Grid container spacing={2} justifyContent="flex-end" alignItems="center" sx={{ maxWidth: { md: '60%' } }}>
-                    <Grid item xs={12} md={6}>
-                        <FormControl fullWidth>
-                            <InputLabel>Thời gian</InputLabel>
-                            <Select
-                                value={timeRange}
-                                onChange={handleTimeRangeChange}
-                                label="Thời gian"
-                                sx={{ 
-                                    borderRadius: '8px',
-                                    '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: 'rgba(0, 0, 0, 0.23)'
-                                    }
-                                }}
-                            >
-                                <MenuItem value="all">Tất cả</MenuItem>
-                                <MenuItem value="today">Hôm nay</MenuItem>
-                                <MenuItem value="yesterday">Hôm qua</MenuItem>
-                                <MenuItem value="week">Tuần này</MenuItem>
-                                <MenuItem value="month">Tháng này</MenuItem>
-                                <MenuItem value="custom">Tùy chọn ngày</MenuItem>
-                                <MenuItem value="custom_month">Tùy chọn tháng</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <FormControl size="small" sx={{ minWidth: 200, height: '56px' }}>
+                        <InputLabel>Thời gian</InputLabel>
+                        <Select
+                            value={timeRange}
+                            onChange={handleTimeRangeChange}
+                            label="Thời gian"
+                            sx={{ 
+                                height: '56px',
+                                borderRadius: '8px',
+                                backgroundColor: 'white',
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                                }
+                            }}
+                        >
+                            <MenuItem value="all">Tất cả</MenuItem>
+                            <MenuItem value="today">Hôm nay</MenuItem>
+                            <MenuItem value="yesterday">Hôm qua</MenuItem>
+                            <MenuItem value="week">Tuần này</MenuItem>
+                            <MenuItem value="month">Tháng này</MenuItem>
+                            <MenuItem value="custom">Tùy chọn ngày</MenuItem>
+                            <MenuItem value="custom_month">Tùy chọn tháng</MenuItem>
+                        </Select>
+                    </FormControl>
                     {timeRange === 'custom' && (
-                        <Grid item xs={12} md={4}>
-                            <StyledInput
-                                type="date"
-                                value={customDate}
-                                onChange={handleCustomDateChange}
-                            />
-                        </Grid>
+                        <StyledInput
+                            type="date"
+                            value={customDate}
+                            onChange={handleCustomDateChange}
+                            sx={{
+                                backgroundColor: 'white',
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                    borderColor: '#3b82f6'
+                                },
+                                width: 200
+                            }}
+                        />
                     )}
                     {timeRange === 'custom_month' && (
-                        <Grid item xs={12} md={4}>
-                            <StyledInput
-                                type="month"
-                                value={customMonth}
-                                onChange={handleCustomMonthChange}
-                            />
-                        </Grid>
+                        <StyledInput
+                            type="month"
+                            value={customMonth}
+                            onChange={handleCustomMonthChange}
+                            sx={{
+                                backgroundColor: 'white',
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                    borderColor: '#3b82f6'
+                                },
+                                width: 200
+                            }}
+                        />
                     )}
-                </Grid>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleOpenCreateDialog}
+                        sx={{
+                            height: '56px',
+                            textTransform: 'none',
+                            borderRadius: 3,
+                            px: 4,
+                            py: 1.5,
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                            background: 'linear-gradient(45deg, #1e40af 30%, #3b82f6 90%)',
+                            '&:hover': {
+                                background: 'linear-gradient(45deg, #1e3a8a 30%, #2563eb 90%)',
+                                boxShadow: '0 6px 8px -2px rgba(0, 0, 0, 0.15)'
+                            }
+                        }}
+                    >
+                        Tạo yêu cầu mới
+                    </Button>
+                </Box>
             </Box>
 
             <Paper sx={{ 
                 width: '100%', 
                 mb: 4, 
-                borderRadius: 3,
+                borderRadius: 4,
                 overflow: 'hidden',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                background: 'linear-gradient(to bottom, #ffffff, #f8fafc)'
             }}>
                 <TableContainer sx={{ maxHeight: 440 }}>
                     <Table stickyHeader>
@@ -268,7 +363,8 @@ const ProductDisposal = () => {
                                     sx={{ 
                                         '&:last-child td, &:last-child th': { border: 0 },
                                         '&:hover': {
-                                            backgroundColor: 'rgba(0,0,0,0.04)'
+                                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                                            transition: 'all 0.2s ease-in-out'
                                         }
                                     }}
                                 >
@@ -276,11 +372,12 @@ const ProductDisposal = () => {
                                     <TableCell>{request.product?.product_name || 'N/A'}</TableCell>
                                     <TableCell>{request.quantity}</TableCell>
                                     <TableCell sx={{ 
-                                        color: 'dark', 
+                                        color: '#1e293b', 
                                         maxWidth: 200, 
                                         whiteSpace: 'normal', 
                                         wordBreak: 'break-word',
-                                        lineHeight: 1.5
+                                        lineHeight: 1.6,
+                                        fontSize: '0.95rem'
                                     }}>
                                         {request.note}
                                     </TableCell>
@@ -295,10 +392,12 @@ const ProductDisposal = () => {
                                                 onClick={() => handleOpenDialog(request)}
                                                 sx={{ 
                                                     textTransform: 'none',
-                                                    borderRadius: '8px',
-                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                    borderRadius: '10px',
+                                                    boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)',
+                                                    background: 'linear-gradient(45deg, #2563eb 30%, #3b82f6 90%)',
                                                     '&:hover': {
-                                                        boxShadow: '0 4px 6px rgba(0,0,0,0.12)'
+                                                        background: 'linear-gradient(45deg, #1d4ed8 30%, #2563eb 90%)',
+                                                        boxShadow: '0 4px 6px rgba(59, 130, 246, 0.3)'
                                                     }
                                                 }}
                                             >
@@ -320,8 +419,9 @@ const ProductDisposal = () => {
                 fullWidth
                 PaperProps={{
                     sx: { 
-                        borderRadius: 3,
-                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
+                        borderRadius: 4,
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                        background: 'linear-gradient(to bottom, #ffffff, #f8fafc)'
                     }
                 }}
             >
@@ -329,20 +429,22 @@ const ProductDisposal = () => {
                     borderBottom: 1, 
                     borderColor: 'divider', 
                     pb: 2,
-                    fontWeight: 600
+                    fontWeight: 700,
+                    color: '#1e40af',
+                    fontSize: '1.5rem'
                 }}>
                     Xem xét yêu cầu hủy sản phẩm
                 </DialogTitle>
                 <DialogContent>
                     {selectedRequest && (
                         <Box sx={{ mt: 3 }}>
-                            <Typography sx={{ mb: 2, fontSize: '1.1rem' }}>
+                            <Typography sx={{ mb: 2, fontSize: '1.1rem', color: '#1e293b' }}>
                                 <strong>Sản phẩm:</strong> {selectedRequest.product?.product_name || 'N/A'}
                             </Typography>
-                            <Typography sx={{ mb: 2, fontSize: '1.1rem' }}>
+                            <Typography sx={{ mb: 2, fontSize: '1.1rem', color: '#1e293b' }}>
                                 <strong>Số lượng:</strong> {selectedRequest.quantity}
                             </Typography>
-                            <Typography sx={{ mb: 3, fontSize: '1.1rem' }}>
+                            <Typography sx={{ mb: 3, fontSize: '1.1rem', color: '#1e293b' }}>
                                 <strong>Lý do:</strong> {selectedRequest.note}
                             </Typography>
                             <TextField
@@ -357,7 +459,8 @@ const ProductDisposal = () => {
                                 sx={{ 
                                     mt: 2,
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: '8px'
+                                        borderRadius: '12px',
+                                        backgroundColor: 'white'
                                     }
                                 }}
                             />
@@ -375,8 +478,12 @@ const ProductDisposal = () => {
                         variant="outlined"
                         sx={{ 
                             textTransform: 'none',
-                            borderRadius: '8px',
-                            px: 3
+                            borderRadius: '10px',
+                            px: 3,
+                            borderWidth: '2px',
+                            '&:hover': {
+                                borderWidth: '2px'
+                            }
                         }}
                     >
                         Hủy
@@ -387,9 +494,13 @@ const ProductDisposal = () => {
                         variant="contained"
                         sx={{ 
                             textTransform: 'none',
-                            borderRadius: '8px',
+                            borderRadius: '10px',
                             px: 3,
-                            boxShadow: '0 2px 4px rgba(211,47,47,0.2)'
+                            boxShadow: '0 4px 6px rgba(239,68,68,0.2)',
+                            background: 'linear-gradient(45deg, #dc2626 30%, #ef4444 90%)',
+                            '&:hover': {
+                                background: 'linear-gradient(45deg, #b91c1c 30%, #dc2626 90%)'
+                            }
                         }}
                     >
                         Từ chối
@@ -400,12 +511,170 @@ const ProductDisposal = () => {
                         variant="contained"
                         sx={{ 
                             textTransform: 'none',
-                            borderRadius: '8px',
+                            borderRadius: '10px',
                             px: 3,
-                            boxShadow: '0 2px 4px rgba(46,125,50,0.2)'
+                            boxShadow: '0 4px 6px rgba(22,163,74,0.2)',
+                            background: 'linear-gradient(45deg, #16a34a 30%, #22c55e 90%)',
+                            '&:hover': {
+                                background: 'linear-gradient(45deg, #15803d 30%, #16a34a 90%)'
+                            }
                         }}
                     >
                         Phê duyệt
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={openCreateDialog}
+                onClose={handleCloseCreateDialog}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4,
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                        background: 'linear-gradient(to bottom, #ffffff, #f8fafc)'
+                    }
+                }}
+            >
+                <DialogTitle sx={{
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                    pb: 2,
+                    fontWeight: 700,
+                    color: '#1e40af',
+                    fontSize: '1.5rem'
+                }}>
+                    Tạo yêu cầu hủy sản phẩm
+                </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mt: 3 }}>
+                        <FormControl fullWidth sx={{ mb: 3 }}>
+                            <InputLabel>Sản phẩm</InputLabel>
+                            <Select
+                                value={selectedProduct}
+                                onChange={(e) => setSelectedProduct(e.target.value)}
+                                label="Sản phẩm"
+                                sx={{
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white',
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                                        borderWidth: '2px'
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: '#3b82f6'
+                                    }
+                                }}
+                            >
+                                {products.map((product) => (
+                                    <MenuItem key={product.id} value={product.id}>
+                                        {product.product_name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            fullWidth
+                            label="Số lượng"
+                            type="number"
+                            value={quantity}
+                            onChange={(e) => setQuantity(e.target.value)}
+                            sx={{ 
+                                mb: 3,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white'
+                                }
+                            }}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Lý do"
+                            multiline
+                            rows={3}
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            sx={{ 
+                                mb: 3,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white'
+                                }
+                            }}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Ngày hủy"
+                            type="date"
+                            value={destroyDate}
+                            onChange={(e) => setDestroyDate(e.target.value)}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            sx={{ 
+                                mb: 3,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white'
+                                }
+                            }}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Hạn sử dụng (nếu có)"
+                            type="date"
+                            value={expirationDate}
+                            onChange={(e) => setExpirationDate(e.target.value)}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white'
+                                }
+                            }}
+                        />
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{
+                    p: 3,
+                    borderTop: 1,
+                    borderColor: 'divider',
+                    gap: 1
+                }}>
+                    <Button
+                        onClick={handleCloseCreateDialog}
+                        variant="outlined"
+                        sx={{
+                            textTransform: 'none',
+                            borderRadius: '10px',
+                            px: 3,
+                            borderWidth: '2px',
+                            '&:hover': {
+                                borderWidth: '2px'
+                            }
+                        }}
+                    >
+                        Hủy
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        variant="contained"
+                        sx={{
+                            textTransform: 'none',
+                            borderRadius: '10px',
+                            px: 3,
+                            boxShadow: '0 4px 6px rgba(59,130,246,0.2)',
+                            background: 'linear-gradient(45deg, #2563eb 30%, #3b82f6 90%)',
+                            '&:hover': {
+                                background: 'linear-gradient(45deg, #1d4ed8 30%, #2563eb 90%)'
+                            }
+                        }}
+                    >
+                        Tạo yêu cầu
                     </Button>
                 </DialogActions>
             </Dialog>

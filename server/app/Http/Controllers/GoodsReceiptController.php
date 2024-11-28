@@ -142,14 +142,8 @@ class GoodsReceiptController extends Controller
 
                 if ($detail->is_added) {
                     $productModel = Product::find($detail->product_id);
-                    if ($productModel) {
-                        if($detail->quantity_defective > 0) {
-                            $productModel->quantity -= ($product['return_quantity'] - $detail->quantity_defective);
-                        } else {
-                            $productModel->quantity -= $product['return_quantity'];
-                        }
-                        $productModel->save();
-                    }
+                    $productModel->quantity -= $product['return_quantity'];
+                    $productModel->save();
                 }
             }
         }
@@ -342,15 +336,81 @@ class GoodsReceiptController extends Controller
         $validated = $request->validate([
             'supplier_id' => 'required',
             'import_date' => 'required',
-            'products' => 'required',
+            'products' => 'required|array',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|numeric|min:0',
+            'products.*.price' => 'required|numeric|min:0',
         ]);
 
         $goodsReceipt = GoodsReceipt::create([
             'supplier_id' => $validated['supplier_id'],
             'import_date' => $validated['import_date'],
-            'status' => '1',
+            'status' => '0',
         ]);
 
+        foreach ($validated['products'] as $productData) {
+            GoodsReceiptDetail::create([
+                'goods_receipt_id' => $goodsReceipt->id,
+                'product_id' => $productData['product_id'],
+                'quantity' => $productData['quantity'],
+                'quantity_receipt' => $productData['quantity'],
+                'price' => $productData['price'],
+                'status' => '0',
+                'production_date' => $productData['production_date'] ?? null,
+                'expiration_date' => $productData['expiration_date'] ?? null,
+                'quantity_defective' => 0,
+                'return_quantity' => 0,
+                'note' => '',
+                'is_added' => true,
+            ]);
+
+            $product = Product::find($productData['product_id']);
+            if ($product) {
+                $product->quantity += $productData['quantity'];
+                if (isset($productData['price']) && $productData['price'] > 0) {
+                    $product->purchase_price = $productData['price'];
+                }
+                $product->save();
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tạo phiếu nhập hàng thành công',
+            'goods_receipt' => $goodsReceipt,
+        ]);
+    }
+
+    public function chinhsua($id, Request $request) {
+        $validated = $request->validate([
+            'status' => 'required',
+            'products' => 'required|array'
+        ]);
+
+        $goodsReceipt = GoodsReceipt::find($id);
+        if (!$goodsReceipt) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy phiếu nhập hàng'
+            ], 404);
+        }
+
+        // Revert quantities for existing products
+        $existingDetails = GoodsReceiptDetail::where('goods_receipt_id', $id)->get();
+        foreach ($existingDetails as $detail) {
+            if ($detail->is_added) {
+                $product = Product::find($detail->product_id);
+                if ($product) {
+                    $product->quantity -= $detail->quantity;
+                    $product->save();
+                }
+            }
+        }
+
+        // Delete existing details
+        GoodsReceiptDetail::where('goods_receipt_id', $id)->delete();
+
+        // Create new details and update product quantities
         foreach ($validated['products'] as $product) {
             GoodsReceiptDetail::create([
                 'goods_receipt_id' => $goodsReceipt->id,
@@ -358,23 +418,29 @@ class GoodsReceiptController extends Controller
                 'quantity' => $product['quantity'],
                 'quantity_receipt' => $product['quantity'],
                 'price' => $product['price'],
-                'status' => '1',
+                'status' => '0',
                 'production_date' => $product['production_date'] ?? null,
                 'expiration_date' => $product['expiration_date'] ?? null,
                 'quantity_defective' => 0,
                 'return_quantity' => 0,
                 'note' => '',
-                'is_added' => true,
+                'is_added' => false,
             ]);
-            $product = Product::find($product['product_id']);
-            $product->quantity += $product['quantity'];
-            $product->purchase_price = $product['price'];
-            $product->save();
+
+            $productModel = Product::find($product['product_id']);
+            if ($productModel) {
+                $productModel->quantity += $product['quantity'];
+                $productModel->purchase_price = $product['price'];
+                $productModel->save();
+            }
         }
+
+        $goodsReceipt->status = $validated['status'];
+        $goodsReceipt->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Tạo phiếu nhập hàng thành công',
+            'message' => 'Cập nhật phiếu nhập hàng thành công',
             'goods_receipt' => $goodsReceipt,
         ]);
     }

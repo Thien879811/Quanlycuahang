@@ -10,7 +10,7 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
 
-const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChangeWeek, previousSchedules ,fetchSchedules}) => {
+const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChangeWeek, loadData, fetchSchedules}) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isAddEmployeeModalVisible, setIsAddEmployeeModalVisible] = useState(false);
   const [isAddTaskModalVisible, setIsAddTaskModalVisible] = useState(false);
@@ -85,6 +85,7 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
 
       if(dataResponse.success) {
         message.success(dataResponse.message);
+        loadData();
         setIsEditModalVisible(false);
         form.resetFields();
         setEditingSchedule(null);
@@ -104,7 +105,7 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
       
       if(dataResponse.success) {
         message.success(dataResponse.message);
-        fetchSchedules();
+        loadData();
       } else {
         message.error(dataResponse.message);
       }
@@ -142,10 +143,10 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
       const dataResponse = handleResponse(response);
     
       if(dataResponse.success) {
+        loadData();
         message.success(dataResponse.message);
         setIsScheduleModalVisible(false);
         form.resetFields();
-        fetchSchedules();
       } else {
         message.error(dataResponse.message);
       }

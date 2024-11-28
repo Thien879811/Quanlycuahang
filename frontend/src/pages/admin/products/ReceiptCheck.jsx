@@ -100,7 +100,8 @@ const ReceiptCheck = () => {
         setLoading(true);
         try {
             const response = await ReceiptService.getReceipt(timeRange, timeRange === 'custom_month' ? customMonth : customDate);
-            const data = handleResponse(response); 
+            const data = handleResponse(response);
+            console.log(data);
             if (data.success) {
                 const processedReceipts = data.goods_receipts.map(receipt => ({
                     ...receipt,
@@ -348,28 +349,7 @@ const ReceiptCheck = () => {
     };
 
     const handleEdit = async () => {
-        try {
-            if (selectedReceipt.status === 'Đã kiểm tra') {
-                setError('Không thể chỉnh sửa phiếu đã kiểm tra');
-                setOpenEditDialog(false);
-                return;
-            }
-
-            const response = await ReceiptService.updateReceipt(editedReceipt.id, editedReceipt);
-            const data = handleResponse(response);
-            if (data.success) {
-                setReceipts(receipts.map(r => r.id === editedReceipt.id ? editedReceipt : r));
-                setFilteredReceipts(filteredReceipts.map(r => r.id === editedReceipt.id ? editedReceipt : r));
-                setOpenEditDialog(false);
-                setError('');
-                await fetchAllReceipts();
-            } else {
-                setError('Không thể cập nhật phiếu nhập hàng');
-            }
-        } catch (error) {
-            console.error('Error updating receipt:', error);
-            setError('Đã xảy ra lỗi khi cập nhật phiếu nhập hàng');
-        }
+       navigate(`/admin/import-product/${editedReceipt.id}`);
     };
 
     const handleGoBack = () => {
@@ -611,6 +591,7 @@ const ReceiptCheck = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
             <ReturnDialog
                 openReturnDialog={openReturnDialog}
                 setOpenReturnDialog={setOpenReturnDialog}
