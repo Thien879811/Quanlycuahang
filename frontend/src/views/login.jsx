@@ -7,8 +7,6 @@ import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 
 export default function login() {
-    const emailRef = useRef();
-    const passwordRef = useRef();
     const [form] = Form.useForm();
 
     const { setUser, setToken } = useStateContext();

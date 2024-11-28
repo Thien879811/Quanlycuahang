@@ -20,13 +20,17 @@ export default function DefaultLayout() {
     const [anchorEl, setAnchorEl] = useState(null);
     const [notificationElements, setNotificationElements] = useState([]);
             
-    const {token, setToken, user, setUser} = useStateContext();
+    const {token, setToken, user, setUser, userRole} = useStateContext();
     const navigate = useNavigate();
     const location = useLocation();
 
 
     if (!token) {
         return <Navigate to='/login' />;
+    }
+
+    if (userRole === 'admin') {
+        return <Navigate to='/admin' />;
     }
 
     useEffect(() => {
