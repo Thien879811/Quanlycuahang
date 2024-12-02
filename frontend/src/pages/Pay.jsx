@@ -18,11 +18,11 @@ const Pay = () => {
     const [change, setChange] = useState(0);
     const {updatePointCustomer} = useCustomer();
 
-    const finalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * (getTotalAmount - getTotalDiscount) : 0);
+    const finalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount : 0);
 
     useEffect(() => {
         if (amountPaid) {
-            const totalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * (getTotalAmount - getTotalDiscount) : 0);
+            const totalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount : 0);
             setChange(parseFloat(amountPaid) - totalAmount);
         }
     }, [amountPaid, getTotalAmount, getTotalDiscount, orders]);

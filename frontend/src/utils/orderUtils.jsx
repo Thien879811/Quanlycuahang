@@ -14,11 +14,13 @@ const orderUtils = () => {
             voucher_id: null,
             discount: 0,
             status: 0,
-            details: []
+            details: [],
+            max_value: 0,
+            min_value: 0,
+            voucher_code: null,
+            discount_percentage: 0
         };
     });
-
- 
 
     // Save to localStorage whenever orders changes
     useEffect(() => {
@@ -46,13 +48,47 @@ const orderUtils = () => {
         }, 0);
     }, [orders?.details]);
 
+    const recalculateVoucherDiscount = (newOrders) => {
+        if (newOrders.voucher_code && newOrders.discount_percentage) {
+            const totalAmount = newOrders.details.reduce((total, detail) => 
+                total + detail.soluong * detail.dongia, 0
+            );
+
+            if (newOrders.min_value && totalAmount < parseFloat(newOrders.min_value)) {
+                alert(`Đơn hàng phải có giá trị tối thiểu ${newOrders.min_value.toLocaleString()}đ để sử dụng voucher này`);
+                return {
+                    ...newOrders,
+                    voucher_id: null,
+                    voucher_code: null,
+                    discount: 0,
+                    max_value: 0,
+                    min_value: 0,
+                    discount_percentage: 0
+                };
+            }
+
+            let discountAmount = (totalAmount * newOrders.discount_percentage) / 100;
+
+            if (newOrders.max_value && discountAmount > parseFloat(newOrders.max_value)) {
+                discountAmount = parseFloat(newOrders.max_value);
+            }
+
+            return {
+                ...newOrders,
+                discount: discountAmount
+            };
+        }
+        return newOrders;
+    };
+
     const addProduct = (product) => {
         if(!orders.details) setOrders({details: []});
         setOrders(prevOrders => {
             const existingProduct = prevOrders.details.find(detail => detail.product_id === product.id);
             
+            let newOrders;
             if (existingProduct) {
-                const newOrders = {
+                newOrders = {
                     ...prevOrders,
                     details: prevOrders.details.map(detail => 
                         detail.product_id === product.id
@@ -60,27 +96,27 @@ const orderUtils = () => {
                         : detail
                     )
                 };
-                localStorage.setItem('order', JSON.stringify(newOrders));
-                return newOrders;
+            } else {
+                newOrders = {
+                    ...prevOrders,
+                    details: [
+                        ...prevOrders.details,
+                        {
+                            product_id: product.id,
+                            soluong: 1,
+                            dongia: product.selling_price,
+                            discount: 0,
+                            product: {
+                                product_name: product.product_name,
+                                selling_price: product.selling_price,
+                                image: product.image,
+                            }
+                        }
+                    ]
+                };
             }
 
-            const newOrders = {
-                ...prevOrders,
-                details: [
-                    ...prevOrders.details,
-                    {
-                        product_id: product.id,
-                        soluong: 1,
-                        dongia: product.selling_price,
-                        discount: 0,
-                        product: {
-                            product_name: product.product_name,
-                            selling_price: product.selling_price,
-                            image: product.image,
-                        }
-                    }
-                ]
-            };
+            newOrders = recalculateVoucherDiscount(newOrders);
             localStorage.setItem('order', JSON.stringify(newOrders));
             return newOrders;
         });
@@ -88,10 +124,12 @@ const orderUtils = () => {
 
     const removeProduct = (product_id) => {
         setOrders(prevOrders => {
-            const newOrders = {
+            let newOrders = {
                 ...prevOrders,
                 details: prevOrders.details.filter(detail => detail.product_id !== product_id)
             };
+
+            newOrders = recalculateVoucherDiscount(newOrders);
             localStorage.setItem('order', JSON.stringify(newOrders));
             return newOrders;
         });
@@ -110,19 +148,20 @@ const orderUtils = () => {
                 return detail;
             }).filter(detail => detail !== null); // Remove marked items
 
-            const newOrders = {
+            let newOrders = {
                 ...prevOrders,
                 details: updatedDetails
             };
+
+            newOrders = recalculateVoucherDiscount(newOrders);
             localStorage.setItem('order', JSON.stringify(newOrders));
             return newOrders;
         });
     }
     
-    const updateDiscount = useCallback((productCode, discount,present) => {
+    const updateDiscount = useCallback((productCode, discount, present) => {
         setOrders(prevOrders => {
             const product = prevOrders.details.find(detail => detail.product_id == productCode);
-            console.log(product);
             const updatedDetails = prevOrders.details.map(productPresent => {
                 if (productPresent.product_id == present) {
                     if(productPresent.soluong > product.soluong){
@@ -132,7 +171,9 @@ const orderUtils = () => {
                 }
                 return productPresent;
             });
-            const newOrders = {...prevOrders, details: updatedDetails};
+
+            let newOrders = {...prevOrders, details: updatedDetails};
+            newOrders = recalculateVoucherDiscount(newOrders);
             localStorage.setItem('order', JSON.stringify(newOrders));
             return newOrders;
         });
@@ -165,7 +206,7 @@ const orderUtils = () => {
                 }
 
                 if (promotion.present) {
-                    updateDiscount(promotion.product_id, promotion.discount_percentage,promotion.present.product_id);
+                    updateDiscount(promotion.product_id, promotion.discount_percentage, promotion.present.product_id);
                     return {
                         ...product,
                         discount: 0
@@ -177,13 +218,14 @@ const orderUtils = () => {
                     discount: (product.dongia * promotion.discount_percentage / 100) * product.soluong
                 };
             });
-            const newOrders = {...prevOrders, details: updatedDetails};
+
+            let newOrders = {...prevOrders, details: updatedDetails};
+            newOrders = recalculateVoucherDiscount(newOrders);
             localStorage.setItem('order', JSON.stringify(newOrders));
             return newOrders;
         });
     }, [updateDiscount]);
 
-    // Hàm updateVoucher dùng để cập nhật voucher cho đơn hàng
     const updateVoucher = (voucher, discount) => {
         setOrders(prevOrders => {
             const totalAmount = getTotalAmount;
@@ -195,17 +237,18 @@ const orderUtils = () => {
 
             let discountAmount = (totalAmount * discount) / 100;
 
-            if (voucher.max_value) {
-                const maxValue = parseFloat(voucher.max_value);
-                discountAmount = Math.min(discountAmount, maxValue);
-                discount = (discountAmount / totalAmount) * 100;
+            if (voucher.max_value && discountAmount > parseFloat(voucher.max_value)) {
+                discountAmount = parseFloat(voucher.max_value);
             }
 
             const newOrders = {
                 ...prevOrders,
                 voucher_id: voucher.id,
                 voucher_code: voucher.code,
-                discount: Number(discount).toFixed(2) // Fixed by using Number() to ensure discount is a number
+                discount: discountAmount,
+                max_value: voucher.max_value,
+                min_value: voucher.min_value,
+                discount_percentage: voucher.discount_percentage
             };
 
             localStorage.setItem('order', JSON.stringify(newOrders));

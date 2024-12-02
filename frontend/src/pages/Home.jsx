@@ -8,8 +8,7 @@ import useOrderProduct from '../utils/orderproduct';
 import orderUtils from '../utils/orderUtils';
 import useCustomer from '../utils/customerUtils';
 import OrderDisplay from '../components/OrderDisplay';
-import useProduct from '../utils/productUtils';
-import usePromotion from '../utils/promorionUtils'; // Fixed typo in import
+import useProduct from '../utils/productUtils'; // Fixed typo in import
 import orderService from '../services/order.service';
 import { handleResponse } from '../functions';
 import PromoGrid from './HomeComponents/PromoGrid';
@@ -17,26 +16,26 @@ import CustomerDialog from './HomeComponents/CustomerDialog';
 import NewCustomerDialog from './HomeComponents/NewCustomerDialog';
 import InfoCustomerDialog from './HomeComponents/InfoCustomerDialog';
 import VoucherDialog from './HomeComponents/VoucherDialog';
-
+import PromotionService from '../services/promotion.service';
 import { message } from 'antd';
+
 const Home = () => {
 	const navigate = useNavigate();
 	const {
 		orders,
-        getTotalAmount,
-        getTotalQuantity,
-        getTotalDiscount,
-        addProduct,
-        removeProduct,
-        updateQuantity,
-        updateDiscount,
-        updateProductDiscount,
-        updateVoucher,
-        updateCustomer,
-        createOrder,
-        updateOrder
-	} 
-	= orderUtils();
+		getTotalAmount,
+		getTotalQuantity, 
+		getTotalDiscount,
+		addProduct,
+		removeProduct,
+		updateQuantity,
+		updateDiscount,
+		updateProductDiscount,
+		updateVoucher,
+		updateCustomer,
+		createOrder,
+		updateOrder
+	} = orderUtils();
 
 	const [containerHeight, setContainerHeight] = useState('100vh');
 	const [openCustomerDialog, setOpenCustomerDialog] = useState(false);
@@ -55,15 +54,30 @@ const Home = () => {
 	
 
 	//promotion
-	const {promotions} = usePromotion();
+	const [promotions, setPromotions] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState(null);
 	const [activePromotion, setActivePromotion] = useState([]);
 
-	
+	const fetchPromotion = async () => {
+		try {
+			setLoading(true);
+			const res = await PromotionService.getPromotion();
+			const data = handleResponse(res);
+			setPromotions(data);
+		} catch (error) {
+			setError(error.message);
+			console.error(error);
+		} finally {
+			setLoading(false);
+		}
+	}
+
 
 	const {customer,
-		searchCustomerByPhone, 
-		createCustomer, 
-		openNewCustomer, 
+		searchCustomerByPhone,
+		createCustomer,
+		openNewCustomer,
 		openCustomerInfo,
 		setOpenNewCustomer,
 		setOpenCustomerInfo
@@ -85,6 +99,7 @@ const Home = () => {
 			setOrder(orderData);
 		};
 		fetchOrder();
+		fetchPromotion();
 	}, []);
 
 	// Memoize filtered products based on search query
@@ -173,7 +188,7 @@ const Home = () => {
 		if(type === 2){
 			if(order_id){
 				updateOrder(order_id);
-				const finalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * (getTotalAmount -getTotalDiscount) : 0);
+				const finalAmount = getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount : 0);
 				return navigate(`/vnpay/${order_id}/${finalAmount}`);
 			}else{
 				createOrder();
@@ -208,20 +223,26 @@ const Home = () => {
 	};
 
 	const handleVoucherSubmit = async () => {
-		const voucher = promotions.find(promo => 
-			promo.code == voucherCodeInput && 
-			promo.quantity > 0 &&
-			new Date(promo.start_date) <= new Date() &&
-			new Date(promo.end_date) >= new Date()
-		);
+
+		if(voucherCodeInput === ''){
+			alert('Vui lòng nhập mã voucher');
+			return;
+		}
+		const voucher = promotions.find(promo => promo.code == voucherCodeInput);
+		
+		if(!voucher){
+			if(voucher.quantity <= 0){
+				alert('Mã voucher đã hết hạn hoặc đã sử dụng');
+			}else{
+				alert('Mã voucher không hợp lệ');
+			}
+			setVoucherCodeInput('');
+			return;
+		}
 
 		if (voucher) {
-			console.log(voucher.code);
 			updateVoucher(voucher, voucher.discount_percentage);
 			handleCloseVoucherDialog();
-		} else {
-			alert('Mã voucher không hợp lệ hoặc đã hết hạn');
-			setVoucherCodeInput('');
 		}
 	};
 
@@ -252,7 +273,7 @@ const Home = () => {
 
 	const handleRemoveProduct = async (productCode) => {
 		try {
-			removeProduct(productCode);
+			const response = await removeProduct(productCode);
 			if(response){
 				message.success('Sản phẩm đã được xóa thành công');
 			}
@@ -394,9 +415,9 @@ const Home = () => {
 										}
 									}}
 									onClick={() => {
-										if (item.name == 'Tiền Mặt') handlePayment(1);
-										if (item.name == 'Ví Điện Tử') handlePayment(2);
-										if (item.name == 'E-Voucher') handlePayment(3);
+										if (item.name === 'Tiền Mặt') handlePayment(1);
+										if (item.name === 'Ví Điện Tử') handlePayment(2);
+										if (item.name === 'E-Voucher') handlePayment(3);
 									}}
 								>
 									{item.name}
@@ -460,16 +481,24 @@ const Home = () => {
 							Thành tiền: {formatNumber(getTotalAmount).toLocaleString('vi-VN')} VNĐ
 						</Typography>
 						<Typography variant="h6" sx={{ mb: 2, color: '#f44336', fontWeight: 600 }}>
-							Chiết khấu: {formatNumber(getTotalDiscount + (orders?.discount ? orders.discount/100 * (getTotalAmount - getTotalDiscount): 0)).toLocaleString('vi-VN')} VNĐ
+							Chiết khấu: {formatNumber(getTotalDiscount + (orders?.discount ? orders.discount : 0)).toLocaleString('vi-VN')} VNĐ
 						</Typography>
 						{customer && (
 							<Typography variant="h6" sx={{ mb: 2, color: '#4CAF50', fontWeight: 600 }}>
 								Điểm tích lũy: {customer.diem} + {formatNumber(getTotalAmount)/1000}
 							</Typography>
 						)}
+
+						{orders.voucher_code && (
+							<Typography variant="h6" sx={{ mb: 2, color: '#4CAF50', fontWeight: 600 }}>
+								Mã giảm giá: {orders.voucher_code} - Giảm ({formatNumber(orders?.discount ? orders.discount : 0).toLocaleString('vi-VN')} VNĐ)
+							</Typography>
+						)}
+						
+
 						<Box sx={{ borderTop: '2px solid #e0e0e0', mt: 2, pt: 2 }}>
 							<Typography variant="h5" sx={{ color: '#f44336', fontWeight: 700, textAlign: 'center' }}>
-								TỔNG CỘNG: {formatNumber(getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount/100 * (getTotalAmount -getTotalDiscount) : 0)).toLocaleString('vi-VN')} VNĐ
+								TỔNG CỘNG: {formatNumber(getTotalAmount - getTotalDiscount - (orders?.discount ? orders.discount : 0)).toLocaleString('vi-VN')} VNĐ
 							</Typography>
 						</Box>
 					</Box>

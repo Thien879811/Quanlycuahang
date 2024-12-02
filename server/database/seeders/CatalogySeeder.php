@@ -17,7 +17,7 @@ class CatalogySeeder extends Seeder
     public function run()
     {
         Catalory::create([
-            'catalogy_name' => 'Nước giải khác',
+            'catalogy_name' => 'Nước giải khát',
         ]);
         Catalory::create([
             'catalogy_name' => 'Mì ăn liền',

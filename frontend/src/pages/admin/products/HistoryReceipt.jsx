@@ -77,6 +77,14 @@ const StyledInput = styled('input')(({ theme }) => ({
         boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
     }
 }));
+
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+    }).format(amount);
+};
+
 const HistoryReceipt = () => {
     const navigate = useNavigate();
     const [timeRange, setTimeRange] = useState('today');
@@ -312,8 +320,8 @@ const HistoryReceipt = () => {
                                         <TableRow key={detail.id}>
                                             <TableCell>{detail.product?.product_name}</TableCell>
                                             <TableCell align="right">{detail.return_quantity || detail.quantity}</TableCell>
-                                            <TableCell align="right">{detail.price?.toLocaleString()} VNĐ</TableCell>
-                                            <TableCell align="right">{((detail.return_quantity || detail.quantity) * detail.price)?.toLocaleString()} VNĐ</TableCell>
+                                            <TableCell align="right">{formatCurrency(detail.price)}</TableCell>
+                                            <TableCell align="right">{formatCurrency((detail.return_quantity || detail.quantity) * detail.price)}</TableCell>
                                             <TableCell align="right">
                                                 <Chip
                                                     label={detail.status}

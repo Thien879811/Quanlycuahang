@@ -6,12 +6,17 @@ use App\Models\Promotion;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Customer;
+use Carbon\Carbon;
 
 class PromotionController extends Controller
 {
     public function getPromotion()
     {
-        $promotions = Promotion::with('product')->get();
+        $promotions = Promotion::with('product')
+            ->where('start_date', '<=', Carbon::now()->format('Y-m-d'))
+            ->where('end_date', '>=', Carbon::now()->format('Y-m-d'))
+            ->get();
+
         return response()->json($promotions);
     }
 
@@ -19,7 +24,7 @@ class PromotionController extends Controller
     {
         $promotionData = $request->all();
 
-        if (!empty($promotionData['product_id'])) {
+        if (!empty($promotionData['product_id']) && $promotionData['code'] == null) {
             $createdPromotions = [];
             
             foreach ($promotionData['product_id'] as $productId) {
@@ -101,17 +106,32 @@ class PromotionController extends Controller
         return response()->json($promotion);
     }
 
-
-    public function Promotion(Request $request)
+    public function promotion(Request $request, $month = null)
     {
-        $promotions = Promotion::with('product')->where('start_date', '<=', now())->where('end_date', '>=', now())->get();
+        if ($month) {
+            $promotions = Promotion::with('product')
+                
+                ->whereMonth('start_date', '=', Carbon::parse($month)->month)
+                ->whereYear('start_date', '=', Carbon::parse($month)->year)
+                ->orWhereMonth('end_date', '=', Carbon::parse($month)->month) 
+                ->whereYear('end_date', '=', Carbon::parse($month)->year)
+                ->get();
+        } else {
+            $promotions = Promotion::with('product')
+               
+                ->where('start_date', '<=', Carbon::now()->format('Y-m-d'))
+                ->where('end_date', '>=', Carbon::now()->format('Y-m-d'))
+                ->get();
+        }
+
         foreach ($promotions as $promotion) {
-            if($promotion->present){
+            if ($promotion->present) {
+                $presentProduct = Product::find($promotion->present);
                 $promotion->present = [
                     'product_id' => $promotion->present,
-                    'product_name' => Product::find($promotion->present)->product_name,
-                    'product_image' => Product::find($promotion->present)->image,
-                    'product_price' => Product::find($promotion->present)->selling_price,
+                    'product_name' => $presentProduct->product_name,
+                    'product_image' => $presentProduct->image,
+                    'product_price' => $presentProduct->selling_price,
                 ];
             }
         }

@@ -24,7 +24,7 @@ export default function DefaultLayout() {
     const navigate = useNavigate();
     const location = useLocation();
 
-
+  
     if (!token) {
         return <Navigate to='/login' />;
     }

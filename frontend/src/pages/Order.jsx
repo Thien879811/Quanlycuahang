@@ -18,6 +18,13 @@ const Order = () => {
     const [openCancelNoteDialog, setOpenCancelNoteDialog] = useState(false);
     const navigate = useNavigate();
 
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(Math.floor(amount));
+    };
+
     const fetchOrders = async () => {
         try {
             const type = 'today';
@@ -36,7 +43,7 @@ const Order = () => {
                         ? product.soluong * product.dongia - product.discount
                         : product.soluong * product.dongia;
                     return total + productTotal;
-                }, 0) * (1 - (order.discount || 0) / 100)
+                }, 0) - (order.discount || 0)
             }));
             const sortedOrders = ordersWithTotal.sort((a, b) => 
                 new Date(b.created_at) - new Date(a.created_at)
@@ -220,10 +227,10 @@ const Order = () => {
                                 }}
                             >
                                 <TableCell sx={{ color: '#2196f3', fontWeight: 500 }}>
-                                    {Math.floor(order.finalTotal).toLocaleString()} VND
+                                    {formatCurrency(order.finalTotal)}
                                     {order.discount > 0 && (
                                         <Typography variant="caption" sx={{ color: '#f44336', display: 'block' }}>
-                                            Giảm: {order.discount}%
+                                            Giảm: {formatCurrency(order.discount)}
                                         </Typography>
                                     )}
                                 </TableCell>
@@ -298,8 +305,8 @@ const Order = () => {
                             <Box sx={{ display: 'grid', gap: 2, marginBottom: 3 }}>
                                 <Typography><strong>Mã đơn hàng:</strong> {selectedOrder.id}</Typography>
                                 <Typography><strong>Tên khách hàng:</strong> {selectedOrder.customer ? selectedOrder.customer.name : 'Khách lẻ'}</Typography>
-                                <Typography><strong>Khuyến mãi:</strong> {selectedOrder.discount  > 0 ? `Giảm ${selectedOrder.discount}%` : 'Không có'}</Typography>
-                                <Typography><strong>Tổng tiền:</strong> {Math.floor(selectedOrder.finalTotal).toLocaleString()} VND</Typography>
+                                <Typography><strong>Khuyến mãi:</strong> {selectedOrder.discount  > 0 ? `Giảm ${formatCurrency(selectedOrder.discount)}` : 'Không có'}</Typography>
+                                <Typography><strong>Tổng tiền:</strong> {formatCurrency(selectedOrder.finalTotal)}</Typography>
                                 <Typography><strong>Ngày:</strong> {new Date(selectedOrder.created_at).toLocaleString()}</Typography>
                                 <Typography><strong>Trạng thái:</strong> 
                                     <span style={{
@@ -330,12 +337,12 @@ const Order = () => {
                                             <TableRow key={index}>
                                                 <TableCell>{product.product.product_name}</TableCell>
                                                 <TableCell>{product.soluong}</TableCell>
-                                                <TableCell>{Math.floor(product.dongia).toLocaleString()} VND</TableCell>
-                                                <TableCell>{product.discount ? Math.floor(product.discount).toLocaleString() : 0} VND</TableCell>
+                                                <TableCell>{formatCurrency(product.dongia)}</TableCell>
+                                                <TableCell>{formatCurrency(product.discount || 0)}</TableCell>
                                                 <TableCell>
-                                                    {Math.floor(product.discount ? 
+                                                    {formatCurrency(product.discount ? 
                                                         product.soluong * product.dongia - product.discount : 
-                                                        product.soluong * product.dongia).toLocaleString()} VND
+                                                        product.soluong * product.dongia)}
                                                 </TableCell>
                                             </TableRow>
                                         ))}

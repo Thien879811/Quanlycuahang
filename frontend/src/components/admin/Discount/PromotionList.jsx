@@ -4,13 +4,15 @@ import { EditOutlined, DeleteOutlined, SearchOutlined, GiftOutlined, PercentageO
 import usePromotion from '../../../utils/promorionUtils';
 import moment from 'moment';
 import useProduct from '../../../utils/productUtils';
+import { handleResponse } from '../../../functions';
+import PromotionService from '../../../services/promotion.service';
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
 const { Option } = Select;
 
 function PromotionList({ promotions }) {
-    const {deletePromotion, updatePromotion, fetchPromotion } = usePromotion();
+    const {deletePromotion, updatePromotion, fetchPromotion, getPromotion } = usePromotion();
     const { products } = useProduct();
     const [searchText, setSearchText] = useState('');
     const [filteredPromotions, setFilteredPromotions] = useState([]);
@@ -94,6 +96,8 @@ function PromotionList({ promotions }) {
                 key: 'end_date',
                 render: (date) => moment(date).format('DD/MM/YYYY')
             },
+            max_value: { title: 'Giá trị tối đa', dataIndex: 'max_value', key: 'max_value' },
+            min_value: { title: 'Giá trị tối thiểu', dataIndex: 'min_value', key: 'min_value' },
             action: {
                 title: 'Hành động',
                 key: 'action',
@@ -159,12 +163,13 @@ function PromotionList({ promotions }) {
         filterPromotions(searchText, value, filterMonth);
     };
 
-    const handleMonthFilter = (date, dateString) => {
+    const handleMonthFilter = (e) => {
+        const date = e.target.value ? moment(e.target.value) : null;
         setFilterMonth(date);
         filterPromotions(searchText, filterType, date);
     };
 
-    const filterPromotions = (text, type, month) => {
+    const filterPromotions = async (text, type, month) => {
         let filtered = promotions;
 
         if (text) {
@@ -180,13 +185,17 @@ function PromotionList({ promotions }) {
         }
 
         if (month) {
-            filtered = filtered.filter(promotion => 
-                moment(promotion.start_date).format('YYYY-MM') === month.format('YYYY-MM') ||
-                moment(promotion.end_date).format('YYYY-MM') === month.format('YYYY-MM')
-            );
+            try {
+                const res = await PromotionService.getPromotion(month);
+                if (res) {
+                    const data = handleResponse(res);
+                    filtered = data;
+                }
+            } catch (error) {
+                console.error('Error fetching promotions:', error);
+            }
         }
-
-        setFilteredPromotions(filtered);
+        setFilteredPromotions(filtered);  
     };
 
     const handleOk = async () => {
@@ -223,10 +232,15 @@ function PromotionList({ promotions }) {
 
     useEffect(() => {
         fetchPromotion();
-    }, [promotions]);
+    }, []);
 
     const getPromotionsByCategory = (category) => {
         return filteredPromotions.filter(promotion => {
+            // Filter out vouchers with customer_id
+            if (category === 'Voucher' && promotion.customer_id) {
+                return false;
+            }
+            
             switch (promotion.catalory) {
                 case '1':
                     return category === 'Giảm giá sản phẩm';
@@ -255,11 +269,11 @@ function PromotionList({ promotions }) {
                     />
                 </Col>
                 <Col xs={24} sm={12} md={8}>
-                    <DatePicker.MonthPicker
-                        style={{ width: '100%' }}
+                    <input
+                        type="month"
+                        style={{ width: '100%', height: '40px', padding: '8px', borderRadius: '6px', border: '1px solid #d9d9d9' }}
                         placeholder="Lọc theo tháng"
                         onChange={handleMonthFilter}
-                        size="large"
                     />
                 </Col>
             </Row>
@@ -475,6 +489,22 @@ function PromotionList({ promotions }) {
                                         size="large"
                                         placeholder="Chọn ngày kết thúc"
                                     />
+                                </Form.Item>
+                            )}
+                            {editingPromotion?.max_value && (
+                                <Form.Item 
+                                    name="max_value" 
+                                    label="Giá trị tối đa"
+                                >
+                                    <InputNumber style={{ width: '100%' }} />
+                                </Form.Item>
+                            )}
+                            {editingPromotion?.min_value && (
+                                <Form.Item 
+                                    name="min_value" 
+                                    label="Giá trị tối thiểu"
+                                >
+                                    <InputNumber style={{ width: '100%' }} />
                                 </Form.Item>
                             )}
                         </Col>

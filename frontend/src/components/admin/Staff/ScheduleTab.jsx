@@ -80,6 +80,8 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
         time_end: values.timeRange[1].format('HH:mm'),
       };
 
+      console.log(updatedSchedule);
+
       const response = await employeeService.updateWorkingSchedule(updatedSchedule.id, updatedSchedule);
       const dataResponse = handleResponse(response);
 

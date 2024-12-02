@@ -29,6 +29,19 @@ use Illuminate\Support\Facades\Route;
 |
 */ 
 
+Route::get('/promotion', [PromotionController::class, 'getPromotion']);
+Route::post('/promotion', [PromotionController::class, 'create']);
+Route::delete('/promotion/{id}', [PromotionController::class, 'delete']);
+Route::put('/promotion/{id}', [PromotionController::class, 'update']);
+Route::put('/promotion/voucher/quantity/{id}', [PromotionController::class, 'updateQuantity']);
+Route::get('/promotion/product/{month?}', [PromotionController::class, 'promotion']);
+Route::get('/promotions/customer', [PromotionController::class, 'promotion']);
+Route::get('/promotions/customer/{id}', [PromotionController::class, 'getPromotionDetail']);
+Route::post('/promotions/redeem-point', [PromotionController::class, 'createRedeemPoint']);
+Route::get('/promotions/customer/{id}', [PromotionController::class, 'getPromotionByCustomerId']);
+Route::get('/promotions/code', [PromotionController::class, 'getPromotionCode']);
+
+
 Route::post('/goods-receipt', [GoodsReceiptController::class, 'createGoodsReceipt'] );
 Route::get('/goods-receipt', [GoodsReceiptController::class, 'getAll']);
 Route::get('/goods-receipt/receipt/{id}', [GoodsReceiptController::class, 'getReceiptById']);
@@ -74,19 +87,7 @@ Route::get('/orders/customer/{id}/{date}', [OrdersController::class, 'getOrdersB
 
 
 
-Route::controller(PromotionController::class)->group(function () {
-    Route::get('/promotion', 'getPromotion');
-    Route::post('/promotion', 'create');
-    Route::delete('/promotion/{id}', 'delete');
-    Route::put('/promotion/{id}', 'update');
-    Route::put('/promotion/voucher/quantity/{id}', 'updateQuantity');
-    Route::get('/promotion/product', 'Promotion');
-    Route::get('/promotions/customer', 'getPromotionsCustomer');
-    Route::get('/promotions/customer/{id}', 'getPromotionDetail');
-    Route::post('/promotions/redeem-point', 'createRedeemPoint');
-    Route::get('/promotions/customer/{id}', 'getPromotionByCustomerId');
-    Route::get('/promotions/code', 'getPromotionCode');
-});
+
 
 //check inventory api
 Route::get('/check-inventory/{timeRange?}', [CheckInventoryController::class, 'getAllCheckInventories']);

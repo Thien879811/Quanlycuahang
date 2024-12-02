@@ -6,8 +6,11 @@ class PromotionService {
     async create(data) {
         return (await this.api.post("/", data)).data;
     }
-    async getPromotion() {
-        return (await this.api.get("/product")).data;
+    async getPromotion(month = null) {
+        if (month) {
+            return (await this.api.get(`/product/${month}`)).data;
+        }
+        return (await this.api.get('/product')).data;
     }
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
