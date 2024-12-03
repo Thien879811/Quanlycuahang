@@ -49,7 +49,8 @@ const InventoryReport = () => {
   useEffect(() => {
     if (searchText) {
       const filtered = products.filter(product => 
-        product.product_name.toLowerCase().includes(searchText.toLowerCase())
+        product.product_name.toLowerCase().includes(searchText.toLowerCase()) ||
+        product.barcode.toLowerCase().includes(searchText.toLowerCase())
       );
       setFilteredProducts(filtered);
     } else {
@@ -405,7 +406,7 @@ const InventoryReport = () => {
                     onMouseEnter={e => e.target.style.backgroundColor = '#f5f5f5'}
                     onMouseLeave={e => e.target.style.backgroundColor = 'white'}
                   >
-                    {product.product_name}
+                    {product.product_name} ( {product.barcode} )
                   </div>
                 ))}
               </Card>

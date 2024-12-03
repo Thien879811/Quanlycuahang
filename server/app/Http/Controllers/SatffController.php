@@ -19,6 +19,8 @@ class SatffController extends Controller
         $employee->address = $data['address'];
         $employee->phone = $data['phone'];
         $employee->gioitinh = $data['gioitinh'];
+        $employee->position = $data['position_id'] ?? $employee->position;
+        $employee->salary = $data['salary'] ?? $employee->salary;
         $employee->save();
         return response()->json(['success' => true, 'message' => 'Cập nhật thông tin nhân viên thành công', 'employee' => $employee]);
     }

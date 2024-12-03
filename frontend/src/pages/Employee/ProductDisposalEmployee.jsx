@@ -22,7 +22,10 @@ import {
     Select,
     MenuItem,
     IconButton,
-    Tooltip
+    Tooltip,
+    CircularProgress,
+    Grid,
+    styled
 } from '@mui/material';
 import productService from '../../services/product.service';
 import { handleResponse } from '../../functions';
@@ -33,6 +36,36 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
 
+const StyledInput = styled('input')(({ theme }) => ({
+    padding: '12px 16px',
+    fontSize: '14px',
+    marginTop: '13px',
+    border: '1px solid #e0e0e0',
+    height: '56px',
+    borderRadius: '8px',
+    width: '100%',
+    '&:focus': {
+        outline: 'none',
+        borderColor: theme.palette.primary.main,
+        boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+    }
+}));
+
+const StyledTableCell = styled(TableCell)({
+    fontWeight: 'bold',
+    backgroundColor: '#f8fafc',
+    borderBottom: '2px solid rgba(224, 224, 224, 1)',
+    padding: '16px'
+});
+
+const StyledChip = styled(Chip)({
+    borderRadius: '16px',
+    fontWeight: 500,
+    '& .MuiChip-icon': {
+        fontSize: '20px'
+    }
+});
+
 const ProductDisposalEmployee = () => {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
@@ -42,41 +75,53 @@ const ProductDisposalEmployee = () => {
     const [quantity, setQuantity] = useState('');
     const [reason, setReason] = useState('');
     const [destroyDate, setDestroyDate] = useState(dayjs());
-    const [expirationDate, setExpirationDate] = useState(null);
+    const [expirationDate, setExpirationDate] = useState('');
     const [timeRange, setTimeRange] = useState('today');
     const [customDate, setCustomDate] = useState('');
     const [customMonth, setCustomMonth] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        loadProducts();
-        loadDisposalRequests();
+        const debounceTimer = setTimeout(() => {
+            loadProducts();
+            loadDisposalRequests();
+        }, 300);
+
+        return () => clearTimeout(debounceTimer);
     }, [timeRange, customDate, customMonth]);
 
     const loadProducts = async () => {
         try {
+            setLoading(true);
             const response = await productService.getAll();
             const data = handleResponse(response);
             setProducts(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Error loading products:', error);
             setProducts([]);
+        } finally {
+            setLoading(false);
         }
     };
 
     const loadDisposalRequests = async () => {
         try {
+            setLoading(true);
             let params = timeRange;
             if (timeRange === 'custom' && customDate) {
-                params = { type: 'custom', date: customDate };
+                params = customDate;
             } else if (timeRange === 'custom_month' && customMonth) {
-                params = { type: 'custom_month', date: customMonth };
+                params = customMonth;
             }
-            const response = await productService.getDestroyProduct(params);
+            const response = await productService.getDestroyProduct(timeRange, params);
             const data = handleResponse(response);
             setDisposalRequests(data.data);
         } catch (error) {
             console.error('Error loading disposal requests:', error);
             setDisposalRequests([]);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -94,11 +139,12 @@ const ProductDisposalEmployee = () => {
         setQuantity('');
         setReason('');
         setDestroyDate(dayjs());
-        setExpirationDate(null);
+        setExpirationDate('');
     };
 
     const handleSubmit = async () => {
         try {
+            setSubmitting(true);
             const formData = new FormData();
             formData.append('product_id', selectedProduct);
             formData.append('quantity', quantity);
@@ -106,7 +152,7 @@ const ProductDisposalEmployee = () => {
             formData.append('note', reason);
             formData.append('status', 'pending');
             if (expirationDate) {
-                formData.append('expiration_date', expirationDate.format('YYYY-MM-DD'));
+                formData.append('expiration_date', expirationDate);
             }
 
             const response = await productService.createDestroyProduct(formData);
@@ -115,11 +161,15 @@ const ProductDisposalEmployee = () => {
             handleCloseDialog();
         } catch (error) {
             console.error('Error creating disposal request:', error);
+        } finally {
+            setSubmitting(false);
         }
     };
 
     const handleTimeRangeChange = (event) => {
         setTimeRange(event.target.value);
+        if (event.target.value !== 'custom') setCustomDate('');
+        if (event.target.value !== 'custom_month') setCustomMonth('');
     };
 
     const handleCustomDateChange = (event) => {
@@ -156,12 +206,11 @@ const ProductDisposalEmployee = () => {
         }
 
         return (
-            <Chip
+            <StyledChip
                 icon={icon}
                 label={label}
                 color={color}
                 size="small"
-                sx={{ fontWeight: 'medium' }}
             />
         );
     };
@@ -223,32 +272,32 @@ const ProductDisposalEmployee = () => {
                         </Select>
                     </FormControl>
                     {timeRange === 'custom' && (
-                        <TextField
+                        <StyledInput
                             type="date"
                             value={customDate}
                             onChange={handleCustomDateChange}
                             sx={{
                                 backgroundColor: 'white',
-                                width: 200,
-                                '& .MuiOutlinedInput-root': {
-                                    height: '56px',
-                                    borderRadius: '8px',
-                                }
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                    borderColor: '#3b82f6'
+                                },
+                                width: 200
                             }}
                         />
                     )}
                     {timeRange === 'custom_month' && (
-                        <TextField
+                        <StyledInput
                             type="month"
                             value={customMonth}
                             onChange={handleCustomMonthChange}
                             sx={{
                                 backgroundColor: 'white',
-                                width: 200,
-                                '& .MuiOutlinedInput-root': {
-                                    height: '56px',
-                                    borderRadius: '8px',
-                                }
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                    borderColor: '#3b82f6'
+                                },
+                                width: 200
                             }}
                         />
                     )}
@@ -283,19 +332,36 @@ const ProductDisposalEmployee = () => {
                     borderRadius: 4,
                     overflow: 'hidden',
                     boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
-                    background: 'linear-gradient(to bottom, #ffffff, #f8fafc)'
+                    background: 'linear-gradient(to bottom, #ffffff, #f8fafc)',
+                    position: 'relative'
                 }}
             >
+                {loading && (
+                    <Box sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                        zIndex: 1
+                    }}>
+                        <CircularProgress />
+                    </Box>
+                )}
                 <TableContainer sx={{ maxHeight: 440 }}>
                     <Table stickyHeader>
                         <TableHead>
                             <TableRow>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Mã yêu cầu</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Sản phẩm</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Số lượng</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Lý do</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Ngày tạo</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', fontSize: '1.1rem' }}>Trạng thái</TableCell>
+                                <StyledTableCell>Mã yêu cầu</StyledTableCell>
+                                <StyledTableCell>Sản phẩm</StyledTableCell>
+                                <StyledTableCell>Số lượng</StyledTableCell>
+                                <StyledTableCell>Lý do</StyledTableCell>
+                                <StyledTableCell>Ngày tạo</StyledTableCell>
+                                <StyledTableCell>Trạng thái</StyledTableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -359,10 +425,35 @@ const ProductDisposalEmployee = () => {
                                 value={selectedProduct}
                                 onChange={(e) => setSelectedProduct(e.target.value)}
                                 label="Sản phẩm"
+                                sx={{
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white',
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                                        borderWidth: '2px'
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: '#3b82f6'
+                                    }
+                                }}
                             >
                                 {products.map((product) => (
                                     <MenuItem key={product.id} value={product.id}>
-                                        {product.product_name}
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                                            <Box>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {product.product_name} ({product.barcode})
+                                                </Typography>
+                                                <Typography variant="caption" color="textSecondary">
+                                                    Mã SP: #{product.id}
+                                                </Typography>
+                                            </Box>
+                                            <Chip 
+                                                label={`SL: ${product.quantity || 0}`}
+                                                color="primary"
+                                                size="small"
+                                            />
+                                        </Box>
                                     </MenuItem>
                                 ))}
                             </Select>
@@ -374,7 +465,13 @@ const ProductDisposalEmployee = () => {
                             type="number"
                             value={quantity}
                             onChange={(e) => setQuantity(e.target.value)}
-                            sx={{ mb: 3 }}
+                            sx={{ 
+                                mb: 3,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white'
+                                }
+                            }}
                         />
 
                         <TextField
@@ -384,7 +481,13 @@ const ProductDisposalEmployee = () => {
                             rows={3}
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            sx={{ mb: 3 }}
+                            sx={{ 
+                                mb: 3,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white'
+                                }
+                            }}
                         />
 
                         <TextField
@@ -393,20 +496,32 @@ const ProductDisposalEmployee = () => {
                             type="date"
                             value={destroyDate.format('YYYY-MM-DD')}
                             onChange={(e) => setDestroyDate(dayjs(e.target.value))}
-                            sx={{ mb: 3 }}
                             InputLabelProps={{
                                 shrink: true,
+                            }}
+                            sx={{ 
+                                mb: 3,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white'
+                                }
                             }}
                         />
                         <TextField
                             fullWidth
                             label="Hạn sử dụng (nếu có)"
                             type="date"
-                            value={expirationDate ? expirationDate.format('YYYY-MM-DD') : ''}
-                            onChange={(e) => setExpirationDate(e.target.value ? dayjs(e.target.value) : null)}
-                            sx={{ mb: 3 }}
+                            value={expirationDate}
+                            onChange={(e) => setExpirationDate(e.target.value)}
                             InputLabelProps={{
                                 shrink: true,
+                            }}
+                            sx={{ 
+                                mb: 3,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white'
+                                }
                             }}
                         />
                     </Box>
@@ -415,6 +530,7 @@ const ProductDisposalEmployee = () => {
                     <Button 
                         onClick={handleCloseDialog}
                         variant="outlined"
+                        disabled={submitting}
                         sx={{ 
                             textTransform: 'none',
                             borderRadius: 2,
@@ -427,13 +543,14 @@ const ProductDisposalEmployee = () => {
                     <Button 
                         onClick={handleSubmit}
                         variant="contained"
+                        disabled={submitting}
                         sx={{ 
                             textTransform: 'none',
                             borderRadius: 2,
                             px: 3
                         }}
                     >
-                        Tạo yêu cầu
+                        {submitting ? <CircularProgress size={24} /> : 'Tạo yêu cầu'}
                     </Button>
                 </DialogActions>
             </Dialog>

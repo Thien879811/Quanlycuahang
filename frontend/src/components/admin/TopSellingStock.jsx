@@ -35,7 +35,7 @@ const TopSellingStock = ({ topSellingStock }) => {
   }));  
 
   return (
-    <Card title="Sản phẩm bán chạy" extra={<a href="#">Xem tất cả</a>}>
+    <Card title="Sản phẩm bán chạy">
       <Table columns={columns} dataSource={data} pagination={false} />
     </Card>
   );

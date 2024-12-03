@@ -48,52 +48,69 @@ const Dashboard = () => {
       } else {
         timeParam = timeRange;
       }
-      
       await Promise.all([
-        getSalesOverview(timeParam),
-        getInventorySummary(timeParam),
         getProductSummary(),
         getOrderSummary(),
+        getLowQuantityStock(),
         getSalesAndPurchaseChartData(),
-        getTopSellingStock(timeParam),
-        getLowQuantityStock(timeParam),
-        getPurchaseData(timeParam)
+        getSalesOverview(timeRange, timeParam),
+        getInventorySummary(timeRange, timeParam),
+        getTopSellingStock(timeRange, timeParam),
+        getPurchaseData(timeRange, timeParam)
       ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const getSalesOverview = async (type) => {
+  const getTopSellingStock = async (type, timeParam=null) => {
     try {
-      const data = await dashboardService.getSalesOverview(type);
+      const data = await dashboardService.getTopSellingStock(type, timeParam);
+      setTopSellingStock(handleResponse(data));
+    } catch (error) {
+      console.error(error);
+    } 
+  }
+
+  const getLowQuantityStock = async (type, timeParam=null) => {
+    try {
+      const data = await dashboardService.getLowQuantityStock(type, timeParam);
+      setLowQuantityStock(handleResponse(data));
+    } catch (error) {
+      console.error(error);
+    } 
+  }
+
+  const getSalesOverview = async (type, timeParam=null) => {
+    try {
+      const data = await dashboardService.getSalesOverview(type, timeParam);
       setSalesOverview(handleResponse(data));
     } catch (error) {
       console.error(error);
     }
   }
 
-  const getInventorySummary = async (type) => {
+  const getInventorySummary = async (type, timeParam=null) => {
     try {
-      const data = await dashboardService.getInventorySummary(type);
+      const data = await dashboardService.getInventorySummary(type, timeParam);
       setInventorySummary(handleResponse(data));
     } catch (error) {
       console.error(error);
     } 
   }
 
-  const getPurchaseData = async (type) => {
+  const getPurchaseData = async (type, timeParam=null) => {
     try {
-      const data = await dashboardService.getPurchaseData(type);
+      const data = await dashboardService.getPurchaseData(type, timeParam);
       setPurchaseData(handleResponse(data));
     } catch (error) {
       console.error(error);
     } 
   }
 
-  const getProductSummary = async (type) => {
+  const getProductSummary = async (type, timeParam=null) => {
     try {
-      const data = await dashboardService.getProductSummary(type);
+      const data = await dashboardService.getProductSummary(type, timeParam);
       setProductSummary(handleResponse(data));
     } catch (error) {
       console.error(error);
@@ -149,23 +166,6 @@ const Dashboard = () => {
     } 
   }
 
-  const getTopSellingStock = async (type) => {
-    try {
-      const data = await dashboardService.getTopSellingStock(type);
-      setTopSellingStock(handleResponse(data));
-    } catch (error) {
-      console.error(error);
-    } 
-  }
-
-  const getLowQuantityStock = async (type) => {
-    try {
-      const data = await dashboardService.getLowQuantityStock(type);
-      setLowQuantityStock(handleResponse(data));
-    } catch (error) {
-      console.error(error);
-    } 
-  }
 
   const handleTimeRangeChange = (value) => {
     setTimeRange(value);
@@ -234,12 +234,14 @@ const Dashboard = () => {
         <Row gutter={[24, 24]}>
           <Col span={18}>
             <Row gutter={[24, 24]}>
-              <Col span={12}>
+              <Col span={24}>
                 <Card hoverable>
                   <SalesOverview salesOverview={salesOverview} />
                 </Card>
               </Col>
-              <Col span={12}>
+            </Row>
+            <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
+              <Col span={24}>
                 <Card hoverable>
                   <PurchaseOverview purchaseData={purchaseData} />
                 </Card>

@@ -18,8 +18,14 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek, load
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
 
-    // Lọc ra các yêu cầu nghỉ phép chưa được duyệt
-    const pendingLeaveRequests = attendances?.filter(a => a.status === '-1') || [];
+    // Filter employees with user_id
+    const filteredEmployees = employees.filter(emp => emp.user_id !== null);
+
+    // Lọc ra các yêu cầu nghỉ phép chưa được duyệt từ nhân viên có user_id
+    const pendingLeaveRequests = attendances?.filter(a => {
+        const employee = filteredEmployees.find(emp => emp.id === a.employee_id);
+        return employee && a.status === '-1';
+    }) || [];
 
     const handleApproveLeave = async (attendance) => {
         try {
@@ -137,22 +143,24 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek, load
             const startOfWeek = currentWeek.clone().startOf('week');
             const endOfWeek = currentWeek.clone().endOf('week');
             
-            filteredAttendances = attendances.filter(attendance => 
-                moment(attendance.date).isBetween(startOfWeek, endOfWeek, 'day', '[]')
-            );
+            filteredAttendances = attendances.filter(attendance => {
+                const employee = filteredEmployees.find(emp => emp.id === attendance.employee_id);
+                return employee && moment(attendance.date).isBetween(startOfWeek, endOfWeek, 'day', '[]');
+            });
             fileName = `Cham_cong_tuan_${currentWeek.format('DD-MM-YYYY')}.xlsx`;
         } else {
             const startOfMonth = currentWeek.clone().startOf('month');
             const endOfMonth = currentWeek.clone().endOf('month');
             
-            filteredAttendances = attendances.filter(attendance => 
-                moment(attendance.date).isBetween(startOfMonth, endOfMonth, 'day', '[]')
-            );
+            filteredAttendances = attendances.filter(attendance => {
+                const employee = filteredEmployees.find(emp => emp.id === attendance.employee_id);
+                return employee && moment(attendance.date).isBetween(startOfMonth, endOfMonth, 'day', '[]');
+            });
             fileName = `Cham_cong_thang_${currentWeek.format('MM-YYYY')}.xlsx`;
         }
 
         const exportData = filteredAttendances.map(attendance => {
-            const employee = employees.find(emp => emp.id === attendance.employee_id);
+            const employee = filteredEmployees.find(emp => emp.id === attendance.employee_id);
             return {
                 'Tên nhân viên': employee?.name || '',
                 'Ngày': moment(attendance.date).format('DD/MM/YYYY'),
@@ -239,7 +247,7 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek, load
                             <Space direction="vertical">
                                 <Text strong>Yêu cầu nghỉ phép chờ duyệt:</Text>
                                 {pendingLeaveRequests.map(request => {
-                                    const employee = employees.find(emp => emp.id === request.employee_id);
+                                    const employee = filteredEmployees.find(emp => emp.id === request.employee_id);
                                     return (
                                         <Space key={request.id}>
                                             <Text>{employee?.name} - {moment(request.date).format('DD/MM/YYYY')}</Text>
@@ -291,7 +299,7 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek, load
                                 allowClear
                                 size="middle"
                             >
-                                {employees.map((employee) => (
+                                {filteredEmployees.map((employee) => (
                                     <Option key={employee.id} value={employee.id}>
                                         {employee.name}
                                     </Option>
@@ -334,7 +342,7 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek, load
                 <Table
                     loading={loading}
                     columns={columns}
-                    dataSource={employees}
+                    dataSource={filteredEmployees}
                     rowKey="id"
                     scroll={{ x: true }}
                 />
@@ -352,7 +360,7 @@ const AttendanceTab = ({ employees, attendances, currentWeek, onChangeWeek, load
                             rules={[{ required: true, message: 'Vui lòng chọn nhân viên' }]}
                         >
                             <Select placeholder="Chọn nhân viên">
-                                {employees.map(employee => (
+                                {filteredEmployees.map(employee => (
                                     <Option key={employee.id} value={employee.id}>
                                         {employee.name}
                                     </Option>

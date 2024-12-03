@@ -154,7 +154,8 @@ const InventoryReportAdmin = () => {
   useEffect(() => {
     if (searchText) {
       const filtered = products.filter(product => 
-        product.product_name.toLowerCase().includes(searchText.toLowerCase())
+        product.product_name.toLowerCase().includes(searchText.toLowerCase()) ||
+        product.barcode.toLowerCase().includes(searchText.toLowerCase())
       );
       setFilteredProducts(filtered);
     } else {
@@ -251,6 +252,34 @@ const InventoryReportAdmin = () => {
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
+
+      // Kiểm tra ngày kiểm kê
+      if (!values.check_date) {
+        message.error('Vui lòng chọn ngày kiểm kê');
+        return;
+      }
+
+      // Kiểm tra danh sách sản phẩm
+      if (!values.products || values.products.length === 0) {
+        message.error('Vui lòng thêm ít nhất một sản phẩm để kiểm kê');
+        return;
+      }
+
+      if(!values.note){
+        message.error('Vui lòng nhập ghi chú');
+        return;
+      }
+
+      // Kiểm tra số lượng thực tế của từng sản phẩm
+      const invalidProducts = values.products.filter(
+        product => !product.actual_quantity || product.actual_quantity < 0
+      );
+
+      if (invalidProducts.length > 0) {
+        message.error('Vui lòng nhập số lượng thực tế hợp lệ cho tất cả sản phẩm');
+        return;
+      }
+
       const payload = {
         check_date: values.check_date.format('YYYY-MM-DD'),
         note: values.note,

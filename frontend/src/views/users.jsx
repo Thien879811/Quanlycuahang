@@ -75,7 +75,6 @@ export default function Users() {
             render: (_, record) => (
                 record.role !== 'admin' && (
                     <Space size="middle">
-                        <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>Sửa</Button>
                         <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.id)}>Xóa</Button>
                     </Space>
                 )

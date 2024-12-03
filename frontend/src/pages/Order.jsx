@@ -335,14 +335,14 @@ const Order = () => {
                                     <TableBody>
                                         {selectedOrder.details && selectedOrder.details.map((product, index) => (
                                             <TableRow key={index}>
-                                                <TableCell>{product.product.product_name}</TableCell>
-                                                <TableCell>{product.soluong}</TableCell>
-                                                <TableCell>{formatCurrency(product.dongia)}</TableCell>
-                                                <TableCell>{formatCurrency(product.discount || 0)}</TableCell>
+                                                <TableCell>{product?.product?.product_name}</TableCell>
+                                                <TableCell>{product?.soluong}</TableCell>
+                                                <TableCell>{formatCurrency(product?.dongia)}</TableCell>
+                                                <TableCell>{formatCurrency(product?.discount || 0)}</TableCell>
                                                 <TableCell>
                                                     {formatCurrency(product.discount ? 
-                                                        product.soluong * product.dongia - product.discount : 
-                                                        product.soluong * product.dongia)}
+                                                        product?.soluong * product?.dongia - product?.discount : 
+                                                        product?.soluong * product?.dongia)}
                                                 </TableCell>
                                             </TableRow>
                                         ))}

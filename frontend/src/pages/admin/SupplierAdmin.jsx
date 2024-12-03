@@ -222,8 +222,9 @@ const SupplierAdmin = () => {
                 onCancel={handleCancel}
                 footer={null}
                 width={600}
-                style={{top: 20}}
+                style={{top: 100}}
                 bodyStyle={{padding: '24px'}}
+                
             >
                 <Form form={form} onFinish={handleSubmit} layout="vertical">
                     <Form.Item name="factory_name" label="Tên nhà cung cấp" rules={[{ required: true, message: 'Vui lòng nhập tên nhà cung cấp' }]}>

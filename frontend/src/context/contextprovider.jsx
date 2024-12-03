@@ -24,6 +24,7 @@ export const ContextProvider = ({children}) => {
                     if (data) {
                         setUser(data.user);
                     } else {
+                        window.onload;
                         setToken(null);
                         setUser(null);
                     }

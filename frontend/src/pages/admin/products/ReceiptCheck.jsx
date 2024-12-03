@@ -99,9 +99,14 @@ const ReceiptCheck = () => {
     const fetchAllReceipts = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await ReceiptService.getReceipt(timeRange, timeRange === 'custom_month' ? customMonth : customDate);
+            let params = timeRange;
+            if (timeRange === 'custom' && customDate) {
+                params = customDate;
+            } else if (timeRange === 'custom_month' && customMonth) {
+                params = customMonth;
+            }
+            const response = await ReceiptService.getReceipt(timeRange, params);
             const data = handleResponse(response);
-            console.log(data);
             if (data.success) {
                 const processedReceipts = data.goods_receipts.map(receipt => ({
                     ...receipt,

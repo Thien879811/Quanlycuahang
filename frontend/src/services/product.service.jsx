@@ -32,8 +32,8 @@ class ProductService {
         const headers = { 'Content-Type': 'multipart/form-data' };
         return (await this.api.post("/destroy/create", data)).data;
     }
-    async getDestroyProduct(type) {
-        return (await this.api.get(`/destroy/${type}`)).data;
+    async getDestroyProduct(type, params) {
+        return (await this.api.get(`/destroy/${type}`, { params: { date: params } })).data;
     }
     async updateDestroyProductStatus(id, data) {
         return (await this.api.put(`/destroy/${id}`, data)).data;

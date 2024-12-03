@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select, message } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, message, Tag } from 'antd';
 import EmployeeService from '../../../services/employee.service';
+import { handleResponse } from '../../../functions';
 
 const InfoEmployee = ({ employees, setEmployees }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -45,6 +46,15 @@ const InfoEmployee = ({ employees, setEmployees }) => {
             render: (text) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(text),
         },
         {
+            title: 'Trạng thái',
+            key: 'status',
+            render: (_, record) => (
+                <Tag color={record.user_id ? 'green' : 'red'}>
+                    {record.user_id ? 'Đang hoạt động' : 'Ngừng truy cập'}
+                </Tag>
+            ),
+        },
+        {
             title: 'Hành động',
             key: 'action',
             render: (_, record) => (
@@ -62,13 +72,23 @@ const InfoEmployee = ({ employees, setEmployees }) => {
     const handleSave = async () => {
         try {
             const values = await form.validateFields();
-            const updatedEmployee = { ...editingEmployee, ...values };
-            const response = await EmployeeService.update(editingEmployee.id, updatedEmployee);
-            if (response.status === 200) {
+            const data = {
+                names: values.name,
+                age: values.age,
+                address: values.address,
+                phone: values.phone,
+                gioitinh: values.gender,
+                position_id: values.position,
+                salary: values.salary
+            };
+            const response = await EmployeeService.update(editingEmployee.id, data);
+            const dataRes = handleResponse(response);
+            if (dataRes.success) {
+                const updatedEmployee = { ...editingEmployee, ...values };
                 setEmployees(employees.map(emp => emp.id === editingEmployee.id ? updatedEmployee : emp));
                 setIsEditing(false);
                 setEditingEmployee(null);
-                message.success('Cập nhật thông tin nhân viên thành công');
+                message.success(dataRes.message);
             }
         } catch (error) {
             console.error('Lỗi khi cập nhật thông tin nhân viên:', error);
@@ -76,6 +96,7 @@ const InfoEmployee = ({ employees, setEmployees }) => {
         }
     };
 
+    
     return (
         <div className="employee-info">
             <h2>Thông tin nhân viên</h2>

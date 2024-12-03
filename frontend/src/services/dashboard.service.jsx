@@ -3,15 +3,6 @@ class DashboardService {
     constructor(baseUrl = "/api/dashboard") {
         this.api = createApiClient(baseUrl);
     }
-
-    async getSalesOverview(type) {
-        return (await this.api.get(`/sales-overview/${type}`)).data;
-    }
-
-    async getInventorySummary(type) {
-        return (await this.api.get(`/inventory-summary/${type}`)).data;
-    }
-
     async getProductSummary() {
         return (await this.api.get(`/product-summary`)).data;
     }   
@@ -21,19 +12,26 @@ class DashboardService {
     }
 
     async getSalesAndPurchaseChartData() {
-        return (await this.api.get(`/sales-and-purchase-chart-data`)).data;
+        return (await this.api.get(`/sales-and-purchase-chart-data/`)).data;
     }
 
-    async getTopSellingStock(type) {
-        return (await this.api.get(`/top-selling-stock/${type}`)).data;
+    async getTopSellingStock(type, timeParam=null) {
+        return (await this.api.get(`/top-selling-stock/${type}`, {params: {date: timeParam}})).data;
     }
 
-    async getLowQuantityStock(type) {
-        return (await this.api.get(`/low-quantity-stock/${type}`)).data;
+    async getLowQuantityStock() {
+        return (await this.api.get(`/low-quantity-stock`)).data;
     }
 
-    async getPurchaseData(type) {
-        return (await this.api.get(`/purchase-data/${type}`)).data;
+    async getPurchaseData(type, timeParam=null) {
+        return (await this.api.get(`/purchase-data/${type}`, {params: {date: timeParam}})).data;
+    }
+    async getSalesOverview(type, timeParam=null) {
+        return (await this.api.get(`/sales-overview/${type}`, {params: {date: timeParam}})).data;
+    }
+
+    async getInventorySummary(type, timeParam=null) {
+        return (await this.api.get(`/inventory-summary/${type}`, {params: {date: timeParam}})).data;
     }
 }
 export default new DashboardService();

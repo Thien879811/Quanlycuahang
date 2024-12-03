@@ -256,10 +256,60 @@ class ProductController extends Controller
         return response()->json(['success' => true, 'message' => 'Sản phẩm đã xóa thành công']);
     }
 
-    public function getDestroyProduct()
+    public function getDestroyProduct($type, Request $request)
     {
-        $destroyProducts = DestroyProduct::with('product')->get();
-        return response()->json($destroyProducts);
+        $query = DestroyProduct::with('product');
+
+        switch ($type) {
+            case 'today':
+                $query->whereDate('created_at', Carbon::today());
+                break;
+            case 'week':
+                $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                break;
+            case 'month':
+                $query->whereMonth('created_at', Carbon::now()->month)
+                      ->whereYear('created_at', Carbon::now()->year);
+                break;
+            case 'custom':
+                if (!$request->has('date')) {
+                    return response()->json(['error' => 'Date is required for custom type'], 400);
+                }
+                $date = $request->input('date');
+                if (!is_string($date)) {
+                    return response()->json(['error' => 'Date must be a string'], 400);
+                }
+                try {
+                    $parsedDate = Carbon::parse($date);
+                    $query->whereDate('created_at', $parsedDate);
+                } catch (\Exception $e) {
+                    return response()->json(['error' => 'Invalid date format'], 400);
+                }
+                break;
+            case 'custom_month':
+                if (!$request->has('date')) {
+                    return response()->json(['error' => 'Date is required for custom month type'], 400);
+                }
+                $date = $request->input('date');
+                if (!is_string($date)) {
+                    return response()->json(['error' => 'Date must be a string'], 400);
+                }
+                try {
+                    $parsedDate = Carbon::parse($date);
+                    $query->whereMonth('created_at', $parsedDate->month)
+                          ->whereYear('created_at', $parsedDate->year);
+                } catch (\Exception $e) {
+                    return response()->json(['error' => 'Invalid date format'], 400);
+                }
+                break;
+        }
+
+        $destroyProducts = $query->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $destroyProducts
+        ]);
     }
 
     public function updateDestroyProductStatus(Request $request, $id)

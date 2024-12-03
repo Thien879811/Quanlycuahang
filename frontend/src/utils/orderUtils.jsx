@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import orderService from '../services/order.service';
 import { handleResponse } from '../functions/index';
 import useCustomer from './customerUtils';
+import { Alert } from '@mui/material';
+import { message } from 'antd';
+
 
 
 const orderUtils = () => {
@@ -55,7 +58,7 @@ const orderUtils = () => {
             );
 
             if (newOrders.min_value && totalAmount < parseFloat(newOrders.min_value)) {
-                alert(`Đơn hàng phải có giá trị tối thiểu ${newOrders.min_value.toLocaleString()}đ để sử dụng voucher này`);
+                message.error(`Đơn hàng phải có giá trị tối thiểu ${newOrders.min_value.toLocaleString()}đ để sử dụng voucher này`);
                 return {
                     ...newOrders,
                     voucher_id: null,
@@ -231,7 +234,7 @@ const orderUtils = () => {
             const totalAmount = getTotalAmount;
 
             if (voucher.min_value && totalAmount < parseFloat(voucher.min_value)) {
-                alert(`Đơn hàng phải có giá trị tối thiểu ${voucher.min_value.toLocaleString()}đ để sử dụng voucher này`);
+                message.error(`Đơn hàng phải có giá trị tối thiểu ${voucher.min_value.toLocaleString()}đ để sử dụng voucher này`);
                 return prevOrders;
             }
 

@@ -125,8 +125,9 @@ Route::get('/employee/salary',[SatffController::class,'getAllSalary']);
 Route::put('/employee/edit/{id}',[SatffController::class,'update']);
 
 Route::post('/employee/cham-cong',[ChamCongController::class,'create']);
+Route::post('/employee/cham-cong/create',[ChamCongController::class,'createChamCong']);
 Route::put('/employee/cham-cong/{id}',[ChamCongController::class,'update']);
-Route::post('/employee/check-in',[ChamCongController::class,'create']);
+Route::post('/employee/check-in',[ChamCongController::class,'checkIn']);
 Route::put('/employee/check-out/{id}',[ChamCongController::class,'update']);
 Route::get('/employee/cham-cong/{staff_id}/{day}',[ChamCongController::class,'getByStaffIdAndDay']);
 Route::get('/employee/cham-cong',[ChamCongController::class,'index']);
@@ -176,14 +177,14 @@ Route::get('/vnpay/return', [PaymentController::class, 'return']);
 Route::post('/vnpay/notify', [PaymentController::class, 'notify']);
 
 Route::controller(DashBoardController::class)->group(function () {
-    Route::get('/dashboard/sales-overview/{type}', 'getSalesOverview');
-    Route::get('/dashboard/inventory-summary/{type}', 'getInventorySummary');
     Route::get('/dashboard/product-summary', 'getProductSummary');
     Route::get('/dashboard/order-summary', 'getOrderSummary');
+    Route::get('/dashboard/low-quantity-stock', 'getLowQuantityStock');
     Route::get('/dashboard/sales-and-purchase-chart-data', 'getSalesAndPurchaseChartData');
     Route::get('/dashboard/top-selling-stock/{type}', 'getTopSellingStock');
-    Route::get('/dashboard/low-quantity-stock/{type}', 'getLowQuantityStock');
     Route::get('/dashboard/purchase-data/{type}', 'getPurchaseData');
+    Route::get('/dashboard/sales-overview/{type}', 'getSalesOverview');
+    Route::get('/dashboard/inventory-summary/{type}', 'getInventorySummary');
 });
 
 

@@ -503,11 +503,11 @@ const OrderAdmin = () => {
                                         {Array.isArray(selectedOrder.details) ? (
                                             selectedOrder.details.map((detail, index) => (
                                                 <TableRow key={index}>
-                                                    <TableCell>{detail.product.product_name}</TableCell>
-                                                    <TableCell>{detail.soluong}</TableCell>
-                                                    <TableCell>{formatCurrency(detail.dongia || 0)}</TableCell>
-                                                    <TableCell>{formatCurrency(detail.discount || 0)}</TableCell>
-                                                    <TableCell>{formatCurrency((detail.soluong * detail.dongia) - (detail.discount || 0))}</TableCell>
+                                                    <TableCell>{detail?.product?.product_name}</TableCell>
+                                                    <TableCell>{detail?.soluong}</TableCell>
+                                                    <TableCell>{formatCurrency(detail?.dongia || 0)}</TableCell>
+                                                    <TableCell>{formatCurrency(detail?.discount || 0)}</TableCell>
+                                                    <TableCell>{formatCurrency((detail?.soluong * detail?.dongia) - (detail?.discount || 0))}</TableCell>
                                                 </TableRow>
                                             ))
                                         ) : (

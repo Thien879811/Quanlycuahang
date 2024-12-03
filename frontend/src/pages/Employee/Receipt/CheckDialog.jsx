@@ -123,7 +123,7 @@ const CheckDialog = ({ openDialog, handleCloseCheckDialog, selectedReceipt, chec
                                             <TableCell align="center">{detail.quantity}</TableCell>
                                             <TableCell>
                                                 {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
-                                                    <Box>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                         <StyledInput
                                                             type="number"
                                                             value={checkResults[detail.id]?.quantity_receipt || ''}
@@ -133,7 +133,8 @@ const CheckDialog = ({ openDialog, handleCloseCheckDialog, selectedReceipt, chec
                                                             required
                                                             style={{ 
                                                                 textAlign: 'center',
-                                                                borderColor: validationErrors[detail.id]?.quantity_receipt ? 'red' : undefined 
+                                                                borderColor: validationErrors[detail.id]?.quantity_receipt ? 'red' : undefined,
+                                                                margin: 'auto'
                                                             }}
                                                         />
                                                         {validationErrors[detail.id]?.quantity_receipt && (
@@ -205,6 +206,7 @@ const CheckDialog = ({ openDialog, handleCloseCheckDialog, selectedReceipt, chec
                                             <TableCell>
                                                 {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
                                                     <StyledInput
+                                                        style={{ margin: 'auto' }}
                                                         type="date"
                                                         value={checkResults[detail.id]?.production_date || ''}
                                                         onChange={(e) => handleCheckResultChange(detail.id, 'production_date', e.target.value)}
@@ -214,6 +216,7 @@ const CheckDialog = ({ openDialog, handleCloseCheckDialog, selectedReceipt, chec
                                             <TableCell>
                                                 {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
                                                     <StyledInput
+                                                        style={{ margin: 'auto' }}
                                                         type="date"
                                                         value={checkResults[detail.id]?.expiration_date || ''}
                                                         onChange={(e) => handleCheckResultChange(detail.id, 'expiration_date', e.target.value)}
@@ -223,6 +226,7 @@ const CheckDialog = ({ openDialog, handleCloseCheckDialog, selectedReceipt, chec
                                             <TableCell>
                                                 {(detail.status === '0' || detail.status === 'Chưa kiểm tra') && (
                                                     <StyledInput
+                                                        style={{ margin: 'auto' }}
                                                         type="text"
                                                         value={checkResults[detail.id]?.note || ''}
                                                         onChange={(e) => handleCheckResultChange(detail.id, 'note', e.target.value)}

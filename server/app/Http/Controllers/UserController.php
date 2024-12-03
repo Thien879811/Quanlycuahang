@@ -87,7 +87,11 @@ class UserController extends Controller
 
     public function deleteUser($id){
         $user = User::find($id);
+        $staff = Staff::where('user_id', $id)->first();
+        $staff->user_id = null;
+        $staff->save();
         $user->delete();
         return response()->json($user);
+
     }
 }

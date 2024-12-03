@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Layout, Button, Space, Typography, Card, Row, Col, Form, message, Spin } from 'antd';
 import { PlusOutlined, DownloadOutlined, BarChartOutlined } from '@ant-design/icons';
 import OverallInventory from '../../components/admin/product/OverallInventory.jsx';
@@ -16,12 +16,8 @@ const ProductAdmin = () => {
   const { catalogs } = useCatalogs();
   const { factories } = useFactories();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const loadData = async () => {
     try {
@@ -35,7 +31,6 @@ const ProductAdmin = () => {
   const showModal = () => {
     setIsModalVisible(true);
   };
-
 
   const handleCancel = () => {
     setIsModalVisible(false);

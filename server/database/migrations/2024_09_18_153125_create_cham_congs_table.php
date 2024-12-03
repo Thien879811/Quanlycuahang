@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('cham_congs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('staff_id')->constrained('staffs')->nullable();
+            $table->foreignId('staff_id')->nullable()->constrained('staffs')->nullOnDelete();
             $table->date('date')->nullable();
             $table->time('time_start')->nullable();
             $table->time('time_end')->nullable();

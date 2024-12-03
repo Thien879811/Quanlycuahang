@@ -67,9 +67,10 @@ class DashBoardController extends Controller
             $sales = $orders->count();
             
             $revenue = $orders->sum(function ($order) {
-                return $order->details->sum(function ($detail) {
+                $detailsTotal = $order->details->sum(function ($detail) {
                     return $detail->soluong * $detail->dongia - ($detail->discount ?? 0);
                 });
+                return $detailsTotal - ($order->discount ?? 0); // Subtract order discount
             });
 
             $cost = $orders->sum(function ($order) {
@@ -227,7 +228,7 @@ class DashBoardController extends Controller
         }
     }
 
-    public function getTopSellingStock($type) {
+    public function getTopSellingStock(Request $request, $type) {
         try {
             $query = DetailOrder::with(['product', 'order'])
                 ->select('product_id')
@@ -311,7 +312,7 @@ class DashBoardController extends Controller
             return response()->json([]);
         }
     }
-    public function getLowQuantityStock($type) {
+    public function getLowQuantityStock() {
         try {
             $lowQuantityProducts = Product::where('quantity', '<', 15)
                 ->orderBy('quantity', 'asc')
@@ -320,7 +321,7 @@ class DashBoardController extends Controller
                     return [
                         'title' => $product->product_name,
                         'avatar' => $product->image,
-                        'description' => "Còn lại: {$product->quantity} sản phẩm"
+                        'description' => "Số lượng còn lại: {$product->quantity}"
                     ];
                 });
 
@@ -331,7 +332,7 @@ class DashBoardController extends Controller
         }
     }
 
-    public function getPurchaseData($type) {
+    public function getPurchaseData(Request $request, $type) {
         try {
             $query = GoodsReceiptDetail::query();
             $goodsReceiptsQuery = GoodsReceipt::query();
@@ -363,6 +364,15 @@ class DashBoardController extends Controller
                     $goodsReceiptsQuery->where('created_at', '>=', Carbon::now()->startOfYear());
                     $destroyQuery->where('created_at', '>=', Carbon::now()->startOfYear());
                     break;
+                case 'custom':
+                    if (!request()->has('date')) {
+                        return response()->json(['error' => 'Date parameter is required for custom range'], 400);
+                    }
+                    $date = Carbon::parse(request()->date);
+                    $query->whereDate('created_at', $date);
+                    $goodsReceiptsQuery->whereDate('created_at', $date);
+                    $destroyQuery->whereDate('created_at', $date);
+                    break;
                 case 'customMonth':
                     if (!request()->has('date')) {
                         return response()->json(['error' => 'Date parameter is required for custom month'], 400);
@@ -385,14 +395,14 @@ class DashBoardController extends Controller
                     }
             }
 
-            // Tính tổng tiền nhập hàng
+            // Calculate total purchase cost
             $totalPurchaseCost = $query->sum(\DB::raw('quantity * price'));
             
-            // Tính tổng tiền trả hàng
+            // Calculate total refund amount
             $totalRefundAmount = $query->whereNotNull('return_quantity')
                 ->sum(\DB::raw('return_quantity * price'));
 
-            // Tính tổng số lượng sản phẩm đã hủy
+            // Calculate total destroyed products
             $totalDestroyedProducts = $destroyQuery->sum('quantity');
 
             $purchaseData = [

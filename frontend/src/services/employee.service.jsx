@@ -16,7 +16,7 @@ class EmployeeService {
         return (await this.api.get(`/${user_id}`)).data;
     }
     async update(id, data) {
-        return (await this.api.put(`/${id}`, data)).data;
+        return (await this.api.put(`/edit/${id}`, data)).data;
     }
     async delete(id) {
         return (await this.api.delete(`/${id}`)).data;
@@ -48,7 +48,7 @@ class EmployeeService {
     }
 
     async createAttendance(data) {
-        return (await this.api.post("/cham-cong", data)).data;
+        return (await this.api.post("/cham-cong/create", data)).data;
     }
 
     async getAllAttendance() {

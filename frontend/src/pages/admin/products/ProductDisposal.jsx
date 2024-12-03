@@ -22,7 +22,7 @@ import {
     MenuItem,
     InputLabel,
     Grid,
-    styled
+    styled,
 } from '@mui/material';
 import productService from '../../../services/product.service';
 import { handleResponse } from '../../../functions';
@@ -96,11 +96,11 @@ const ProductDisposal = () => {
         try {
             let params = timeRange;
             if (timeRange === 'custom' && customDate) {
-                params = { type: 'custom', date: customDate };
+                params = customDate;
             } else if (timeRange === 'custom_month' && customMonth) {
-                params = { type: 'custom_month', date: customMonth };
+                params = customMonth;
             }
-            const response = await productService.getDestroyProduct(params);
+            const response = await productService.getDestroyProduct(timeRange, params);
             const data = handleResponse(response);
             setDisposalRequests(data.data);
         } catch (error) {
@@ -570,7 +570,21 @@ const ProductDisposal = () => {
                             >
                                 {products.map((product) => (
                                     <MenuItem key={product.id} value={product.id}>
-                                        {product.product_name}
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                                            <Box>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {product.product_name} ({product.barcode})
+                                                </Typography>
+                                                <Typography variant="caption" color="textSecondary">
+                                                    Mã SP: #{product.id}
+                                                </Typography>
+                                            </Box>
+                                            <Chip 
+                                                label={`SL: ${product.quantity || 0}`}
+                                                color="primary"
+                                                size="small"
+                                            />
+                                        </Box>
                                     </MenuItem>
                                 ))}
                             </Select>

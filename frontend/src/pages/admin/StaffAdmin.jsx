@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Layout, Typography, Space } from 'antd';
+import { Tabs, Layout, Typography, Space, Select } from 'antd';
 import ScheduleTab from '../../components/admin/Staff/ScheduleTab';
 import SalaryTab from '../../components/admin/Staff/SalaryTab';
 import InfoEmployee from '../../components/admin/Staff/InfoEmployee';
@@ -11,6 +11,7 @@ import moment from 'moment';
 const { TabPane } = Tabs;
 const { Content } = Layout;
 const { Title } = Typography;
+const { Option } = Select;
 
 const StaffAdmin = () => {
   const [employees, setEmployees] = useState([]);
@@ -20,6 +21,7 @@ const StaffAdmin = () => {
   // Khởi tạo tuần hiện tại từ thứ 2
   const [currentWeek, setCurrentWeek] = useState(moment().startOf('isoWeek'));
   const [previousSchedules, setPreviousSchedules] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState(moment().month() + 1);
 
   const fetchEmployees = async () => {
     try {
@@ -63,8 +65,9 @@ const StaffAdmin = () => {
 
   const fetchAttendances = async () => {
     try {
-      const response = await employeeService.getAttendance(11);
+      const response = await employeeService.getAttendance(selectedMonth);
       const data = handleResponse(response);
+      console.log(data);
       if (!data || !Array.isArray(data)) {
         console.error('Invalid attendance data:', data);
         return [];
@@ -131,17 +134,32 @@ const StaffAdmin = () => {
 
   useEffect(() => {
     loadData();
-  }, [currentWeek]);
+  }, [currentWeek, selectedMonth]);
 
   const changeWeek = (newWeek) => {
     setCurrentWeek(newWeek);
+  };
+
+  const handleMonthChange = (value) => {
+    setSelectedMonth(value);
   };
 
   return (
     <Layout>
       <Content style={{ padding: '24px' }}>
         <Space direction="vertical" size="large" style={{ width: '100%', height: '800px' }}>
-          <Title level={2}>Quản lý Nhân viên</Title>
+          <Space align="center" style={{ marginBottom: 16 }}>
+            <Title level={2}>Quản lý Nhân viên</Title>
+            <Select
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              style={{ width: 120 }}
+            >
+              {[...Array(12)].map((_, i) => (
+                <Option key={i + 1} value={i + 1}>Tháng {i + 1}</Option>
+              ))}
+            </Select>
+          </Space>
           <Tabs defaultActiveKey="1" type="card" size="large">
             <TabPane tab="Lịch làm việc" key="1">
               <ScheduleTab 
@@ -166,7 +184,7 @@ const StaffAdmin = () => {
               />
             </TabPane>
             <TabPane tab="Thông tin nhân viên" key="4">
-              <InfoEmployee employees={employees} />
+              <InfoEmployee employees={employees} setEmployees={setEmployees} />
             </TabPane>
           </Tabs>
         </Space>

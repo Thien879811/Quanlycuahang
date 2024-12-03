@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, DatePicker, TimePicker, Button, message, Space, Select, Row, Col, Modal, Form, Input, Popconfirm, Card, Typography } from 'antd';
-import { PlusOutlined, SaveOutlined, UserAddOutlined, ScheduleOutlined, LeftOutlined, RightOutlined, EditOutlined, DeleteOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Table, DatePicker, TimePicker, Button, message, Space, Select, Row, Col, Modal, Form, Input, Popconfirm, Card, Typography, Divider } from 'antd';
+import { PlusOutlined, SaveOutlined, UserAddOutlined, ScheduleOutlined, LeftOutlined, RightOutlined, EditOutlined, DeleteOutlined, CalendarOutlined, ClockCircleOutlined, FileTextOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import AddEmployeeModal from './Modal/AddEmployeeModal';
 import AddTaskModal from './Modal/AddTaskModal';
@@ -10,7 +10,7 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
 
-const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChangeWeek, loadData, fetchSchedules}) => {
+const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChangeWeek, loadData, fetchSchedules, user_id }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isAddEmployeeModalVisible, setIsAddEmployeeModalVisible] = useState(false);
   const [isAddTaskModalVisible, setIsAddTaskModalVisible] = useState(false);
@@ -20,6 +20,9 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
   const [form] = Form.useForm();
   const [selectedWeek, setSelectedWeek] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Filter employees based on user_id
+  const filteredEmployees = employees.filter(emp => emp.user_id !== null);
 
   const getPreviousWeek = async () => {
     try {
@@ -41,10 +44,8 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
           
           if(dayIndex >= 0) { // Chỉ áp dụng cho các ngày từ thứ 2-CN
             form.setFieldsValue({
-              [`timeRange_${dayIndex}`]: [
-                moment(schedule.time_start, 'HH:mm'),
-                moment(schedule.time_end, 'HH:mm')
-              ],
+              [`time_start_${dayIndex}`]: moment(schedule.time_start, 'HH:mm'),
+              [`time_end_${dayIndex}`]: moment(schedule.time_end, 'HH:mm'),
               [`reason_${dayIndex}`]: schedule.reason
             });
           }
@@ -63,7 +64,8 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
     setEditingSchedule(record);
     form.setFieldsValue({
       date: moment(record.date),
-      timeRange: [moment(record.time_start, 'HH:mm'), moment(record.time_end, 'HH:mm')],
+      time_start: moment(record.time_start, 'HH:mm'),
+      time_end: moment(record.time_end, 'HH:mm'),
       reason: record.reason
     });
     setIsEditModalVisible(true);
@@ -76,8 +78,8 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
         ...editingSchedule,
         ...values,
         date: values.date.format('YYYY-MM-DD'),
-        time_start: values.timeRange[0].format('HH:mm'),
-        time_end: values.timeRange[1].format('HH:mm'),
+        time_start: values.time_start.format('HH:mm'),
+        time_end: values.time_end.format('HH:mm'),
       };
 
       console.log(updatedSchedule);
@@ -121,12 +123,13 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
       const values = await form.validateFields();
       const schedules = Array.from({ length: 7 }, (_, i) => {
         const date = selectedWeek.clone().add(i, 'days');
-        const timeRange = values[`timeRange_${i}`];
+        const time_start = values[`time_start_${i}`];
+        const time_end = values[`time_end_${i}`];
         
-        return timeRange ? {
+        return time_start && time_end ? {
           date: date.format('YYYY-MM-DD'),
-          time_start: timeRange[0].format('HH:mm'),
-          time_end: timeRange[1].format('HH:mm'),
+          time_start: time_start.format('HH:mm'),
+          time_end: time_end.format('HH:mm'),
           reason: values[`reason_${i}`] || null,
         } : null;
       }).filter(Boolean);
@@ -186,20 +189,24 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
                 key={schedule.id} 
                 size="small" 
                 style={{ 
-                  borderRadius: '6px',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  borderRadius: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  border: '1px solid #f0f0f0'
                 }}
+                hoverable
               >
-                <Space direction="vertical" size={2}>
-                  <Text strong style={{ color: '#1890ff', fontSize: '12px' }}>
-                    <CalendarOutlined style={{ marginRight: 4 }} />
+                <Space direction="vertical" size={4}>
+                  <Text strong style={{ color: '#1890ff', fontSize: '13px' }}>
+                    <ClockCircleOutlined style={{ marginRight: 6 }} />
                     {`${schedule.time_start} - ${schedule.time_end}`}
                   </Text>
                   {schedule.reason && (
-                    <Text type="secondary" style={{ fontSize: '11px' }}>
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      <FileTextOutlined style={{ marginRight: 6 }} />
                       {schedule.reason}
                     </Text>
                   )}
+                  <Divider style={{ margin: '8px 0' }} />
                   <Space size="small">
                     <Button 
                       type="primary"
@@ -207,7 +214,7 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
                       icon={<EditOutlined />} 
                       onClick={() => handleEdit(schedule)} 
                       size="small"
-                      style={{ fontSize: '11px', padding: '0 4px' }}
+                      style={{ fontSize: '12px', borderRadius: '6px' }}
                     >
                       Sửa
                     </Button>
@@ -222,7 +229,7 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
                         ghost 
                         icon={<DeleteOutlined />} 
                         size="small"
-                        style={{ fontSize: '11px', padding: '0 4px' }}
+                        style={{ fontSize: '12px', borderRadius: '6px' }}
                       >
                         Xóa
                       </Button>
@@ -238,30 +245,34 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
   ];
 
   return (
-    <Card style={{ width: '100%', borderRadius: '6px' }}>
+    <Card style={{ width: '100%', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
         <Row justify="space-between" align="middle">
           <Col>
-            <Title level={4} style={{ fontSize: '18px', margin: 0 }}>Lịch làm việc nhân viên</Title>
+            <Space align="center">
+              <CalendarOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
+              <Title level={4} style={{ fontSize: '20px', margin: 0 }}>Lịch làm việc nhân viên</Title>
+            </Space>
           </Col>
           <Col>
-            <Space size="small">
+            <Space size="middle">
               <Button 
                 type="primary"
                 icon={<PlusOutlined />} 
                 onClick={() => setIsScheduleModalVisible(true)}
                 size="middle"
+                style={{ borderRadius: '6px', height: '38px' }}
               >
                 Thêm lịch trình
               </Button>
               <Select
-                style={{ width: 160 }}
+                style={{ width: 180, borderRadius: '6px' }}
                 placeholder="Chọn nhân viên"
                 onChange={setSelectedEmployee}
                 allowClear
                 size="middle"
               >
-                {employees.map((employee) => (
+                {filteredEmployees.map((employee) => (
                   <Option key={employee.id} value={employee.id}>
                     {employee.name}
                   </Option>
@@ -271,13 +282,14 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
           </Col>
         </Row>
         
-        <Row justify="space-between" align="middle">
+        <Row justify="space-between" align="middle" style={{ background: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
           <Col>
             <Button 
               type="default"
               icon={<LeftOutlined />} 
               onClick={() => onChangeWeek(currentWeek.clone().subtract(1, 'week'))}
               size="middle"
+              style={{ borderRadius: '6px' }}
             >
               Tuần trước
             </Button>
@@ -287,7 +299,7 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
               value={[currentWeek.clone().startOf('isoWeek'), currentWeek.clone().startOf('isoWeek').endOf('week')]}
               format="DD/MM/YYYY"
               disabled
-              style={{ width: '240px' }}
+              style={{ width: '280px', borderRadius: '6px' }}
               size="middle"
             />
           </Col>
@@ -297,6 +309,7 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
               icon={<RightOutlined />} 
               onClick={() => onChangeWeek(currentWeek.clone().add(1, 'week'))}
               size="middle"
+              style={{ borderRadius: '6px' }}
             >
               Tuần sau
             </Button>
@@ -306,82 +319,163 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
         <Table
           loading={loading}
           columns={columns}
-          dataSource={employees}
+          dataSource={filteredEmployees}
           rowKey="id"
           scroll={{ x: 'max-content' }}
           pagination={false}
           bordered
-          size="small"
+          size="middle"
           style={{ marginTop: '12px' }}
         />
 
         <Modal
-          title={<Title level={4} style={{ fontSize: '16px', margin: 0 }}>Thêm lịch trình cho nhân viên</Title>}
+          title={
+            <Space align="center">
+              <ScheduleOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+              <Title level={4} style={{ fontSize: '18px', margin: 0 }}>Thêm lịch trình cho nhân viên</Title>
+            </Space>
+          }
           visible={isScheduleModalVisible}
           onOk={handleScheduleModalOk}
           onCancel={() => {
             setIsScheduleModalVisible(false);
             form.resetFields();
           }}
-          width={720}
-          okText="Lưu"
+          width={1000}
+          okText="Lưu lịch trình"
           cancelText="Hủy"
+          style={{ top: 90 }}
         >
           <Form form={form} layout="vertical" size="middle">
-            <Form.Item
-              name="employee"
-              label="Chọn nhân viên"
-              rules={[{ required: true, message: 'Vui lòng chọn nhân viên' }]}
-            >
-              <Select placeholder="Chọn nhân viên">
-                {employees.map(employee => (
-                  <Option key={employee.id} value={employee.id}>
-                    {employee.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-            
-            <Form.Item
-              name="selectedWeek"
-              label="Chọn tuần"
-              rules={[{ required: true, message: 'Vui lòng chọn tuần' }]}
-            >
-              <DatePicker
-                picker="week"
-                onChange={date => setSelectedWeek(date?.startOf('week'))}
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="employee"
+                  label="Chọn nhân viên"
+                  rules={[{ required: true, message: 'Vui lòng chọn nhân viên' }]}
+                >
+                  <Select placeholder="Chọn nhân viên" style={{ borderRadius: '6px' }}>
+                    {filteredEmployees.map(employee => (
+                      <Option key={employee.id} value={employee.id}>
+                        {employee.name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="selectedWeek"
+                  label="Chọn tuần"
+                  rules={[{ required: true, message: 'Vui lòng chọn tuần' }]}
+                >
+                  <DatePicker
+                    picker="week"
+                    onChange={date => setSelectedWeek(date?.startOf('week'))}
+                    style={{ width: '100%', borderRadius: '6px' }}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
 
-            <Button type="primary" onClick={getPreviousWeek}>Lấy lịch trình tuần trước</Button>
+            <Button 
+              type="primary" 
+              onClick={getPreviousWeek}
+              icon={<CalendarOutlined />}
+              style={{ marginBottom: '16px', borderRadius: '6px' }}
+            >
+              Lấy lịch trình tuần trước
+            </Button>
 
-            {selectedWeek && Array.from({ length: 7 }, (_, i) => (
-              <Card key={i} style={{ marginBottom: '12px' }} size="small">
-                <Row gutter={12}>
-                  <Col span={8}>
-                    <Form.Item label={`Ngày ${selectedWeek.clone().startOf('isoWeek').add(i, 'days').format('DD/MM (ddd)')}`}>
-                      <Input disabled value={selectedWeek.clone().startOf('isoWeek').add(i, 'days').format('DD/MM/YYYY')} />
-                    </Form.Item>
-                  </Col>
-                  <Col span={8}>
-                    <Form.Item name={`timeRange_${i}`} label="Thời gian làm việc">
-                      <TimePicker.RangePicker format="HH:mm" style={{ width: '100%' }} />
-                    </Form.Item>
-                  </Col>
-                  <Col span={8}>
-                    <Form.Item name={`reason_${i}`} label="Lý do">
-                      <Input.TextArea rows={2} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Card>
-            ))}
+            <div style={{ maxHeight: '60vh', overflowY: 'auto', padding: '0 4px' }}>
+              {selectedWeek && Array.from({ length: 7 }, (_, i) => (
+                <Card 
+                  key={i} 
+                  style={{ 
+                    marginBottom: '16px', 
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                  }} 
+                  size="small"
+                >
+                  <Row gutter={16}>
+                    <Col span={8}>
+                      <Form.Item 
+                        label={
+                          <Space>
+                            <CalendarOutlined style={{ color: '#1890ff' }} />
+                            {`Ngày ${selectedWeek.clone().startOf('isoWeek').add(i, 'days').format('DD/MM (ddd)')}`}
+                          </Space>
+                        }
+                      >
+                        <Input 
+                          disabled 
+                          value={selectedWeek.clone().startOf('isoWeek').add(i, 'days').format('DD/MM/YYYY')}
+                          style={{ borderRadius: '6px' }}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                      <Row gutter={8}>
+                        <Col span={12}>
+                          <Form.Item 
+                            name={`time_start_${i}`} 
+                            label={
+                              <Space>
+                                <ClockCircleOutlined style={{ color: '#1890ff' }} />
+                                Giờ bắt đầu
+                              </Space>
+                            }
+                          >
+                            <TimePicker format="HH:mm" style={{ width: '100%', borderRadius: '6px' }} />
+                          </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                          <Form.Item 
+                            name={`time_end_${i}`} 
+                            label={
+                              <Space>
+                                <ClockCircleOutlined style={{ color: '#1890ff' }} />
+                                Giờ kết thúc
+                              </Space>
+                            }
+                          >
+                            <TimePicker format="HH:mm" style={{ width: '100%', borderRadius: '6px' }} />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    </Col>
+                    <Col span={8}>
+                      <Form.Item 
+                        name={`reason_${i}`} 
+                        label={
+                          <Space>
+                            <FileTextOutlined style={{ color: '#1890ff' }} />
+                            Ghi chú
+                          </Space>
+                        }
+                      >
+                        <Input.TextArea 
+                          rows={2} 
+                          style={{ borderRadius: '6px' }}
+                          placeholder="Nhập ghi chú nếu có..."
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                </Card>
+              ))}
+            </div>
           </Form>
         </Modal>
 
         <Modal
-          title={<Title level={4} style={{ fontSize: '16px', margin: 0 }}>Chỉnh sửa lịch trình</Title>}
+          title={
+            <Space align="center">
+              <EditOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+              <Title level={4} style={{ fontSize: '18px', margin: 0 }}>Chỉnh sửa lịch trình</Title>
+            </Space>
+          }
           visible={isEditModalVisible}
           onOk={handleEditModalOk}
           onCancel={() => {
@@ -391,26 +485,66 @@ const ScheduleTab = ({ employees, schedules, setSchedules, currentWeek, onChange
           }}
           okText="Lưu thay đổi"
           cancelText="Hủy"
-          width={480}
+          width={520}
         >
           {editingSchedule && (
             <Form form={form} layout="vertical" size="middle">
               <Form.Item
                 name="date"
-                label="Ngày"
+                label={
+                  <Space>
+                    <CalendarOutlined style={{ color: '#1890ff' }} />
+                    Ngày
+                  </Space>
+                }
                 rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
               >
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker style={{ width: '100%', borderRadius: '6px' }} />
               </Form.Item>
-              <Form.Item
-                name="timeRange"
-                label="Thời gian làm việc"
-                rules={[{ required: true, message: 'Vui lòng chọn thời gian làm việc' }]}
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    name="time_start"
+                    label={
+                      <Space>
+                        <ClockCircleOutlined style={{ color: '#1890ff' }} />
+                        Giờ bắt đầu
+                      </Space>
+                    }
+                    rules={[{ required: true, message: 'Vui lòng chọn giờ bắt đầu' }]}
+                  >
+                    <TimePicker format="HH:mm" style={{ width: '100%', borderRadius: '6px' }} />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="time_end"
+                    label={
+                      <Space>
+                        <ClockCircleOutlined style={{ color: '#1890ff' }} />
+                        Giờ kết thúc
+                      </Space>
+                    }
+                    rules={[{ required: true, message: 'Vui lòng chọn giờ kết thúc' }]}
+                  >
+                    <TimePicker format="HH:mm" style={{ width: '100%', borderRadius: '6px' }} />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Form.Item 
+                name="reason" 
+                label={
+                  <Space>
+                    <FileTextOutlined style={{ color: '#1890ff' }} />
+                    Ghi chú
+                  </Space>
+                }
               >
-                <TimePicker.RangePicker format="HH:mm" style={{ width: '100%' }} />
-              </Form.Item>
-              <Form.Item name="reason" label="Lý do">
-                <Input.TextArea rows={3} />
+                <Input.TextArea 
+                  rows={3} 
+                  style={{ borderRadius: '6px' }}
+                  placeholder="Nhập ghi chú nếu có..."
+                />
               </Form.Item>
             </Form>
           )}

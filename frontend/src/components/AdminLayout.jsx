@@ -6,23 +6,18 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import MenuIcon from '@mui/icons-material/Menu';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import SearchIcon from '@mui/icons-material/Search';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import BusinessIcon from '@mui/icons-material/Business';
-import SettingsIcon from '@mui/icons-material/Settings';
+import BusinessIcon from '@mui/icons-material/Business';;
 import LogoutIcon from '@mui/icons-material/ExitToApp';
 import GroupIcon from '@mui/icons-material/Group';
 import DiscountIcon from '@mui/icons-material/Discount';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
-import FactCheckIcon from '@mui/icons-material/FactCheck';
 import HistoryIcon from '@mui/icons-material/History';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import PersonIcon from '@mui/icons-material/Person';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import Pusher from 'pusher-js';
 
 const drawerWidth = 240;
@@ -99,25 +94,25 @@ export default function AdminLayout() {
     };
 
     const menuItems = [
-        { text: 'Trang chủ', icon: <DashboardIcon />, path: '/admin' },
-        { text: 'Người dùng', icon: <PeopleIcon />, path: '/admin/users' },
+        { text: 'Trang chủ', icon: <DashboardIcon sx={{color: '#fff'}} />, path: '/admin' },
+        { text: 'Nhà cung cấp', icon: <BusinessIcon sx={{color: '#fff'}} />, path: '/admin/suppliers' },
         {
             text: 'Sản phẩm',
-            icon: <InventoryIcon />,
+            icon: <InventoryIcon sx={{color: '#fff'}} />,
             onClick: handleProductsClick,
             open: openProducts,
             subItems: [
                 { text: 'Tổng quan tồn kho', path: '/admin/products' },
-                { text: 'Báo cáo kiểm kho', icon: <HistoryIcon />, path: '/admin/inventory-report' },
-                { text: 'Nhập kho', icon: <AddShoppingCartIcon />, path: '/admin/import-product' },
-                { text: 'Hủy sản phẩm', icon: <DeleteSweepIcon />, path: '/admin/product-disposal' },
+                { text: 'Báo cáo kiểm kho', icon: <HistoryIcon sx={{color: '#fff'}} />, path: '/admin/inventory-report' },
+                { text: 'Nhập kho', icon: <AddShoppingCartIcon sx={{color: '#fff'}} />, path: '/admin/import-product' },
+                { text: 'Hủy sản phẩm', icon: <DeleteSweepIcon sx={{color: '#fff'}} />, path: '/admin/product-disposal' },
             ],
         },
-        { text: 'Khách hàng', icon: <PeopleIcon />, path: '/admin/customers' },
-        { text: 'Nhà cung cấp', icon: <BusinessIcon />, path: '/admin/suppliers' },
-        { text: 'Đơn hàng', icon: <AssignmentIcon />, path: '/admin/orders' },
-        { text: 'Nhân sự', icon: <GroupIcon />, path: '/admin/staff' },
-        { text: 'Khuyến mãi', icon: <DiscountIcon />, path: '/admin/sales' },
+        { text: 'Khách hàng', icon: <PeopleIcon sx={{color: '#fff'}} />, path: '/admin/customers' },
+        { text: 'Đơn hàng', icon: <AssignmentIcon sx={{color: '#fff'}} />, path: '/admin/orders' },
+        { text: 'Khuyến mãi', icon: <DiscountIcon sx={{color: '#fff'}} />, path: '/admin/sales' },
+        { text: 'Người dùng', icon: <PersonIcon sx={{color: '#fff'}} />, path: '/admin/users' },
+        { text: 'Nhân sự', icon: <AssignmentIndIcon sx={{color: '#fff'}} />, path: '/admin/staff' },
     ];
 
     return (
@@ -186,9 +181,9 @@ export default function AdminLayout() {
                                         },
                                     }}
                                 >
-                                    <ListItemIcon sx={{ color: 'white' }}>{item.icon}</ListItemIcon>
+                                    <ListItemIcon>{item.icon}</ListItemIcon>
                                     <ListItemText primary={item.text} />
-                                    {item.subItems && (item.open ? <ExpandLess /> : <ExpandMore />)}
+                                    {item.subItems && (item.open ? <ExpandLess sx={{color: '#fff'}} /> : <ExpandMore sx={{color: '#fff'}} />)}
                                 </ListItem>
                                 {item.subItems && (
                                     <Collapse in={item.open} timeout="auto" unmountOnExit>
@@ -221,7 +216,7 @@ export default function AdminLayout() {
                                 backgroundColor: '#34495e',
                             },
                         }}>
-                            <ListItemIcon sx={{ color: 'white' }}><LogoutIcon /></ListItemIcon>
+                            <ListItemIcon><LogoutIcon sx={{color: '#fff'}} /></ListItemIcon>
                             <ListItemText primary="Đăng xuất" />
                         </ListItem>
                     </List>

@@ -156,6 +156,14 @@ const ReceiptCheck = () => {
                 !receipt.details.some(detail => detail.status === 'Hư hỏng')
             );
         }
+        
+        // Sort receipts - unchecked first
+        filtered = [...filtered].sort((a, b) => {
+            if (a.status === 'Chưa kiểm tra' && b.status !== 'Chưa kiểm tra') return -1;
+            if (a.status !== 'Chưa kiểm tra' && b.status === 'Chưa kiểm tra') return 1;
+            return 0;
+        });
+        
         setDisplayedReceipts(filtered.slice(startIndex, endIndex));
     }, [page, rowsPerPage, filteredReceipts, showDisposed]);
 
@@ -180,9 +188,6 @@ const ReceiptCheck = () => {
         setCustomMonth(event.target.value);
     };
 
-    const handleCustomYearChange = (event) => {
-        setCustomYear(event.target.value);
-    };
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -194,21 +199,15 @@ const ReceiptCheck = () => {
 
     const fetchAllReceipts = async () => {
         try {
-            let params = {};
+            let params = timeRange;
             if (timeRange === 'custom' && customDate) {
-                params.date = customDate;
-            } else if (timeRange === 'custom_month') {
-                if (!customMonth || !customYear) {
-                    setError('Vui lòng chọn tháng và năm');
-                    return;
-                }
-                params.month = customMonth;
-                params.year = customYear;
+                params = customDate;
+            } else if (timeRange === 'custom_month' && customMonth) {
+                params = customMonth;
             }
 
             const response = await ReceiptService.getReceipt(timeRange, params);
             const data = handleResponse(response);
-            console.log(data);
             if (data.success) {
                 data.goods_receipts.forEach(receipt => {
                     if (receipt.status === '1') {
@@ -231,8 +230,16 @@ const ReceiptCheck = () => {
                         }
                     });
                 });
-                setReceipts(data.goods_receipts);
-                setFilteredReceipts(data.goods_receipts);
+                
+                // Sort receipts - unchecked first
+                const sortedReceipts = [...data.goods_receipts].sort((a, b) => {
+                    if (a.status === 'Chưa kiểm tra' && b.status !== 'Chưa kiểm tra') return -1;
+                    if (a.status !== 'Chưa kiểm tra' && b.status === 'Chưa kiểm tra') return 1;
+                    return 0;
+                });
+                
+                setReceipts(sortedReceipts);
+                setFilteredReceipts(sortedReceipts);
                 setError('');
             } else {
                 setError('Không thể tải danh sách phiếu nhập hàng');
@@ -258,7 +265,15 @@ const ReceiptCheck = () => {
             receipt.status.toLowerCase().includes(searchValue.toLowerCase()) ||
             (receipt.check_date && dayjs(receipt.check_date).format('DD/MM/YYYY').includes(searchValue))
         );
-        setFilteredReceipts(filtered);
+        
+        // Sort filtered results - unchecked first
+        const sortedFiltered = [...filtered].sort((a, b) => {
+            if (a.status === 'Chưa kiểm tra' && b.status !== 'Chưa kiểm tra') return -1;
+            if (a.status !== 'Chưa kiểm tra' && b.status === 'Chưa kiểm tra') return 1;
+            return 0;
+        });
+        
+        setFilteredReceipts(sortedFiltered);
         setPage(0);
     };
 
@@ -472,61 +487,22 @@ const ReceiptCheck = () => {
                             </FormControl>
                         </Grid>
                         {timeRange === 'custom' && (
-                            <Grid item xs={12} md={4}>
+                            <Grid item xs={12} md={2}>
                                 <StyledInput
                                     type="date"
                                     value={customDate}
                                     onChange={handleCustomDateChange}
-                                    sx={{ height: '48px' }}
                                 />
                             </Grid>
                         )}
                         {timeRange === 'custom_month' && (
-                            <>
-                                <Grid item xs={12} md={2}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Tháng</InputLabel>
-                                        <Select
-                                            value={customMonth}
-                                            onChange={handleCustomMonthChange}
-                                            label="Tháng"
-                                            sx={{ 
-                                                height: '48px',
-                                                borderRadius: '12px'
-                                            }}
-                                        >
-                                            {[...Array(12)].map((_, i) => (
-                                                <MenuItem key={i + 1} value={(i + 1).toString()}>
-                                                    Tháng {i + 1}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Năm</InputLabel>
-                                        <Select
-                                            value={customYear}
-                                            onChange={handleCustomYearChange}
-                                            label="Năm"
-                                            sx={{ 
-                                                height: '48px',
-                                                borderRadius: '12px'
-                                            }}
-                                        >
-                                            {[...Array(5)].map((_, i) => {
-                                                const year = new Date().getFullYear() - i;
-                                                return (
-                                                    <MenuItem key={year} value={year.toString()}>
-                                                        {year}
-                                                    </MenuItem>
-                                                );
-                                            })}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                            </>
+                            <Grid item xs={12} md={2}>
+                                <StyledInput
+                                    type="month"
+                                    value={customMonth}
+                                    onChange={handleCustomMonthChange}
+                                />
+                            </Grid>
                         )}
                         <Grid item xs={12}>
                             <SearchTextField

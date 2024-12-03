@@ -134,4 +134,62 @@ class ChamCongController extends Controller
             'data' => $attendance
         ]);
     }
+
+    public function createChamCong(Request $request)
+    {
+        $chamCong = $request->all();
+        
+        // Kiểm tra xem đã có chấm công cho ngày này chưa
+        $existingChamCong = ChamCong::where('staff_id', $chamCong['staff_id'])
+            ->where('date', $chamCong['date'])
+            ->first();
+
+        if ($existingChamCong) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nhân viên đã chấm công cho ngày này rồi'
+            ], 400);
+        }
+
+        $newChamCong = ChamCong::create([
+            'staff_id' => $chamCong['staff_id'],
+            'date' => $chamCong['date'],
+            'time_start' => $chamCong['time_start'],
+            'time_end' => $chamCong['time_end'],
+            'status' => $chamCong['status']
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Chấm công đã được tạo thành công',
+            'data' => $newChamCong
+        ]);
+    }
+
+    public function checkIn(Request $request)
+    {
+        $chamCong = $request->all();
+
+        $checkIn = ChamCong::where('staff_id', $chamCong['staff_id'])
+                          ->where('date', $chamCong['date'])
+                          ->first();
+
+        if ($checkIn) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn đã chấm công'
+            ], 400);
+        }
+
+        $newChamCong = ChamCong::create([
+            'staff_id' => $chamCong['staff_id'],
+            'date' => $chamCong['date'],
+            'time_start' => $chamCong['time_start'],
+        ]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Chấm công đã được tạo thành công',
+            'data' => $newChamCong
+        ]);
+    }
 }

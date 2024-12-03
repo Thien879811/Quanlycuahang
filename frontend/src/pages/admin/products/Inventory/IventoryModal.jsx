@@ -40,7 +40,6 @@ export default function IventoryModal(
                 <Form.Item
                   name="check_date"
                   label="Ngày kiểm kê"
-                  rules={[{ required: true, message: 'Vui lòng chọn ngày kiểm kê' }]}
                 >
                   <DatePicker 
                     style={{ width: '100%' }} 
@@ -102,7 +101,7 @@ export default function IventoryModal(
                     >
                       <div>
                         <Text strong style={{display: 'block', color: '#262626'}}>
-                          {product.product_name}
+                          {product.product_name} ( {product.barcode} )
                         </Text>
                         <Text type="secondary" style={{fontSize: '12px'}}>
                           Mã SP: #{product.id}
@@ -158,7 +157,6 @@ export default function IventoryModal(
                       render: (_, record, index) => (
                         <Form.Item
                           name={[index, 'actual_quantity']}
-                          rules={[{ required: true, message: 'Bắt buộc nhập' }]}
                           style={{ marginBottom: 0 }}
                         >
                           <Input 
