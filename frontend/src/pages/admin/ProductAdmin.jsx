@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Button, Space, Typography, Card, Row, Col, Form, message, Spin } from 'antd';
 import { PlusOutlined, DownloadOutlined, BarChartOutlined } from '@ant-design/icons';
 import OverallInventory from '../../components/admin/product/OverallInventory.jsx';
@@ -7,22 +7,37 @@ import useProducts from '../../utils/productUtils';
 import useCatalogs from '../../utils/catalogUtils';
 import useFactories from '../../utils/factoryUtils';
 import ProductForm from '../../pages/admin/products/productForm';
-
+import ProductService from '../../services/product.service';
+import { handleResponse } from '../../functions';
+import * as XLSX from 'xlsx';
 const { Content } = Layout;
 const { Title } = Typography;
 
 const ProductAdmin = () => {
-  const { products, createProduct , fetchProducts} = useProducts();
-  const { catalogs } = useCatalogs();
-  const { factories } = useFactories();
+  const [products, setProducts] = useState([]);
+  const [catalogs, setCatalogs] = useState([]);
+  const [factories, setFactories] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      loadData();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, []);
+
   const loadData = async () => {
     try {
       setLoading(true);
-      await Promise.all([products, catalogs, factories]);
+      const response = await ProductService.getInfoInventory();
+      const data = handleResponse(response);
+      console.log(data);
+      setProducts(data.product);
+      setCatalogs(data.catalog);
+      setFactories(data.factory);
     } finally {
       setLoading(false);
     }
@@ -35,6 +50,47 @@ const ProductAdmin = () => {
   const handleCancel = () => {
     setIsModalVisible(false);
     form.resetFields();
+  };
+
+  const exportToExcel = () => {
+    try {
+      // Chuẩn bị dữ liệu cho file Excel
+      const exportData = products.map((product, index) => ({
+        'STT': index + 1,
+        'Mã sản phẩm': product.id,
+        'Tên sản phẩm': product.product_name,
+        'Danh mục': catalogs.find(c => c.id === product.catalogy_id)?.catalogy_name || '',
+        'Nhà sản xuất': factories.find(f => f.id === product.factory_id)?.factory_name || '',
+        'Số lượng': product.quantity,
+        'Giá': product.price,
+        'Trạng thái': product.quantity > 0 ? 'Còn hàng' : 'Hết hàng'
+      }));
+
+      // Tạo workbook và worksheet
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách sản phẩm");
+
+      // Tự động điều chỉnh độ rộng cột
+      const colWidths = [
+        { wch: 5 },  // STT
+        { wch: 12 }, // Mã sản phẩm
+        { wch: 30 }, // Tên sản phẩm
+        { wch: 20 }, // Danh mục
+        { wch: 25 }, // Nhà sản xuất
+        { wch: 10 }, // Số lượng
+        { wch: 15 }, // Giá
+        { wch: 12 }  // Trạng thái
+      ];
+      ws['!cols'] = colWidths;
+
+      // Xuất file
+      XLSX.writeFile(wb, "danh-sach-san-pham.xlsx");
+      message.success('Xuất file Excel thành công!');
+    } catch (error) {
+      console.error('Lỗi khi xuất file Excel:', error);
+      message.error('Có lỗi xảy ra khi xuất file Excel');
+    }
   };
 
   return (
@@ -52,7 +108,7 @@ const ProductAdmin = () => {
             </Col>
             <Col span={24}>
               <Card>
-                <OverallInventory products={products} />
+                <OverallInventory products={products} catalogs={catalogs} loadData={loadData} />
               </Card>
             </Col>
             <Col span={24}>
@@ -61,11 +117,11 @@ const ProductAdmin = () => {
                   <Button type="primary" icon={<PlusOutlined />} onClick={showModal} size="large">
                     Thêm sản phẩm
                   </Button>
-                  <Button icon={<DownloadOutlined />} size="large">
+                  <Button icon={<DownloadOutlined />} size="large" onClick={exportToExcel}>
                     Tải xuống tất cả
                   </Button>
                 </Space>
-                <ProductsTable products={products} fetchProducts={fetchProducts}/>
+                <ProductsTable products={products} loadData={loadData} catalogs={catalogs} factories={factories}/>
               </Card>
             </Col>
           </Row>
@@ -81,7 +137,6 @@ const ProductAdmin = () => {
         onCancel={handleCancel}
         initialValues={null}
         loadData={loadData}
-        fetchProducts={fetchProducts}
       />
     </Layout>
   );

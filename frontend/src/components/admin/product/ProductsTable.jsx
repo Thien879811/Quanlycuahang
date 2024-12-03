@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Tag, Modal, Button, Form, Image, Input, Space, Typography as AntTypography } from 'antd';
+import { Table, Tag, Modal, Button, Form, Image, Input, Space, Typography as AntTypography, Select } from 'antd';
 import { Typography, Box, Divider, Grid, Paper } from '@mui/material';
 import useProducts from "../../../utils/productUtils";
 import moment from 'moment';
@@ -9,17 +9,17 @@ import useFactories from '../../../utils/factoryUtils';
 import { EditOutlined, DeleteOutlined, CloseOutlined, SearchOutlined } from '@ant-design/icons';
 import { API_URL } from '../../../services/config';
 
-const ProductsTable = ({products, fetchProducts}) => {
+const ProductsTable = ({products, loadData, catalogs, factories}) => {
   
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchText, setSearchText] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
   const {updateProduct, deleteProduct} = useProducts();
-  const {catalogs} = useCatalogs();
-  const {factories} = useFactories();
+
 
   const showModal = (product) => {
     setSelectedProduct(product);
@@ -59,8 +59,8 @@ const ProductsTable = ({products, fetchProducts}) => {
       onOk: async () => {
         await deleteProduct(selectedProduct.id);
         setIsModalVisible(false);
-        fetchProducts();
-      }
+          loadData();
+        }
     });
   };
 
@@ -83,10 +83,18 @@ const ProductsTable = ({products, fetchProducts}) => {
     setSearchTimeout(timeout);
   };
 
-  const filteredProducts = products.filter(product => 
-    product.product_name.toLowerCase().includes(searchText.toLowerCase()) ||
-    product.barcode?.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+  };
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.product_name.toLowerCase().includes(searchText.toLowerCase()) ||
+      product.barcode?.toLowerCase().includes(searchText.toLowerCase());
+    
+    const matchesCategory = selectedCategory ? product.catalogy_id === selectedCategory : true;
+
+    return matchesSearch && matchesCategory;
+  });
 
   const columns = [
     {
@@ -166,17 +174,28 @@ const ProductsTable = ({products, fetchProducts}) => {
 
   return (
     <>
-      <Input.Search
-        placeholder="Tìm kiếm theo tên sản phẩm hoặc mã vạch"
-        onChange={e => handleSearch(e.target.value)}
-        style={{ 
-          marginBottom: 24,
-          width: '100%',
-          maxWidth: 500
-        }}
-        size="large"
-        prefix={<SearchOutlined style={{color: '#bfbfbf'}} />}
-      />
+      <Space style={{ marginBottom: 24, width: '100%' }}>
+        <Input.Search
+          placeholder="Tìm kiếm theo tên sản phẩm hoặc mã vạch"
+          onChange={e => handleSearch(e.target.value)}
+          style={{ width: 300 }}
+          size="large"
+          prefix={<SearchOutlined style={{color: '#bfbfbf'}} />}
+        />
+        <Select
+          placeholder="Lọc theo danh mục"
+          style={{ width: 200 }}
+          onChange={handleCategoryChange}
+          allowClear
+          size="large"
+        >
+          {catalogs.map(catalog => (
+            <Select.Option key={catalog.id} value={catalog.id}>
+              {catalog.catalogy_name}
+            </Select.Option>
+          ))}
+        </Select>
+      </Space>
       
       <Table 
         columns={columns}
@@ -326,7 +345,7 @@ const ProductsTable = ({products, fetchProducts}) => {
           initialValues={selectedProduct}
           catalogs={catalogs}
           factories={factories}
-          fetchProducts={fetchProducts}
+          loadData={loadData}
         />
       )}
     </>

@@ -20,4 +20,16 @@ class CataloryController extends Controller
             $cat
         );
     }
+
+    public function update(Request $request, $id){
+        $catalory = Catalory::find($id);
+        $catalory->update($request->all());
+        return response()->json($catalory);
+    }
+
+    public function delete($id){
+        $catalory = Catalory::find($id);
+        $catalory->delete();
+        return response()->json(['message' => 'Catalory deleted successfully']);
+    }
 }

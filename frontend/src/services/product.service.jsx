@@ -38,5 +38,8 @@ class ProductService {
     async updateDestroyProductStatus(id, data) {
         return (await this.api.put(`/destroy/${id}`, data)).data;
     }
+    async getInfoInventory() {
+        return (await this.api.get("/info-inventory")).data;
+    }
 }
 export default new ProductService();

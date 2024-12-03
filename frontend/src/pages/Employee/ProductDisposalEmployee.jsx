@@ -84,7 +84,6 @@ const ProductDisposalEmployee = () => {
 
     useEffect(() => {
         const debounceTimer = setTimeout(() => {
-            loadProducts();
             loadDisposalRequests();
         }, 300);
 
@@ -126,6 +125,7 @@ const ProductDisposalEmployee = () => {
     };
 
     const handleOpenDialog = () => {
+        loadProducts();
         setOpenDialog(true);
     };
 

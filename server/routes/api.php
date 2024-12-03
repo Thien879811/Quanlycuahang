@@ -65,6 +65,7 @@ Route::get('/product/destroy',[ProductController::class,'getDestroyProduct']);
 Route::put('/product/destroy/{id}',[ProductController::class,'updateDestroyProductStatus']);
 Route::put('/product/update-quantity/{id}',[ProductController::class,'updateQuantity']);
 Route::get('/product/customer',[ProductController::class,'getProduct']);
+Route::get('/product/info-inventory',[ProductController::class,'getInfoInventory']);
 
 
 Route::post('/orders/customer', [OrdersController::class, 'createOrderCustomer']);
@@ -99,6 +100,8 @@ Route::put('/check-inventory/accept/{id}', [CheckInventoryController::class, 'ac
 //catalog api
 Route::get('/catalory',[CataloryController::class,'getCatalory']);
 Route::post('/catalory',[CataloryController::class,'create']);
+Route::put('/catalory/{id}',[CataloryController::class,'update']);
+Route::delete('/catalory/{id}',[CataloryController::class,'delete']);
 
 
 //factory api

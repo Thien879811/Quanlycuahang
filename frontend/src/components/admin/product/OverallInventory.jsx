@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Typography, Button, Modal, List, Input, Form, Avatar } from 'antd';
+import { Row, Col, Card, Typography, Button, Modal, List, Input, Form, Avatar, Popconfirm } from 'antd';
 import { createGlobalStyle } from 'styled-components';
-import { EyeOutlined, PlusOutlined, AppstoreOutlined, ShoppingOutlined, WarningOutlined } from '@ant-design/icons';
+import { EyeOutlined, PlusOutlined, AppstoreOutlined, ShoppingOutlined, WarningOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import useCatalogs from '../../../utils/catalogUtils';
-import useProducts from '../../../utils/productUtils';
-import dashboardService from '../../../services/dashboard.service';
+import cataloryService from '../../../services/catalory.service';
 
 const { Text, Title } = Typography;
 
@@ -86,27 +85,12 @@ const StatisticCard = ({ title, value1, value2, subLabel1, subLabel2, titleColor
   </Col>
 );
 
-const OverallInventory = ({products}) => {
+const OverallInventory = ({products, catalogs, loadData}) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isOutOfStockModalVisible, setIsOutOfStockModalVisible] = useState(false);
-  const { catalogs, fetchCatalogs, createCatalog } = useCatalogs();
+  const [editingCatalog, setEditingCatalog] = useState(null);
+  const {createCatalog, updateCatalog, deleteCatalog} = useCatalogs();
   const [form] = Form.useForm();
-  const [purchaseData, setPurchaseData] = useState(null);
-
-  useEffect(() => {
-    fetchPurchaseData();
-  }, [products]);
-
-  const handleResponse = (response, setter) => {
-    if (response && response.data) {
-      setter(response.data);
-    }
-  };
-
-  const fetchPurchaseData = async () => {
-    const response = await dashboardService.getPurchaseData('today');
-    handleResponse(response, setPurchaseData);
-  };
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -122,6 +106,8 @@ const OverallInventory = ({products}) => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+    setEditingCatalog(null);
+    form.resetFields();
   };
 
   const handleOutOfStockCancel = () => {
@@ -129,11 +115,39 @@ const OverallInventory = ({products}) => {
   };
 
   const handleAddCategory = async (values) => {
-    await createCatalog(values);
-    await fetchCatalogs();
-    await fetchProducts();
+    if (editingCatalog) {
+      try {
+        await cataloryService.update(editingCatalog.id, values);
+      } catch (error) {
+        console.error('Error updating catalog:', error);
+      }
+    } else {
+      try {
+        await cataloryService.create(values);
+      } catch (error) {
+        console.error('Error creating catalog:', error);
+      }
+    }
+    loadData();
     form.resetFields();
+    setEditingCatalog(null);
     handleCancel();
+  };
+
+  const handleEditCatalog = (catalog) => {
+    setEditingCatalog(catalog);
+    form.setFieldsValue({
+      catalogy_name: catalog.catalogy_name
+    });
+  };
+
+  const handleDeleteCatalog = async (catalogId) => {
+    try {
+      await cataloryService.delete(catalogId);
+      loadData();
+    } catch (error) {
+      console.error('Error deleting catalog:', error);
+    }
   };
 
   const getOutOfStockCount = () => {
@@ -176,7 +190,7 @@ const OverallInventory = ({products}) => {
       </Row>
 
       <Modal 
-        title={<Title level={4}>Danh sách danh mục</Title>}
+        title={<Title level={4}>{editingCatalog ? 'Sửa danh mục' : 'Danh sách danh mục'}</Title>}
         open={isModalVisible} 
         onOk={handleOk} 
         onCancel={handleCancel}
@@ -195,7 +209,28 @@ const OverallInventory = ({products}) => {
           }}
           dataSource={catalogs}
           renderItem={(item) => (
-            <List.Item style={{ padding: '16px' }}>
+            <List.Item 
+              style={{ padding: '16px' }}
+              actions={[
+                <Button 
+                  icon={<EditOutlined />} 
+                  type="text"
+                  onClick={() => handleEditCatalog(item)}
+                />,
+                <Popconfirm
+                  title="Bạn có chắc chắn muốn xóa danh mục này?"
+                  onConfirm={() => handleDeleteCatalog(item.id)}
+                  okText="Có"
+                  cancelText="Không"
+                >
+                  <Button 
+                    icon={<DeleteOutlined />} 
+                    type="text"
+                    danger
+                  />
+                </Popconfirm>
+              ]}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <Avatar icon={<AppstoreOutlined />} style={{ backgroundColor: '#1890ff' }} />
                 <Typography.Text strong>{item.catalogy_name}</Typography.Text>
@@ -213,7 +248,7 @@ const OverallInventory = ({products}) => {
             rules={[{ required: true, message: 'Vui lòng nhập tên danh mục!' }]}
           >
             <Input 
-              placeholder="Nhập tên danh mục mới" 
+              placeholder="Nhập tên danh mục" 
               size="large"
               prefix={<AppstoreOutlined style={{ color: '#1890ff' }} />}
             />
@@ -222,11 +257,11 @@ const OverallInventory = ({products}) => {
             <Button 
               type="primary" 
               htmlType="submit" 
-              icon={<PlusOutlined />}
+              icon={editingCatalog ? <EditOutlined /> : <PlusOutlined />}
               size="large"
               block
             >
-              Thêm danh mục
+              {editingCatalog ? 'Cập nhật danh mục' : 'Thêm danh mục'}
             </Button>
           </Form.Item>
         </Form>
@@ -251,7 +286,7 @@ const OverallInventory = ({products}) => {
             <List.Item style={{ padding: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <Avatar icon={<WarningOutlined />} style={{ backgroundColor: '#ff4d4f' }} />
-                <Typography.Text strong>{item.product_name}</Typography.Text>
+                <Typography.Text strong>{item.product_name} ({item.barcode})</Typography.Text>
               </div>
             </List.Item>
           )}

@@ -23,6 +23,7 @@ import {
     InputLabel,
     Grid,
     styled,
+    CircularProgress
 } from '@mui/material';
 import productService from '../../../services/product.service';
 import { handleResponse } from '../../../functions';
@@ -76,10 +77,14 @@ const ProductDisposal = () => {
     const [reason, setReason] = useState('');
     const [destroyDate, setDestroyDate] = useState('');
     const [expirationDate, setExpirationDate] = useState('');
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        loadDisposalRequests();
-        loadProducts();
+        const timeoutId = setTimeout(() => {
+            loadDisposalRequests();
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
     }, [timeRange, customDate, customMonth]);
 
     const loadProducts = async () => {
@@ -94,6 +99,7 @@ const ProductDisposal = () => {
 
     const loadDisposalRequests = async () => {
         try {
+            setLoading(true);
             let params = timeRange;
             if (timeRange === 'custom' && customDate) {
                 params = customDate;
@@ -106,6 +112,8 @@ const ProductDisposal = () => {
         } catch (error) {
             console.error('Error loading disposal requests:', error);
             setDisposalRequests([]);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -124,6 +132,7 @@ const ProductDisposal = () => {
     };
 
     const handleOpenDialog = (request) => {
+        loadProducts();
         setSelectedRequest(request);
         setOpenDialog(true);
     };
@@ -135,6 +144,7 @@ const ProductDisposal = () => {
     };
 
     const handleOpenCreateDialog = () => {
+        loadProducts();
         setOpenCreateDialog(true);
     };
 
@@ -149,6 +159,7 @@ const ProductDisposal = () => {
 
     const handleSubmit = async () => {
         try {
+            setLoading(true);
             // Check if selected product exists
 
             const formData = new FormData();
@@ -169,11 +180,14 @@ const ProductDisposal = () => {
         
         } catch (error) {
             console.error('Error creating disposal request:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleApprove = async () => {
         try {
+            setLoading(true);
             const formData = new FormData();
             formData.append('status', 'approved');
             formData.append('note', approvalNote);
@@ -183,11 +197,14 @@ const ProductDisposal = () => {
             handleCloseDialog();
         } catch (error) {
             console.error('Error approving disposal request:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleReject = async () => {
         try {
+            setLoading(true);
             const formData = new FormData();
             formData.append('status', 'rejected'); 
             formData.append('note', approvalNote);
@@ -196,6 +213,8 @@ const ProductDisposal = () => {
             handleCloseDialog();
         } catch (error) {
             console.error('Error rejecting disposal request:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -340,8 +359,25 @@ const ProductDisposal = () => {
                 borderRadius: 4,
                 overflow: 'hidden',
                 boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
-                background: 'linear-gradient(to bottom, #ffffff, #f8fafc)'
+                background: 'linear-gradient(to bottom, #ffffff, #f8fafc)',
+                position: 'relative'
             }}>
+                {loading && (
+                    <Box sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                        zIndex: 1
+                    }}>
+                        <CircularProgress />
+                    </Box>
+                )}
                 <TableContainer sx={{ maxHeight: 440 }}>
                     <Table stickyHeader>
                         <TableHead>
@@ -492,6 +528,7 @@ const ProductDisposal = () => {
                         onClick={handleReject} 
                         color="error" 
                         variant="contained"
+                        disabled={loading}
                         sx={{ 
                             textTransform: 'none',
                             borderRadius: '10px',
@@ -503,12 +540,13 @@ const ProductDisposal = () => {
                             }
                         }}
                     >
-                        Từ chối
+                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Từ chối'}
                     </Button>
                     <Button 
                         onClick={handleApprove} 
                         color="success" 
                         variant="contained"
+                        disabled={loading}
                         sx={{ 
                             textTransform: 'none',
                             borderRadius: '10px',
@@ -520,7 +558,7 @@ const ProductDisposal = () => {
                             }
                         }}
                     >
-                        Phê duyệt
+                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Phê duyệt'}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -677,6 +715,7 @@ const ProductDisposal = () => {
                     <Button
                         onClick={handleSubmit}
                         variant="contained"
+                        disabled={loading}
                         sx={{
                             textTransform: 'none',
                             borderRadius: '10px',
@@ -688,7 +727,7 @@ const ProductDisposal = () => {
                             }
                         }}
                     >
-                        Tạo yêu cầu
+                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Tạo yêu cầu'}
                     </Button>
                 </DialogActions>
             </Dialog>

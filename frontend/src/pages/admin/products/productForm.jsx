@@ -8,7 +8,7 @@ import { API_URL } from '../../../services/config';
 const { Option } = Select;
 const { Title } = Typography;
 
-const ProductForm = ({ visible, onCancel, catalogs, initialValues = null, onSuccess, loadData, setIsModalVisible , fetchProducts}) => {
+const ProductForm = ({ visible, onCancel, catalogs, initialValues = null, onSuccess, loadData, setIsModalVisible }) => {
     const [form] = Form.useForm();
     const [imageUrl, setImageUrl] = useState('');
     const [fileList, setFileList] = useState([]);
@@ -67,10 +67,10 @@ const ProductForm = ({ visible, onCancel, catalogs, initialValues = null, onSucc
             try {
                 if (initialValues) {
                     response = await updateProduct(initialValues.id, formData);
-                    fetchProducts();
+                    loadData();
                 } else {
                     response = await createProduct(formData);
-                    fetchProducts();
+                    loadData();
                 }
                 if (response.success) {
                     message.success(initialValues ? 'Sản phẩm đã được cập nhật thành công.' : 'Sản phẩm đã được thêm thành công.');

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Catalory;
+use App\Models\Factory;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -370,5 +372,16 @@ class ProductController extends Controller
         $product = Product::all();
         return response()->json($product);
     } 
+
+    public function getInfoInventory(){
+        $product = Product::all();
+        $catalog = Catalory::all();
+        $factory = Factory::all();
+        return response()->json([
+            'product' => $product,
+            'catalog' => $catalog,
+            'factory' => $factory
+        ]);
+    }
 }
  

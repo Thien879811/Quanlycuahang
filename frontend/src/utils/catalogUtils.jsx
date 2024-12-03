@@ -31,11 +31,15 @@ const useCatalogs = () => {
     const response = await cataloryService.update(catalog);
   }
 
+  const deleteCatalog = async (catalogId) => {
+    const response = await cataloryService.delete(catalogId);
+  }
+
   useEffect(() => {
     fetchCatalogs();
   }, []);
 
-  return { catalogs, loading, error , fetchCatalogs, createCatalog, updateCatalog};
+  return { catalogs, loading, error , fetchCatalogs, createCatalog, updateCatalog, deleteCatalog};
 };
 
 export default useCatalogs;
