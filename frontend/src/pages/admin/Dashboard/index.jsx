@@ -103,6 +103,7 @@ const Dashboard = () => {
     try {
       const data = await dashboardService.getPurchaseData(type, timeParam);
       setPurchaseData(handleResponse(data));
+      console.log(handleResponse(data));
     } catch (error) {
       console.error(error);
     } 

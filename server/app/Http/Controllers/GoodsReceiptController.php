@@ -76,6 +76,7 @@ class GoodsReceiptController extends Controller
             'check_date' => Carbon::createFromFormat('d/m/Y H:i:s', $validated['check_date'])->format('Y-m-d H:i:s'),
         ]);
         $goodsReceipt->save();
+
         if($validated['details']) {
             foreach ($validated['details'] as $detail) {
                 $goodsReceiptDetail = GoodsReceiptDetail::find($detail['id']);
@@ -90,25 +91,14 @@ class GoodsReceiptController extends Controller
                     $goodsReceiptDetail->price = $detail['price'];
                 }
                 
-                $goodsReceiptDetail->save();
 
                 $product = Product::find($goodsReceiptDetail->product_id);
-                
-                if ($goodsReceiptDetail->status === '1' && !$goodsReceiptDetail->is_added) {
-                    $product->quantity += $goodsReceiptDetail->quantity;
-                    $product->purchase_price = $goodsReceiptDetail->price;
-                    $product->save();
-                    $goodsReceiptDetail->is_added = true;
-                    $goodsReceiptDetail->save();
-                }
-                if( $goodsReceiptDetail->status === '2' || $goodsReceiptDetail->status === '3' && !$goodsReceiptDetail->is_added
-                ) {
-                    $product->quantity += $goodsReceiptDetail->quantity_receipt;
-                    $goodsReceiptDetail->is_added = true;
-                    $product->purchase_price = $goodsReceiptDetail->price;
-                    $product->save();
-                    $goodsReceiptDetail->save();
-                }
+                $product->quantity += $goodsReceiptDetail->quantity;
+                $product->purchase_price = $goodsReceiptDetail->price;
+                $product->save();
+
+                $goodsReceiptDetail->is_added = true;
+                $goodsReceiptDetail->save();
             }
         }
 
@@ -366,15 +356,6 @@ class GoodsReceiptController extends Controller
                 'note' => '',
                 'is_added' => true,
             ]);
-
-            $product = Product::find($productData['product_id']);
-            if ($product) {
-                $product->quantity += $productData['quantity'];
-                if (isset($productData['price']) && $productData['price'] > 0) {
-                    $product->purchase_price = $productData['price'];
-                }
-                $product->save();
-            }
         }
 
         return response()->json([

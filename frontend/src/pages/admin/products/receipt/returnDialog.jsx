@@ -72,7 +72,7 @@ const ReturnDialog = ({ openReturnDialog, setOpenReturnDialog, selectedReceipt, 
                                         </TableCell>
                                         <TableCell>{detail.product?.product_name}</TableCell>
                                         <TableCell align="right">{detail.quantity}</TableCell>
-                                        <TableCell align="right">{detail.quantity_receipt}</TableCell>
+                                        <TableCell align="right">{detail.quantity}</TableCell>
                                         <TableCell align="right">{detail.quantity_defective}</TableCell>
                                         <TableCell align="right">
                                             <TextField

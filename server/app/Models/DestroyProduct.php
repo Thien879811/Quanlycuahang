@@ -11,6 +11,8 @@ class DestroyProduct extends Model
 {
     use HasFactory;
 
+    protected $table = 'destroy_products';
+
     protected $fillable = [
         'product_id',
         'quantity',

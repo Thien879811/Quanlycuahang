@@ -50,7 +50,7 @@ Route::post('/goods-receipt/return', [GoodsReceiptController::class, 'returnRece
 Route::get('/goods-receipt/{type}', [GoodsReceiptController::class, 'getReceipt']);
 Route::get('/goods-receipt/{type}/return', [GoodsReceiptController::class, 'getReceiptReturn']);
 Route::delete('/goods-receipt/{id}', [GoodsReceiptController::class, 'deleteReceipt']);
-Route::put('/goods-receipt/update/{id}', [GoodsReceiptController::class, 'update']);
+// Route::put('/goods-receipt/update/{id}', [GoodsReceiptController::class, 'update']);
 Route::post('/goods-receipt/create', [GoodsReceiptController::class, 'createReceipt']); 
 Route::put('/goods-receipt/chinhsua/{id}', [GoodsReceiptController::class, 'chinhsua']); 
 

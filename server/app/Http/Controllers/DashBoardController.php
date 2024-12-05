@@ -234,8 +234,9 @@ class DashBoardController extends Controller
                 ->select('product_id')
                 ->selectRaw('SUM(soluong) as soldQuantity')
                 ->groupBy('product_id')
+                ->whereHas('product') // Only include records where product exists
                 ->whereHas('order', function($q) {
-                    $q->whereIn('status', [1, 2]); // Only count completed/paid orders
+                    $q->whereIn('status', [1, 2, 5]); // Only count completed/paid orders
                 });
 
             switch($type) {
@@ -297,13 +298,18 @@ class DashBoardController extends Controller
                 ->limit(10)
                 ->get()
                 ->map(function ($item) {
+                    if (!$item->product) {
+                        return null;
+                    }
                     return [
                         'name' => $item->product->product_name,
                         'soldQuantity' => $item->soldQuantity,
                         'remainingQuantity' => $item->product->quantity,
                         'price' => $item->product->selling_price
                     ];
-                });
+                })
+                ->filter() // Remove null values
+                ->values(); // Re-index array
 
             return response()->json($topProducts);
 
@@ -337,32 +343,38 @@ class DashBoardController extends Controller
             $query = GoodsReceiptDetail::query();
             $goodsReceiptsQuery = GoodsReceipt::query();
             $destroyQuery = DestroyProduct::query();
+            $returnQuery = GoodsReceiptDetail::query();
 
             switch ($type) {
                 case 'today':
                     $query->whereDate('created_at', Carbon::today());
                     $goodsReceiptsQuery->whereDate('created_at', Carbon::today());
                     $destroyQuery->whereDate('created_at', Carbon::today());
+                    $returnQuery->whereDate('return_date', Carbon::today());
                     break;
                 case 'yesterday':
                     $query->whereDate('created_at', Carbon::yesterday());
                     $goodsReceiptsQuery->whereDate('created_at', Carbon::yesterday());
                     $destroyQuery->whereDate('created_at', Carbon::yesterday());
+                    $returnQuery->whereDate('return_date', Carbon::yesterday());
                     break;
                 case 'week':
                     $query->where('created_at', '>=', Carbon::now()->startOfWeek());
                     $goodsReceiptsQuery->where('created_at', '>=', Carbon::now()->startOfWeek());
                     $destroyQuery->where('created_at', '>=', Carbon::now()->startOfWeek());
+                    $returnQuery->where('return_date', '>=', Carbon::now()->startOfWeek());
                     break;
                 case 'month':
                     $query->where('created_at', '>=', Carbon::now()->startOfMonth());
                     $goodsReceiptsQuery->where('created_at', '>=', Carbon::now()->startOfMonth());
                     $destroyQuery->where('created_at', '>=', Carbon::now()->startOfMonth());
+                    $returnQuery->where('return_date', '>=', Carbon::now()->startOfMonth());
                     break;
                 case 'year':
                     $query->where('created_at', '>=', Carbon::now()->startOfYear());
                     $goodsReceiptsQuery->where('created_at', '>=', Carbon::now()->startOfYear());
                     $destroyQuery->where('created_at', '>=', Carbon::now()->startOfYear());
+                    $returnQuery->where('return_date', '>=', Carbon::now()->startOfYear());
                     break;
                 case 'custom':
                     if (!request()->has('date')) {
@@ -372,6 +384,7 @@ class DashBoardController extends Controller
                     $query->whereDate('created_at', $date);
                     $goodsReceiptsQuery->whereDate('created_at', $date);
                     $destroyQuery->whereDate('created_at', $date);
+                    $returnQuery->whereDate('return_date', $date);
                     break;
                 case 'customMonth':
                     if (!request()->has('date')) {
@@ -384,22 +397,25 @@ class DashBoardController extends Controller
                                      ->whereMonth('created_at', $date->month);
                     $destroyQuery->whereYear('created_at', $date->year)
                                 ->whereMonth('created_at', $date->month);
+                    $returnQuery->whereYear('return_date', $date->year)
+                               ->whereMonth('return_date', $date->month);
                     break;
                 default:
                     if (Carbon::hasFormat($type, 'Y-m-d')) {
                         $query->whereDate('created_at', Carbon::parse($type));
                         $goodsReceiptsQuery->whereDate('created_at', Carbon::parse($type));
                         $destroyQuery->whereDate('created_at', Carbon::parse($type));
+                        $returnQuery->whereDate('return_date', Carbon::parse($type));
                     } else {
                         return response()->json(['error' => 'Invalid date format'], 400);
                     }
             }
 
             // Calculate total purchase cost
-            $totalPurchaseCost = $query->sum(\DB::raw('quantity * price'));
+            $totalPurchaseCost = $query->sum(\DB::raw('(quantity - return_quantity) * price'));
             
-            // Calculate total refund amount
-            $totalRefundAmount = $query->whereNotNull('return_quantity')
+            // Calculate total refund amount based on return_date
+            $totalRefundAmount = $returnQuery->whereNotNull('return_quantity')
                 ->sum(\DB::raw('return_quantity * price'));
 
             // Calculate total destroyed products
@@ -407,9 +423,10 @@ class DashBoardController extends Controller
 
             $purchaseData = [
                 'purchaseOrders' => $goodsReceiptsQuery->count(),
-                'purchaseCost' => $totalPurchaseCost - $totalRefundAmount,
+                'purchaseCost' => $totalPurchaseCost,
                 'canceledOrders' => $totalDestroyedProducts,
-                'refundedOrders' => $query->whereNotNull('return_quantity')->sum('return_quantity')
+                'totalRefundedOrders' => $totalRefundAmount,
+                'refundedOrders' => $returnQuery->whereNotNull('return_quantity')->sum('return_quantity')
             ];
 
             return response()->json($purchaseData);

@@ -162,7 +162,8 @@ const CheckDialog = ({ openDialog, handleCloseCheckDialog, selectedReceipt, chec
                                                             max={detail.quantity}
                                                             style={{ 
                                                                 textAlign: 'center',
-                                                                borderColor: validationErrors[detail.id]?.quantity_defective ? 'red' : undefined 
+                                                                borderColor: validationErrors[detail.id]?.quantity_defective ? 'red' : undefined, 
+                                                                margin: 'auto'
                                                             }}
                                                         />
                                                         {validationErrors[detail.id]?.quantity_defective && (
